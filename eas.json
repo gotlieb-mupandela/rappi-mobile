@@ -1,0 +1,51 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://www.rappisportshub.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://wzmzwerzbyudcvoiiege.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6bXp3ZXJ6Ynl1ZGN2b2lpZWdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3NjA2NjksImV4cCI6MjEwNDMzNjY2OX0.MUWnAPv3_Gcb4sOrre0SyKlLa-D3T_S9jNyGM993KYo"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://www.rappisportshub.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://wzmzwerzbyudcvoiiege.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6bXp3ZXJ6Ynl1ZGN2b2lpZWdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3NjA2NjksImV4cCI6MjEwNDMzNjY2OX0.MUWnAPv3_Gcb4sOrre0SyKlLa-D3T_S9jNyGM993KYo"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://www.rappisportshub.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://wzmzwerzbyudcvoiiege.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6bXp3ZXJ6Ynl1ZGN2b2lpZWdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3NjA2NjksImV4cCI6MjEwNDMzNjY2OX0.MUWnAPv3_Gcb4sOrre0SyKlLa-D3T_S9jNyGM993KYo"
+      }
+    },
+    "production-apk": {
+      "extends": "production",
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
