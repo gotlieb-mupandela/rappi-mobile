@@ -80,7 +80,7 @@ export function CategoryHub({ slug }: { slug: string }) {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.hero}>
           {heroImage ? (
-            <Image source={{ uri: heroImage }} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={250} />
+            <Image source={{ uri: heroImage }} style={styles.fill} contentFit="cover" contentPosition="top" cachePolicy="memory-disk" transition={250} />
           ) : null}
           <Image source={SHADE} style={styles.heroShade} contentFit="fill" pointerEvents="none" />
           <View style={styles.heroText}>
