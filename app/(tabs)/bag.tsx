@@ -7,14 +7,18 @@ import { Swipeable } from 'react-native-gesture-handler';
 
 import { EmptyState, PrimaryButton, Screen, SkeletonList } from '@/src/components/ui';
 import { QtyStepper } from '@/src/components/QtyStepper';
+import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useAuth } from '@/src/lib/auth';
 import { useBag } from '@/src/lib/bag';
 import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
-import { formatMoney } from '@/src/lib/money';
 import { openLogin } from '@/src/lib/navigation';
-import { colors, fonts, radius, shadow, space } from '@/src/theme';
+import { makeStyles, useTheme } from '@/src/lib/theme';
+import { fonts, radius, space } from '@/src/theme';
 
 export default function BagScreen() {
+  const { formatMoney, t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { lines, ready, synced, subtotal, setQty, remove, refresh } = useBag();
   const { session } = useAuth();
 
@@ -33,11 +37,11 @@ export default function BagScreen() {
   };
 
   return (
-    <Screen title="Bag">
+    <Screen title={t('bag.title')}>
       {!ready ? (
         <SkeletonList count={4} />
       ) : lines.length === 0 ? (
-        <EmptyState message="Your bag is empty." action="Browse shop" onPress={() => router.navigate('/(tabs)/shop')} />
+        <EmptyState message={t('bag.empty')} action={t('bag.browse')} onPress={() => router.navigate('/(tabs)/shop')} />
       ) : (
         <View style={styles.flex}>
           <FlatList
@@ -50,7 +54,7 @@ export default function BagScreen() {
                 renderRightActions={() => (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`Remove ${line.name} from bag`}
+                    accessibilityLabel={t('bag.remove', { name: line.name })}
                     style={styles.deleteWrap}
                     onPress={() => remove(line.code, line.size)}>
                     {({ pressed }) => (
@@ -86,10 +90,10 @@ export default function BagScreen() {
           />
           <View style={styles.footer}>
             <View style={styles.subRow}>
-              <Text style={styles.subLabel}>Subtotal</Text>
+              <Text style={styles.subLabel}>{t('bag.subtotal')}</Text>
               <Text style={styles.subValue}>{formatMoney(subtotal)}</Text>
             </View>
-            <PrimaryButton label="Check out" onPress={checkout} />
+            <PrimaryButton label={t('bag.checkout')} onPress={checkout} />
           </View>
         </View>
       )}
@@ -97,7 +101,7 @@ export default function BagScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, shadow }) => ({
   flex: { flex: 1 },
   list: { padding: space.screen, gap: space.gap, paddingBottom: 24 },
   card: {
@@ -129,4 +133,4 @@ const styles = StyleSheet.create({
   subRow: { flexDirection: 'row', justifyContent: 'space-between' },
   subLabel: { fontFamily: fonts.body, fontSize: 15, color: colors.muted },
   subValue: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.text, fontVariant: ['tabular-nums'] },
-});
+}));

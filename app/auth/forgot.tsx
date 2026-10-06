@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import { BrandMark, Field, FormScroll, PrimaryButton, Screen } from '@/src/components/ui';
 import { authErrorMessage } from '@/src/lib/navigation';
 import { supabase } from '@/src/lib/supabase';
-import { colors, fonts } from '@/src/theme';
+import { makeStyles } from '@/src/lib/theme';
+import { fonts } from '@/src/theme';
 
 export default function ForgotScreen() {
+  const styles = useStyles();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -54,8 +56,8 @@ export default function ForgotScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors }) => ({
   hint: { fontFamily: fonts.body, fontSize: 14, color: colors.muted },
   error: { fontFamily: fonts.body, color: colors.danger },
   info: { fontFamily: fonts.bodySemi, color: colors.accentText },
-});
+}));

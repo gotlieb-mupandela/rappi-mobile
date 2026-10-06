@@ -6,24 +6,40 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ApiError, isNetworkError, NETWORK_MESSAGE } from '@/src/api/client';
 import { createPayment, openPaymentPage, waitForPaidPayment } from '@/src/api/checkout';
 import type { ShippingMethod } from '@/src/api/types';
+import { ActionSheet } from '@/src/components/settings';
 import { EmptyState, FormScroll, LabeledField, PrimaryButton, Screen } from '@/src/components/ui';
+import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useAuth } from '@/src/lib/auth';
 import { useBag } from '@/src/lib/bag';
-import { formatMoney, vatOn } from '@/src/lib/money';
+import { vatOn } from '@/src/lib/money';
 import { openLogin } from '@/src/lib/navigation';
 import { fetchProfile, latestOrderId, waitForNewOrder } from '@/src/lib/orders';
-import { colors, fonts, radius, sectionLabel } from '@/src/theme';
+import { makeStyles, useTheme } from '@/src/lib/theme';
+import { fonts, radius } from '@/src/theme';
 
-const SHIPPING: { id: ShippingMethod; label: string; cost: number }[] = [
-  { id: 'standard', label: 'Standard (5–8 days)', cost: 100 },
-  { id: 'express', label: 'Express (2–3 days)', cost: 150 },
-  { id: 'pickup', label: 'Hub pickup', cost: 0 },
+const SHIPPING: { id: ShippingMethod; labelKey: string; cost: number }[] = [
+  { id: 'standard', labelKey: 'checkout.standard', cost: 100 },
+  { id: 'express', labelKey: 'checkout.express', cost: 150 },
+  { id: 'pickup', labelKey: 'checkout.pickup', cost: 0 },
 ];
+
+const COUNTRIES = [
+  ['Namibia', 15], ['South Africa', 15], ['Botswana', 14], ['France', 20], ['Belgium', 21],
+  ['Luxembourg', 17], ['Germany', 19], ['Netherlands', 21], ['Spain', 21], ['Italy', 22],
+  ['Portugal', 23], ['Austria', 20], ['Ireland', 23], ['Finland', 25.5], ['Sweden', 25],
+  ['Denmark', 25], ['Greece', 24], ['Poland', 23], ['Czechia', 21], ['Slovakia', 23],
+  ['Slovenia', 22], ['Croatia', 25], ['Hungary', 27], ['Romania', 21], ['Bulgaria', 20],
+  ['Estonia', 24], ['Latvia', 21], ['Lithuania', 21], ['Malta', 18], ['Cyprus', 19],
+  ['United Kingdom', 20], ['Switzerland', 8.1],
+] as const;
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function CheckoutScreen() {
+  const { market, formatMoney, t } = useLocale();
   const { session, ready } = useAuth();
+  const { sectionLabel } = useTheme();
+  const styles = useStyles();
   const bag = useBag();
   const profile = useQuery({
     queryKey: ['profile', session?.user.id],
@@ -37,6 +53,8 @@ export default function CheckoutScreen() {
   const [city, setCity] = useState('');
   const [notes, setNotes] = useState('');
   const [shipping, setShipping] = useState<ShippingMethod>('standard');
+  const [country, setCountry] = useState(market === 'eu' ? 'France' : 'Namibia');
+  const [countryOpen, setCountryOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const prefilled = useRef(false);
@@ -57,7 +75,8 @@ export default function CheckoutScreen() {
   }, [profile.data, profile.isPending, session]);
 
   const shippingCost = SHIPPING.find((item) => item.id === shipping)?.cost ?? 100;
-  const vat = vatOn(bag.subtotal + shippingCost);
+  const vatRate = COUNTRIES.find(([name]) => name === country)?.[1] ?? 15;
+  const vat = vatOn(bag.subtotal + shippingCost, vatRate);
   const total = bag.subtotal + shippingCost + vat;
   const pickup = shipping === 'pickup';
 
@@ -72,7 +91,7 @@ export default function CheckoutScreen() {
       openLogin('/checkout');
       return;
     }
-    setBusy('Starting payment');
+    setBusy(t('checkout.openingDpo'));
     setError(null);
 
     let payment: Awaited<ReturnType<typeof createPayment>>;
@@ -90,7 +109,7 @@ export default function CheckoutScreen() {
         phone: phone.trim(),
         address: pickup ? 'Hub pickup' : address.trim(),
         city: pickup ? '—' : city.trim(),
-        country: 'Namibia',
+        country,
         notes: notes.trim(),
         shippingMethod: shipping,
         lines: bag.lines.map((line) => ({ code: line.code, size: line.size, qty: line.qty })),
@@ -113,7 +132,7 @@ export default function CheckoutScreen() {
 
     let outcome: Awaited<ReturnType<typeof openPaymentPage>>;
     try {
-      setBusy('Waiting for payment');
+      setBusy(t('checkout.openingDpo'));
       outcome = await openPaymentPage(payment.paymentUrl);
     } catch {
       setBusy(null);
@@ -157,24 +176,24 @@ export default function CheckoutScreen() {
   };
 
   if (!session) {
-    return <Screen title="Checkout" back>{null}</Screen>;
+    return <Screen title={t('checkout.title')} back>{null}</Screen>;
   }
 
   if (bag.ready && bag.lines.length === 0 && !busy) {
     return (
-      <Screen title="Checkout" back>
-        <EmptyState message="Your bag is empty." action="Browse shop" onPress={() => router.navigate('/(tabs)/shop')} />
+      <Screen title={t('checkout.title')} back>
+        <EmptyState message={t('bag.empty')} action={t('bag.browse')} onPress={() => router.navigate('/(tabs)/shop')} />
       </Screen>
     );
   }
 
   return (
-    <Screen title="Checkout" back>
+    <Screen title={t('checkout.title')} back>
       <FormScroll gap={10}>
-        <Text style={sectionLabel}>DETAILS</Text>
+        <Text style={sectionLabel}>{t('checkout.details').toUpperCase()}</Text>
         <View style={styles.section}>
           <LabeledField
-            label="Full name"
+            label={t('checkout.fullName')}
             placeholder="Jane Doe"
             autoComplete="name"
             textContentType="name"
@@ -182,7 +201,7 @@ export default function CheckoutScreen() {
             onChangeText={setName}
           />
           <LabeledField
-            label="Email"
+            label={t('checkout.email')}
             placeholder="jane@example.com"
             autoCapitalize="none"
             autoComplete="email"
@@ -192,7 +211,7 @@ export default function CheckoutScreen() {
             onChangeText={setEmail}
           />
           <LabeledField
-            label="Cell phone"
+            label={t('checkout.phone')}
             placeholder="+264 81 123 4567"
             autoComplete="tel"
             keyboardType="phone-pad"
@@ -202,7 +221,7 @@ export default function CheckoutScreen() {
           />
         </View>
 
-        <Text style={[sectionLabel, styles.block]}>DELIVERY</Text>
+        <Text style={[sectionLabel, styles.block]}>{t('checkout.delivery').toUpperCase()}</Text>
         <View style={styles.section}>
           {SHIPPING.map((item) => {
             const selected = shipping === item.id;
@@ -215,7 +234,7 @@ export default function CheckoutScreen() {
                 style={({ pressed }) => [styles.ship, selected && styles.shipOn, pressed && styles.pressed]}>
                 <View style={styles.shipCopy}>
                   <View style={[styles.radio, selected && styles.radioOn]}>{selected ? <View style={styles.radioDot} /> : null}</View>
-                  <Text style={styles.shipLabel}>{item.label}</Text>
+                  <Text style={styles.shipLabel}>{t(item.labelKey)}</Text>
                 </View>
                 <Text style={styles.shipCost}>{formatMoney(item.cost)}</Text>
               </Pressable>
@@ -224,7 +243,7 @@ export default function CheckoutScreen() {
           {!pickup ? (
             <>
               <LabeledField
-                label="Address"
+                label={t('checkout.address')}
                 placeholder="12 Independence Ave"
                 autoComplete="street-address"
                 textContentType="fullStreetAddress"
@@ -232,7 +251,7 @@ export default function CheckoutScreen() {
                 onChangeText={setAddress}
               />
               <LabeledField
-                label="City"
+                label={t('checkout.city')}
                 placeholder="Windhoek"
                 autoComplete="postal-address-locality"
                 textContentType="addressCity"
@@ -241,30 +260,45 @@ export default function CheckoutScreen() {
               />
             </>
           ) : null}
-          <View style={styles.country}>
-            <Text style={styles.rowLabel}>Country</Text>
-            <Text style={styles.rowValue}>Namibia</Text>
-          </View>
-          <LabeledField label="Order notes" optional placeholder="Anything we should know?" value={notes} onChangeText={setNotes} />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('checkout.country')}
+            onPress={() => setCountryOpen(true)}
+            style={({ pressed }) => [styles.country, pressed && styles.pressed]}>
+            <Text style={styles.rowLabel}>{t('checkout.country')}</Text>
+            <Text style={styles.rowValue}>{country}</Text>
+          </Pressable>
+          <LabeledField label={t('checkout.notes')} optional placeholder={t('checkout.notesPlaceholder')} value={notes} onChangeText={setNotes} />
         </View>
 
-        <Text style={[sectionLabel, styles.block]}>TOTAL</Text>
+        <Text style={[sectionLabel, styles.block]}>{t('checkout.summary').toUpperCase()}</Text>
         <View style={styles.section}>
-          <Row label="Merchandise" value={formatMoney(bag.subtotal)} />
-          <Row label="Shipping" value={formatMoney(shippingCost)} />
-          <Row label="VAT 15%" value={formatMoney(vat)} />
+          <Row label={t('checkout.merchandise')} value={formatMoney(bag.subtotal)} />
+          <Row label={t('checkout.shipping')} value={formatMoney(shippingCost)} />
+          <Row label={t('checkout.vat', { rate: vatRate })} value={formatMoney(vat)} />
           <View style={styles.divider} />
-          <Row label="Total" value={formatMoney(total)} bold />
-          <Text style={styles.hint}>DPO confirms the final charged amount using live prices and stock.</Text>
+          <Row label={t('checkout.total')} value={formatMoney(total)} bold />
+          <Text style={styles.hint}>{t('checkout.totalsNote')}</Text>
         </View>
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <PrimaryButton label={busy ?? 'Pay with DPO'} disabled={!canPay || !!busy} onPress={pay} />
+        <PrimaryButton label={busy ?? t('checkout.payDpo')} disabled={!canPay || !!busy} onPress={pay} />
       </FormScroll>
+      <ActionSheet
+        visible={countryOpen}
+        title={t('checkout.country')}
+        onClose={() => setCountryOpen(false)}
+        options={COUNTRIES.map(([name]) => ({
+          label: name,
+          icon: country === name ? 'checkmark-circle' : 'ellipse-outline',
+          onPress: () => setCountry(name),
+        }))}
+      />
     </Screen>
   );
 }
 
 function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+  const styles = useStyles();
   return (
     <View style={styles.row}>
       <Text style={[styles.rowLabel, bold && styles.bold]}>{label}</Text>
@@ -273,7 +307,7 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors }) => ({
   block: { marginTop: 24 },
   section: {
     gap: 14,
@@ -318,4 +352,4 @@ const styles = StyleSheet.create({
   bold: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.text },
   hint: { fontFamily: fonts.body, fontSize: 12, color: colors.muted, marginTop: 4, marginBottom: 6 },
   error: { fontFamily: fonts.body, fontSize: 14, color: colors.danger, marginBottom: 6 },
-});
+}));

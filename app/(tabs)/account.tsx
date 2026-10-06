@@ -3,19 +3,22 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { deleteAccount, openSitePage, openSupportEmail, openWhatsApp, SUPPORT_EMAIL, SUPPORT_WHATSAPP_LABEL } from '@/src/api/account';
 import { ApiError, isNetworkError, isRouteMissing, NETWORK_MESSAGE } from '@/src/api/client';
 import { usePhotoPicker } from '@/src/components/PhotoPicker';
 import { ActionSheet, Avatar, SettingsGroup, SettingsRow } from '@/src/components/settings';
 import { BrandMark, Field, PrimaryButton, Screen, SecondaryButton, SkeletonList } from '@/src/components/ui';
+import { useLocale } from '@/src/i18n/LocaleProvider';
+import { MARKETS } from '@/src/i18n/market';
 import { useAuth } from '@/src/lib/auth';
 import { fetchProfile } from '@/src/lib/orders';
 import { profileName, profilePhoto } from '@/src/lib/profile';
 import { supabase } from '@/src/lib/supabase';
+import { makeStyles, useTheme } from '@/src/lib/theme';
 import { useWishlist } from '@/src/lib/wishlist';
-import { colors, fonts, radius, space } from '@/src/theme';
+import { fonts, radius, space } from '@/src/theme';
 
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 const DELETE_PHRASE = 'Delete my Account';
@@ -46,15 +49,20 @@ function ContactSheet({ visible, onClose }: { visible: boolean; onClose: () => v
 }
 
 function VersionFooter() {
+  const styles = useStyles();
   return <Text style={styles.version}>Rappi Sports Hub · Version {APP_VERSION}</Text>;
 }
 
 export default function AccountScreen() {
+  const { market, setMarket, t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { user, ready } = useAuth();
   const wishlist = useWishlist();
   const queryClient = useQueryClient();
   const photo = usePhotoPicker();
   const [contactOpen, setContactOpen] = useState(false);
+  const [marketOpen, setMarketOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -118,10 +126,21 @@ export default function AccountScreen() {
 
   const wishlistValue = wishlist.count ? `${wishlist.count} saved` : undefined;
   const contact = <ContactSheet visible={contactOpen} onClose={() => setContactOpen(false)} />;
+  const marketSheet = (
+    <ActionSheet
+      visible={marketOpen}
+      title={t('market.title')}
+      onClose={() => setMarketOpen(false)}
+      options={[
+        { label: MARKETS.na.label, icon: market === 'na' ? 'checkmark-circle' : 'ellipse-outline', onPress: () => void setMarket('na') },
+        { label: MARKETS.eu.label, icon: market === 'eu' ? 'checkmark-circle' : 'ellipse-outline', onPress: () => void setMarket('eu') },
+      ]}
+    />
+  );
 
   if (!ready) {
     return (
-      <Screen title="Account">
+      <Screen title={t('tabs.account')}>
         <SkeletonList count={4} />
       </Screen>
     );
@@ -129,7 +148,7 @@ export default function AccountScreen() {
 
   if (!user) {
     return (
-      <Screen title="Account">
+      <Screen title={t('tabs.account')}>
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.guest}>
             <BrandMark height={84} />
@@ -143,13 +162,15 @@ export default function AccountScreen() {
           <SettingsGroup title="My shopping">
             <SettingsRow icon="heart-outline" label="Wishlist" value={wishlistValue} onPress={() => router.push('/wishlist')} />
           </SettingsGroup>
-          <SettingsGroup title="Preferences">
+          <SettingsGroup title={t('settings.preferences')}>
+            <SettingsRow icon="language-outline" label={t('settings.languageCurrency')} value={MARKETS[market].label} onPress={() => setMarketOpen(true)} />
             <SettingsRow icon="settings-outline" label="Settings" detail="Notifications and app preferences" onPress={() => router.push('/settings')} />
           </SettingsGroup>
           <HelpAndLegal onContact={() => setContactOpen(true)} />
           <VersionFooter />
         </ScrollView>
         {contact}
+        {marketSheet}
       </Screen>
     );
   }
@@ -158,7 +179,7 @@ export default function AccountScreen() {
   const email = profile.data?.email || user.email || '';
 
   return (
-    <Screen title="Account">
+    <Screen title={t('tabs.account')}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Pressable
@@ -169,7 +190,7 @@ export default function AccountScreen() {
             style={({ pressed }) => [styles.avatarWrap, pressed && styles.pressed]}>
             <Avatar uri={profilePhoto(user)} name={fullName} email={email} size={76} />
             <View style={styles.avatarBadge}>
-              {photo.busy ? <ActivityIndicator size="small" color={colors.onDark} /> : <Ionicons name="camera" size={14} color={colors.onDark} />}
+              {photo.busy ? <ActivityIndicator size="small" color={colors.onInverse} /> : <Ionicons name="camera" size={14} color={colors.onInverse} />}
             </View>
           </Pressable>
           <View style={styles.headerText}>
@@ -198,6 +219,7 @@ export default function AccountScreen() {
           <SettingsRow icon="person-outline" label="Profile details" detail="Name and profile photo" onPress={() => router.push('/profile')} />
           <SettingsRow icon="lock-closed-outline" label="Change password" onPress={() => router.push('/settings/password')} />
           <SettingsRow icon="settings-outline" label="Settings" detail="Notifications and app preferences" onPress={() => router.push('/settings')} />
+          <SettingsRow icon="language-outline" label={t('settings.languageCurrency')} value={MARKETS[market].label} onPress={() => setMarketOpen(true)} />
         </SettingsGroup>
 
         <HelpAndLegal onContact={() => setContactOpen(true)} />
@@ -265,11 +287,12 @@ export default function AccountScreen() {
       </ScrollView>
       {photo.sheet}
       {contact}
+      {marketSheet}
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors }) => ({
   content: { padding: space.screen, gap: 24, paddingBottom: 48 },
   pressed: { opacity: 0.8 },
   guest: { alignItems: 'center', gap: 10, paddingTop: 8 },
@@ -285,7 +308,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.text,
+    backgroundColor: colors.inverse,
     borderWidth: 2,
     borderColor: colors.bg,
     alignItems: 'center',
@@ -318,4 +341,4 @@ const styles = StyleSheet.create({
   confirmText: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.muted },
   confirmPhrase: { fontFamily: fonts.bodyBold, color: colors.text },
   version: { textAlign: 'center', fontFamily: fonts.body, fontSize: 12, color: colors.muted },
-});
+}));

@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
 const supported = Platform.OS === 'ios' || Platform.OS === 'android';
-const STORAGE_KEY = 'hapticsOff';
+const STORAGE_KEY = 'hapticsOn';
 
-let enabled = supported;
+let enabled = false;
 const listeners = new Set<(on: boolean) => void>();
 
 void AsyncStorage.getItem(STORAGE_KEY)
   .then((value) => {
-    if (value === '1') setEnabled(false);
+    if (value === '1') setEnabled(true);
   })
   .catch(() => undefined);
 
@@ -22,7 +22,7 @@ function setEnabled(on: boolean): void {
 
 export function setHapticsEnabled(on: boolean): void {
   setEnabled(on);
-  void (on ? AsyncStorage.removeItem(STORAGE_KEY) : AsyncStorage.setItem(STORAGE_KEY, '1')).catch(() => undefined);
+  void (on ? AsyncStorage.setItem(STORAGE_KEY, '1') : AsyncStorage.removeItem(STORAGE_KEY)).catch(() => undefined);
 }
 
 export function useHapticsEnabled(): boolean {

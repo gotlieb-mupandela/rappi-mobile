@@ -2,7 +2,7 @@
 
 Build a brand-new React Native app with Expo. Do not copy, import, or share source files from the website repo (rappi-webapp). Recreate types and UI from this document. The app only talks to the live website API and the existing Supabase project.
 
-Store: Rappi Sport, Windhoek, Namibia. Language: English. Currency: Namibian dollars, shown as N$304 (no space, no decimals when the amount is whole, two decimals otherwise). Market is Namibia only. Do not add euro, language switching, or admin screens.
+Store: Rappi Sport, Windhoek, Namibia. The app has one market setting: Namibia uses English and NAD (N$), while France / EU uses French and display-only EUR converted from NAD. Do not add admin screens.
 
 ## How to use this file
 
@@ -25,12 +25,13 @@ Bag and wishlist live on the phone only (AsyncStorage). Checkout is `POST /api/p
 
 ## Environment
 
-Copy this block into `.env`. These three values are public. Do not add any other key.
+Copy this block into `.env`. These values are public. Do not add secret keys.
 
 ```
 EXPO_PUBLIC_API_URL=https://www.rappisportshub.com
 EXPO_PUBLIC_SUPABASE_URL=https://wzmzwerzbyudcvoiiege.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=
+EXPO_PUBLIC_EUR_PER_NAD=
 ```
 
 Never put the service-role key, `DPO_COMPANY_TOKEN`, or `RESEND_API_KEY` in the app.

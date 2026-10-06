@@ -16,13 +16,12 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, AppState, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import {
-  SafeAreaInsetsContext,
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import { SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TabBar } from '@/src/components/TabBar';
+import { loadInitialMarket } from '@/src/i18n/detect';
+import { LocaleProvider } from '@/src/i18n/LocaleProvider';
+import type { Market } from '@/src/i18n/market';
 
 import { AuthProvider } from '@/src/lib/auth';
 import { BagProvider } from '@/src/lib/bag';
@@ -31,7 +30,7 @@ import { listenForPushOpens } from '@/src/lib/push';
 import { supabase } from '@/src/lib/supabase';
 import { ToastProvider } from '@/src/lib/toast';
 import { WishlistProvider } from '@/src/lib/wishlist';
-import { colors } from '@/src/theme';
+import { theme } from '@/src/theme';
 import { ApiError } from '@/src/api/client';
 
 SplashScreen.preventAutoHideAsync();
@@ -50,6 +49,8 @@ export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
     </View>
   );
 }
+
+const { colors } = theme;
 
 const crash = StyleSheet.create({
   wrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 14, backgroundColor: colors.bg },
@@ -85,7 +86,31 @@ function AboveTabBar({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AppShell({ reduceMotion }: { reduceMotion: boolean }) {
+  return (
+    <>
+      <StatusBar style="dark" />
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <AboveTabBar>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: reduceMotion ? 'none' : 'slide_from_right',
+              contentStyle: { backgroundColor: colors.bg },
+            }}
+          >
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="checkout/result" options={{ gestureEnabled: false }} />
+          </Stack>
+        </AboveTabBar>
+        <TabBar />
+      </View>
+    </>
+  );
+}
+
 export default function RootLayout() {
+  const [market, setMarket] = useState<Market | null>(null);
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -114,10 +139,17 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (loaded) {
+    void loadInitialMarket()
+      .then(setMarket)
+      .catch(() => setMarket('na'));
+  }, []);
+
+  const ready = loaded && !!market;
+  useEffect(() => {
+    if (ready) {
       void SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [ready]);
 
   useEffect(() => listenForPushOpens(), []);
 
@@ -145,48 +177,37 @@ export default function RootLayout() {
     };
   }, []);
 
-  if (!loaded) return null;
+  if (!ready) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <PersistQueryClientProvider
-          client={queryClient}
-          persistOptions={{
-            persister,
-            maxAge: CACHE_MAX_AGE,
-            buster: Constants.expoConfig?.version ?? '',
-            dehydrateOptions: {
-              shouldDehydrateQuery: (query) =>
-                query.state.status === 'success' && PERSISTED_QUERIES.has(String(query.queryKey[0])),
-            },
-          }}>
-          <AuthProvider>
-            <BagProvider>
-              <WishlistProvider>
-                <OfflineProvider>
-                  <ToastProvider>
-                    <StatusBar style="dark" />
-                    <View style={{ flex: 1, backgroundColor: colors.bg }}>
-                      <AboveTabBar>
-                        <Stack
-                          screenOptions={{
-                            headerShown: false,
-                            animation: reduceMotion ? 'none' : 'slide_from_right',
-                            contentStyle: { backgroundColor: colors.bg },
-                          }}>
-                          <Stack.Screen name="(tabs)" />
-                          <Stack.Screen name="checkout/result" options={{ gestureEnabled: false }} />
-                        </Stack>
-                      </AboveTabBar>
-                      <TabBar />
-                    </View>
-                  </ToastProvider>
-                </OfflineProvider>
-              </WishlistProvider>
-            </BagProvider>
-          </AuthProvider>
-        </PersistQueryClientProvider>
+        <LocaleProvider initialMarket={market}>
+          <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={{
+              persister,
+              maxAge: CACHE_MAX_AGE,
+              buster: Constants.expoConfig?.version ?? '',
+              dehydrateOptions: {
+                shouldDehydrateQuery: (query) =>
+                  query.state.status === 'success' && PERSISTED_QUERIES.has(String(query.queryKey[0])),
+              },
+            }}
+          >
+            <AuthProvider>
+              <BagProvider>
+                <WishlistProvider>
+                  <OfflineProvider>
+                    <ToastProvider>
+                      <AppShell reduceMotion={reduceMotion} />
+                    </ToastProvider>
+                  </OfflineProvider>
+                </WishlistProvider>
+              </BagProvider>
+            </AuthProvider>
+          </PersistQueryClientProvider>
+        </LocaleProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

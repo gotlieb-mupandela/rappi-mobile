@@ -5,9 +5,10 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { Product } from '@/src/api/types';
 import { HeartButton } from '@/src/components/HeartButton';
 import { PressableScale } from '@/src/components/ui';
+import { useLocale } from '@/src/i18n/LocaleProvider';
 import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
-import { formatMoney } from '@/src/lib/money';
-import { colors, fonts, radius } from '@/src/theme';
+import { makeStyles } from '@/src/lib/theme';
+import { fonts, radius } from '@/src/theme';
 
 type Props = {
   product: Product;
@@ -15,18 +16,25 @@ type Props = {
 
 type Badge = { label: string; tone: 'sold' | 'new' | 'offer' };
 
-function badgeFor(product: Product): Badge | null {
+function badgeFor(product: Product, labels: Record<Badge['tone'], string>): Badge | null {
   const sizes = product.sizes ?? [];
   const sold = sizes.length > 0 ? sizes.every((size) => size.stock <= 0) : product.stockQty <= 0;
-  if (sold) return { label: 'Sold out', tone: 'sold' };
-  if (product.badge === 'new') return { label: 'New', tone: 'new' };
-  if (product.badge === 'offer') return { label: 'Offer', tone: 'offer' };
+  if (sold) return { label: labels.sold, tone: 'sold' };
+  if (product.badge === 'new') return { label: labels.new, tone: 'new' };
+  if (product.badge === 'offer') return { label: labels.offer, tone: 'offer' };
   return null;
 }
 
 export function ProductCard({ product }: Props) {
+  const styles = useStyles();
+  const { formatMoney, t } = useLocale();
   const name = product.displayName || product.name;
-  const badge = badgeFor(product);
+  const badge = badgeFor(product, {
+    sold: t('product.soldOut'),
+    new: t('product.new'),
+    offer: t('product.offer'),
+  });
+  const badgeTextStyle = { sold: styles.badgeTextSold, new: styles.badgeTextAccent, offer: styles.badgeTextInverse };
   const href = { pathname: '/product/[code]' as const, params: { code: product.code } };
 
   return (
@@ -49,7 +57,7 @@ export function ProductCard({ product }: Props) {
           ) : null}
           {badge ? (
             <View style={[styles.badge, styles[badge.tone]]}>
-              <Text style={[styles.badgeText, badge.tone === 'new' ? styles.badgeTextDark : styles.badgeTextLight]}>{badge.label}</Text>
+              <Text style={[styles.badgeText, badgeTextStyle[badge.tone]]}>{badge.label}</Text>
             </View>
           ) : null}
           {product.available === false ? null : <HeartButton code={product.code} id={product.id} name={name} variant="overlay" />}
@@ -65,7 +73,7 @@ export function ProductCard({ product }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors }) => ({
   card: {
     flex: 1,
     backgroundColor: colors.bg,
@@ -76,7 +84,7 @@ const styles = StyleSheet.create({
   },
   well: {
     aspectRatio: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.photo,
     padding: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
@@ -96,15 +104,16 @@ const styles = StyleSheet.create({
   },
   sold: { backgroundColor: colors.muted },
   new: { backgroundColor: colors.accent },
-  offer: { backgroundColor: colors.text },
+  offer: { backgroundColor: colors.inverse },
   badgeText: {
     fontFamily: fonts.displayBold,
     fontSize: 10,
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  badgeTextDark: { color: colors.onAccent },
-  badgeTextLight: { color: colors.onDark },
+  badgeTextAccent: { color: colors.onAccent },
+  badgeTextSold: { color: colors.bg },
+  badgeTextInverse: { color: colors.onInverse },
   body: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 14, gap: 6 },
   name: {
     fontFamily: fonts.bodySemi,
@@ -119,4 +128,4 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontVariant: ['tabular-nums'],
   },
-});
+}));

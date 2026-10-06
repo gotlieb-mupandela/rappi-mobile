@@ -1,5 +1,4 @@
 import type { Product, ProductSize, StockResponse } from '@/src/api/types';
-import { colors } from '@/src/theme';
 
 export function productSizes(product: Product, stock?: StockResponse): ProductSize[] {
   const live = stock?.stock?.[product.code]?.sizes;
@@ -27,10 +26,10 @@ export function isSoldOut(sizes: ProductSize[]): boolean {
   return sizes.length === 0 || sizes.every((item) => item.stock <= 0);
 }
 
-export function stockLine(count: number): { text: string; color: string } {
-  if (count <= 0) return { text: 'Sold out', color: colors.danger };
-  if (count <= 5) return { text: `Only ${count} left`, color: colors.warn };
-  return { text: `${count} in stock`, color: colors.muted };
+export function stockLine(count: number): { text: string; tone: 'danger' | 'warn' | 'muted' } {
+  if (count <= 0) return { text: 'Sold out', tone: 'danger' };
+  if (count <= 5) return { text: `Only ${count} left`, tone: 'warn' };
+  return { text: `${count} in stock`, tone: 'muted' };
 }
 
 export function isPack(product: Product): boolean {

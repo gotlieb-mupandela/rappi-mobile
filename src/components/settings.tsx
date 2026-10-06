@@ -1,16 +1,19 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
-import { Modal, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useLocale } from '@/src/i18n/LocaleProvider';
 import { tapHaptic } from '@/src/lib/haptics';
 import { initials } from '@/src/lib/profile';
-import { colors, fonts, radius, sectionLabel, space } from '@/src/theme';
+import { makeStyles, useTheme } from '@/src/lib/theme';
+import { fonts, radius, space } from '@/src/theme';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 export function SettingsGroup({ title, footer, children }: { title?: string; footer?: string; children: ReactNode }) {
+  const styles = useStyles();
   const rows = Children.toArray(children).filter(isValidElement);
   return (
     <View style={styles.group}>
@@ -29,6 +32,8 @@ export function SettingsGroup({ title, footer, children }: { title?: string; foo
 }
 
 function RowIcon({ icon, danger }: { icon: IconName; danger?: boolean }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View style={[styles.icon, danger && styles.iconDanger]}>
       <Ionicons name={icon} size={18} color={danger ? colors.danger : colors.text} />
@@ -55,6 +60,8 @@ export function SettingsRow({
   disabled?: boolean;
   onPress?: () => void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <Pressable
       accessibilityRole={external ? 'link' : 'button'}
@@ -99,6 +106,8 @@ export function SettingsSwitchRow({
   disabled?: boolean;
   onChange: (next: boolean) => void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <Pressable
       accessibilityRole="switch"
@@ -117,9 +126,9 @@ export function SettingsSwitchRow({
         value={value}
         disabled={disabled}
         onValueChange={onChange}
-        trackColor={{ false: '#d4d4d8', true: colors.accent }}
+        trackColor={{ false: colors.handle, true: colors.accent }}
         thumbColor={colors.bg}
-        ios_backgroundColor="#d4d4d8"
+        ios_backgroundColor={colors.handle}
         importantForAccessibility="no-hide-descendants"
       />
     </Pressable>
@@ -127,6 +136,7 @@ export function SettingsSwitchRow({
 }
 
 export function Avatar({ uri, name, email, size = 72 }: { uri?: string; name: string; email?: string | null; size?: number }) {
+  const styles = useStyles();
   const box = { width: size, height: size, borderRadius: size / 2 };
   return (
     <View style={[styles.avatar, box]}>
@@ -152,39 +162,43 @@ export function ActionSheet({
   options: SheetOption[];
   onClose: () => void;
 }) {
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
+  const { t } = useLocale();
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
-      <Pressable accessibilityLabel="Close" style={styles.scrim} onPress={onClose} />
+      <Pressable accessibilityLabel={t('common.close')} style={styles.scrim} onPress={onClose} />
       <View style={[styles.sheet, { paddingBottom: insets.bottom + 12 }]}>
         <View style={styles.handle} />
         {title ? <Text style={styles.sheetTitle}>{title}</Text> : null}
-        {options.map((option) => (
-          <Pressable
-            key={option.label}
-            accessibilityRole="button"
-            onPress={() => {
-              tapHaptic();
-              onClose();
-              option.onPress();
-            }}
-            style={({ pressed }) => [styles.sheetRow, pressed && styles.rowPressed]}>
-            <RowIcon icon={option.icon} danger={option.danger} />
-            <Text style={[styles.label, option.danger && styles.labelDanger]}>{option.label}</Text>
-          </Pressable>
-        ))}
+        <ScrollView style={styles.sheetOptions} bounces={false}>
+          {options.map((option) => (
+            <Pressable
+              key={option.label}
+              accessibilityRole="button"
+              onPress={() => {
+                tapHaptic();
+                onClose();
+                option.onPress();
+              }}
+              style={({ pressed }) => [styles.sheetRow, pressed && styles.rowPressed]}>
+              <RowIcon icon={option.icon} danger={option.danger} />
+              <Text style={[styles.label, option.danger && styles.labelDanger]}>{option.label}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
         <Pressable
           accessibilityRole="button"
           onPress={onClose}
           style={({ pressed }) => [styles.sheetCancel, pressed && styles.rowPressed]}>
-          <Text style={styles.sheetCancelLabel}>Cancel</Text>
+          <Text style={styles.sheetCancelLabel}>{t('common.cancel')}</Text>
         </Pressable>
       </View>
     </Modal>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, sectionLabel }) => ({
   group: { gap: 8 },
   groupTitle: { ...sectionLabel, paddingHorizontal: 4 },
   groupFooter: { paddingHorizontal: 4, fontFamily: fonts.body, fontSize: 12, lineHeight: 17, color: colors.muted },
@@ -200,14 +214,14 @@ const styles = StyleSheet.create({
   rowPressed: { backgroundColor: colors.surface },
   disabled: { opacity: 0.45 },
   icon: { width: 36, height: 36, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  iconDanger: { backgroundColor: 'rgba(209,36,58,0.08)' },
+  iconDanger: { backgroundColor: colors.dangerMuted },
   rowText: { flex: 1, gap: 2 },
   label: { fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text },
   labelDanger: { color: colors.danger },
   detail: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.muted },
-  value: { fontFamily: fonts.body, fontSize: 14, color: colors.muted },
-  avatar: { backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  avatarInitials: { fontFamily: fonts.displayBold, letterSpacing: 1, color: colors.onDark },
+  value: { flexShrink: 1, maxWidth: '45%', textAlign: 'right', fontFamily: fonts.body, fontSize: 14, color: colors.muted },
+  avatar: { backgroundColor: colors.inverse, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatarInitials: { fontFamily: fonts.displayBold, letterSpacing: 1, color: colors.onInverse },
   scrim: { ...StyleSheet.absoluteFill, backgroundColor: colors.scrim },
   sheet: {
     position: 'absolute',
@@ -220,8 +234,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.screen - 6,
     paddingTop: 10,
   },
-  handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: '#d4d4d8', marginBottom: 12 },
+  handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.handle, marginBottom: 12 },
   sheetTitle: { ...sectionLabel, paddingHorizontal: 8, paddingBottom: 6 },
+  sheetOptions: { maxHeight: 420 },
   sheetRow: { minHeight: 56, paddingHorizontal: 8, borderRadius: radius.card, flexDirection: 'row', alignItems: 'center', gap: 14 },
   sheetCancel: {
     marginTop: 8,
@@ -232,4 +247,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sheetCancelLabel: { fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text },
-});
+}));

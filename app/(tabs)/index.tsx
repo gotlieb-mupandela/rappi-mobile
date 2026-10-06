@@ -4,24 +4,37 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { WishlistNavButton } from '@/src/components/HeartButton';
 import { Screen } from '@/src/components/ui';
-import { HOME_TILES } from '@/src/lib/categories';
+import { useLocale } from '@/src/i18n/LocaleProvider';
+import { categoryName, HOME_TILES } from '@/src/lib/categories';
 import { tapHaptic } from '@/src/lib/haptics';
-import { colors, fonts, space } from '@/src/theme';
+import { makeStyles } from '@/src/lib/theme';
+import { fonts, space } from '@/src/theme';
 
 const SCRIM_STEPS = [55, 48, 42, 36, 31, 26, 22, 18, 14, 10] as const;
 
 export default function HomeScreen() {
+  const { market, t } = useLocale();
+  const styles = useStyles();
+  const language = market === 'eu' ? 'fr' : 'en';
+  const tileLabel = (key: string, fallback: string) => {
+    if (key === 'teamwear') return t('home.teamwear');
+    if (key === 'running') return t('home.running');
+    if (key === 'footwear') return t('home.footwear');
+    if (key === 'kids') return t('common.kids');
+    return categoryName(key, language) || fallback;
+  };
   return (
     <Screen wordmark right={<WishlistNavButton />}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.grid}>
           {HOME_TILES.map((tile) => {
             const light = tile.tone === 'light';
+            const label = tileLabel(tile.key, tile.label);
             return (
               <Pressable
                 key={tile.key}
                 accessibilityRole="button"
-                accessibilityLabel={`Shop ${tile.label}`}
+                accessibilityLabel={t('home.shop', { name: label })}
                 onPress={() => {
                   tapHaptic();
                   router.push(tile.href as never);
@@ -40,7 +53,7 @@ export default function HomeScreen() {
                     ))}
                 <View pointerEvents="none" style={light ? styles.labelCentre : styles.labelBottom}>
                   <Text style={[styles.label, light && styles.labelDark]} numberOfLines={1}>
-                    {tile.label}
+                    {label}
                   </Text>
                 </View>
               </Pressable>
@@ -52,7 +65,7 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors }) => ({
   content: { padding: space.screen, paddingTop: 16, paddingBottom: 32 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   tile: {
@@ -61,7 +74,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1c1e',
   },
   tileLight: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#f5f5f5',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
@@ -82,5 +95,5 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
-  labelDark: { color: colors.text, textShadowColor: 'transparent', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 0 },
-});
+  labelDark: { color: '#121212', textShadowColor: 'transparent', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 0 },
+}));

@@ -13,16 +13,21 @@ import { HeartButton } from '@/src/components/HeartButton';
 import { QtyStepper } from '@/src/components/QtyStepper';
 import { SizePicker } from '@/src/components/SizePicker';
 import { EmptyState, ErrorState, PrimaryButton, Screen } from '@/src/components/ui';
+import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useBag } from '@/src/lib/bag';
 import { categoryName } from '@/src/lib/categories';
 import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
-import { formatMoney } from '@/src/lib/money';
 import { defaultSize, isAvailable, isOneSize, isPack, isSoldOut, productSizes, stockLine } from '@/src/lib/sizes';
 import { useToast } from '@/src/lib/toast';
+import { makeStyles, useTheme } from '@/src/lib/theme';
 import { useWishlist, useWishlistActions } from '@/src/lib/wishlist';
-import { colors, fonts, space } from '@/src/theme';
+import { fonts, space } from '@/src/theme';
 
 export default function ProductScreen() {
+  const { formatMoney, market, t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useStyles();
+  const language = market === 'eu' ? 'fr' : 'en';
   const { code: raw } = useLocalSearchParams<{ code: string }>();
   const code = useMemo(() => {
     try {
@@ -115,7 +120,7 @@ export default function ProductScreen() {
 
   return (
     <Screen
-      title={product.data ? categoryName(product.data.category) : 'Product'}
+      title={product.data ? categoryName(product.data.category, language) : t('product.product')}
       back
       right={gone && !saved ? null : <HeartButton code={code} id={product.data?.id} name={name} />}>
       {gone ? (
@@ -169,7 +174,7 @@ export default function ProductScreen() {
                 </View>
               ) : null}
             </View>
-            <Text style={styles.eyebrow}>{categoryName(product.data.category)}</Text>
+            <Text style={styles.eyebrow}>{categoryName(product.data.category, language)}</Text>
             <Text style={styles.title}>
               {product.data.displayName || product.data.name}
               {pack ? ' · Pack' : ''}
@@ -183,13 +188,13 @@ export default function ProductScreen() {
                 <SizePicker sizes={sizes} value={size} onChange={setSize} />
               </View>
             ) : null}
-            <Text style={[styles.stock, { color: line.color }]}>{line.text}</Text>
+            <Text style={[styles.stock, { color: colors[line.tone] }]}>{line.text}</Text>
             {product.data.description ? <Text style={styles.desc}>{product.data.description}</Text> : null}
           </ScrollView>
           <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
             {!soldOut ? <QtyStepper value={qty} max={maxQty} onChange={setQty} /> : null}
             <View style={styles.grow}>
-              <PrimaryButton label={soldOut ? 'Sold out' : 'Add to bag'} disabled={!canAdd} onPress={add} />
+              <PrimaryButton label={soldOut ? t('product.soldOut') : t('product.addToBag')} disabled={!canAdd} onPress={add} />
             </View>
           </View>
         </>
@@ -198,7 +203,7 @@ export default function ProductScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors }) => ({
   body: { paddingBottom: 24 },
   gallery: { backgroundColor: colors.imageWell },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingVertical: 10 },
@@ -254,4 +259,4 @@ const styles = StyleSheet.create({
   skelImage: { backgroundColor: colors.surface },
   skelLine: { height: 18, marginTop: 16, marginHorizontal: space.screen, borderRadius: 6, backgroundColor: colors.surface },
   skelShort: { width: '40%' },
-});
+}));

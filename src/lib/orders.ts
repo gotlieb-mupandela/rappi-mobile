@@ -29,8 +29,14 @@ export type Order = {
   order_items?: OrderItem[];
 };
 
-export function orderStatusLabel(status: string): string | null {
+export function orderStatusLabel(status: string, language: 'en' | 'fr' = 'en'): string | null {
   if (status === 'stock_short') return null;
+  if (language === 'fr') {
+    if (status === 'reserved') return 'Reçue';
+    if (status === 'preparing') return 'En préparation';
+    if (status === 'shipped') return 'Expédiée';
+    if (status === 'cancelled') return 'Annulée';
+  }
   if (status === 'reserved') return 'Received';
   if (status === 'preparing') return 'Preparing';
   if (status === 'shipped') return 'Shipped';
@@ -42,13 +48,18 @@ export function shortOrderId(id: string | number): string {
   return String(id).replace(/-/g, '').slice(0, 8).toUpperCase();
 }
 
-export function formatOrderDate(iso: string): string {
+export function formatOrderDate(iso: string, locale = 'en-NA'): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString('en-NA', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
 }
 
-export function shippingLabel(method: string): string {
+export function shippingLabel(method: string, language: 'en' | 'fr' = 'en'): string {
+  if (language === 'fr') {
+    if (method === 'express') return 'Express (2–3 jours)';
+    if (method === 'pickup') return 'Retrait au hub';
+    if (method === 'standard') return 'Standard (5–8 jours)';
+  }
   if (method === 'express') return 'Express (2–3 days)';
   if (method === 'pickup') return 'Hub pickup';
   if (method === 'standard') return 'Standard (5–8 days)';

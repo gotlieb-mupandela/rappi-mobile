@@ -11,10 +11,13 @@ import { successHaptic } from '@/src/lib/haptics';
 import { fetchProfile } from '@/src/lib/orders';
 import { profileName, profilePhoto, saveFullName } from '@/src/lib/profile';
 import { useToast } from '@/src/lib/toast';
-import { colors, fonts, radius } from '@/src/theme';
+import { makeStyles, useTheme } from '@/src/lib/theme';
+import { fonts, radius } from '@/src/theme';
 
 export default function ProfileScreen() {
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const styles = useStyles();
   const queryClient = useQueryClient();
   const toast = useToast();
   const photo = usePhotoPicker();
@@ -109,7 +112,7 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors }) => ({
   pressed: { opacity: 0.85 },
   photo: { alignItems: 'center', gap: 12, paddingVertical: 8 },
   photoBusy: {
@@ -125,4 +128,4 @@ const styles = StyleSheet.create({
   readOnlyValue: { fontFamily: fonts.body, fontSize: 16, color: colors.text },
   readOnlyHint: { fontFamily: fonts.body, fontSize: 12, color: colors.muted },
   error: { fontFamily: fonts.body, fontSize: 13, color: colors.danger },
-});
+}));

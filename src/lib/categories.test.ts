@@ -4,8 +4,9 @@ import test from 'node:test';
 import { categoryName, isHiddenCategory } from './categories.ts';
 
 test('uses the Namibia storefront category names', () => {
-  assert.equal(categoryName('running-fitness'), 'Running & Fitness');
-  assert.equal(categoryName('balls-bags'), 'Balls & Bags');
+  assert.equal(categoryName('running-fitness'), 'Running');
+  assert.equal(categoryName('balls-bags'), 'Balls & bags');
+  assert.equal(categoryName('shoes', 'fr'), 'Chaussures');
   assert.equal(categoryName('new-category'), 'New Category');
 });
 

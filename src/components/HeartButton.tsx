@@ -6,7 +6,8 @@ import { Animated, Pressable, StyleSheet, Text, View, type GestureResponderEvent
 import { tapHaptic } from '@/src/lib/haptics';
 import { useReducedMotion } from '@/src/lib/motion';
 import { useWishlist, useWishlistActions } from '@/src/lib/wishlist';
-import { colors, fonts, shadow } from '@/src/theme';
+import { makeStyles, useTheme } from '@/src/lib/theme';
+import { fonts } from '@/src/theme';
 
 function usePop() {
   const reducedMotion = useReducedMotion();
@@ -29,6 +30,8 @@ type HeartButtonProps = {
 };
 
 export function HeartButton({ code, id, name, variant = 'bar' }: HeartButtonProps) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const wishlist = useWishlist();
   const { toggle } = useWishlistActions();
   const { scale, pop } = usePop();
@@ -55,7 +58,7 @@ export function HeartButton({ code, id, name, variant = 'bar' }: HeartButtonProp
         <Ionicons
           name={saved ? 'heart' : 'heart-outline'}
           size={overlay ? 19 : 24}
-          color={saved ? colors.accent : colors.text}
+          color={saved ? colors.accent : overlay ? OVERLAY_ICON : colors.text}
         />
       </Animated.View>
     </Pressable>
@@ -64,6 +67,8 @@ export function HeartButton({ code, id, name, variant = 'bar' }: HeartButtonProp
 
 /** Top-bar entry to the wishlist with a live count. */
 export function WishlistNavButton() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const wishlist = useWishlist();
   const { scale, pop } = usePop();
   const previous = useRef<number | null>(null);
@@ -96,7 +101,10 @@ export function WishlistNavButton() {
   );
 }
 
-const styles = StyleSheet.create({
+/** The overlay button stays white over photos in both schemes, so its icon stays dark. */
+const OVERLAY_ICON = '#121212';
+
+const useStyles = makeStyles(({ colors, shadow }) => ({
   bar: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   overlay: {
     position: 'absolute',
@@ -121,11 +129,11 @@ const styles = StyleSheet.create({
     height: 18,
     paddingHorizontal: 5,
     borderRadius: 9,
-    backgroundColor: colors.text,
+    backgroundColor: colors.inverse,
     borderWidth: 2,
     borderColor: colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeText: { fontFamily: fonts.bodyBold, fontSize: 10, lineHeight: 12, color: colors.onDark, fontVariant: ['tabular-nums'] },
-});
+  badgeText: { fontFamily: fonts.bodyBold, fontSize: 10, lineHeight: 12, color: colors.onInverse, fontVariant: ['tabular-nums'] },
+}));

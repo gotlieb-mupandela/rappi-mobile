@@ -5,9 +5,12 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 
 import { authErrorMessage, finishAuth } from '@/src/lib/navigation';
 import { signInWithGoogle } from '@/src/lib/oauth';
-import { colors, fonts, radius } from '@/src/theme';
+import { makeStyles, useTheme } from '@/src/lib/theme';
+import { fonts, radius } from '@/src/theme';
 
 export function GoogleButton({ returnTo }: { returnTo?: string }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +54,7 @@ export function GoogleButton({ returnTo }: { returnTo?: string }) {
 }
 
 export function OrDivider() {
+  const styles = useStyles();
   return (
     <View style={styles.divider}>
       <View style={styles.line} />
@@ -60,7 +64,7 @@ export function OrDivider() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors }) => ({
   wrap: { gap: 8 },
   button: {
     height: 52,
@@ -80,4 +84,4 @@ const styles = StyleSheet.create({
   divider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 4 },
   line: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
   or: { fontFamily: fonts.body, fontSize: 13, color: colors.muted },
-});
+}));

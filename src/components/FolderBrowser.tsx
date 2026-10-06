@@ -6,6 +6,7 @@ import { fetchFolderCatalog, fetchSiteFolders, folderProductQuery, isSubFolder }
 import type { Folder } from '@/src/api/types';
 import { FolderProducts } from '@/src/components/FolderProducts';
 import { EmptyState, ErrorState, FolderCard, PathTrail, Screen, SkeletonGrid, TypeCard } from '@/src/components/ui';
+import { useLocale } from '@/src/i18n/LocaleProvider';
 import { categoryName } from '@/src/lib/categories';
 import { space } from '@/src/theme';
 
@@ -68,9 +69,11 @@ type Props = {
 };
 
 export function FolderBrowser({ slug, trail, leaf, audience, crumbs }: Props) {
+  const { folderName, market } = useLocale();
+  const language = market === 'eu' ? 'fr' : 'en';
   const current = trail[trail.length - 1];
-  const title = current?.name ?? categoryName(slug);
-  const rootCrumbs = crumbs ?? [categoryName(slug)];
+  const title = current ? folderName(current.key, current.name) : categoryName(slug, language);
+  const rootCrumbs = crumbs ?? [categoryName(slug, language)];
 
   const folders = useQuery({
     queryKey: ['site-folders', slug, current?.key ?? null, audience ?? null],
@@ -92,7 +95,7 @@ export function FolderBrowser({ slug, trail, leaf, audience, crumbs }: Props) {
   });
   const visibleFolders = folders.data?.filter((_, index) => !audience || audienceCounts[index]?.data?.total !== 0);
 
-  const labels = [...rootCrumbs, ...trail.map((step) => step.name)];
+  const labels = [...rootCrumbs, ...trail.map((step) => folderName(step.key, step.name))];
   const parts = labels.map((label, index) => {
     const pops = labels.length - 1 - index;
     return {
@@ -105,7 +108,7 @@ export function FolderBrowser({ slug, trail, leaf, audience, crumbs }: Props) {
     openCatalogFolder({
       cat: folder.cat ?? slug,
       folder: folder.key,
-      name: folder.name,
+      name: folderName(folder.key, folder.name),
       audience,
       crumbs,
       trail,
@@ -147,7 +150,7 @@ export function FolderBrowser({ slug, trail, leaf, audience, crumbs }: Props) {
             <View style={styles.cell}>
               {item ? (
                 <CoverFolderTile
-                  name={item.name}
+                  name={folderName(item.key, item.name)}
                   imageUrl={item.imageUrl}
                   coverQuery={coverQuery(item)}
                   onPress={() => openFolder(item)}

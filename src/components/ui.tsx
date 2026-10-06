@@ -23,7 +23,8 @@ import { pressHaptic, tapHaptic } from '@/src/lib/haptics';
 import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
 import { OfflineBanner } from '@/src/lib/offline';
 import { useReducedMotion } from '@/src/lib/motion';
-import { buttonLabel, colors, fonts, radius, space } from '@/src/theme';
+import { makeStyles, useTheme } from '@/src/lib/theme';
+import { buttonLabel, fonts, radius, space } from '@/src/theme';
 
 type TopBarProps = {
   title?: string;
@@ -33,6 +34,8 @@ type TopBarProps = {
 };
 
 export function TopBar({ title, wordmark, back, right }: TopBarProps) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.topBar, { paddingTop: insets.top }]}>
@@ -78,6 +81,7 @@ export function Screen({
   children,
   banner = true,
 }: TopBarProps & { children: React.ReactNode; banner?: boolean }) {
+  const styles = useStyles();
   return (
     <View style={styles.screen}>
       <TopBar title={title} wordmark={wordmark} back={back} right={right} />
@@ -88,6 +92,7 @@ export function Screen({
 }
 
 export function PathTrail({ parts }: { parts: { label: string; onPress?: () => void }[] }) {
+  const styles = useStyles();
   return (
     <View style={styles.path}>
       {parts.map((part, index) => (
@@ -109,6 +114,7 @@ type PressableScaleProps = Omit<PressableProps, 'style'> & {
 
 /** Pressable with a subtle spring scale; honours reduced motion. */
 export function PressableScale({ style, scaleTo = 0.97, onPressIn, onPressOut, disabled, children, ...rest }: PressableScaleProps) {
+  const styles = useStyles();
   const reducedMotion = useReducedMotion();
   const scale = useRef(new Animated.Value(1)).current;
   const animate = (to: number) => {
@@ -145,6 +151,7 @@ export function PrimaryButton({
   onPress?: () => void;
   disabled?: boolean;
 }) {
+  const styles = useStyles();
   return (
     <PressableScale
       accessibilityRole="button"
@@ -161,6 +168,7 @@ export function PrimaryButton({
 }
 
 export function SecondaryButton({ label, onPress, disabled }: { label: string; onPress?: () => void; disabled?: boolean }) {
+  const styles = useStyles();
   return (
     <PressableScale
       accessibilityRole="button"
@@ -185,6 +193,7 @@ export function TextButton({
   onPress?: () => void;
   muted?: boolean;
 }) {
+  const styles = useStyles();
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.textButton, pressed && styles.pressed]}>
       <Text style={[styles.textButtonLabel, muted && styles.textButtonMuted]}>{label}</Text>
@@ -193,6 +202,7 @@ export function TextButton({
 }
 
 export function FormScroll({ children, gap = 12 }: { children: React.ReactNode; gap?: number }) {
+  const styles = useStyles();
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.form, { gap }]}>
@@ -203,6 +213,8 @@ export function FormScroll({ children, gap = 12 }: { children: React.ReactNode; 
 }
 
 export function Field(props: TextInputProps) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <TextInput
       placeholderTextColor={colors.muted}
@@ -219,6 +231,7 @@ export function LabeledField({
   optional,
   ...props
 }: TextInputProps & { label: string; optional?: boolean }) {
+  const styles = useStyles();
   return (
     <View style={styles.fieldGroup}>
       <View style={styles.fieldLabelRow}>
@@ -239,6 +252,7 @@ export function Chip({
   selected?: boolean;
   onPress?: () => void;
 }) {
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityRole="button"
@@ -270,6 +284,7 @@ export function FolderCard({
   imageUrl?: string;
   onPress: () => void;
 }) {
+  const styles = useStyles();
   return (
     <PressableScale
       accessibilityRole="button"
@@ -293,6 +308,8 @@ export function FolderCard({
 
 /** Rounded category card for hub pages: square photo with the name underneath. */
 export function TypeCard({ name, imageUrl, onPress }: { name: string; imageUrl?: string; onPress: () => void }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <PressableScale
       accessibilityRole="button"
@@ -327,6 +344,8 @@ export function ListCard({
   disabled?: boolean;
   onPress?: () => void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <PressableScale
       accessibilityRole="button"
@@ -360,6 +379,8 @@ export function EmptyState({
   onPress?: () => void;
   icon?: IconName;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View style={styles.empty}>
       <View style={styles.emptyIcon}>
@@ -372,6 +393,8 @@ export function EmptyState({
 }
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View style={styles.empty}>
       <View style={styles.emptyIcon}>
@@ -385,6 +408,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
 }
 
 export function SkeletonGrid({ count = 6 }: { count?: number }) {
+  const styles = useStyles();
   return (
     <View style={styles.skelGrid}>
       {Array.from({ length: count }).map((_, index) => (
@@ -395,6 +419,7 @@ export function SkeletonGrid({ count = 6 }: { count?: number }) {
 }
 
 export function SkeletonList({ count = 6 }: { count?: number }) {
+  const styles = useStyles();
   return (
     <View style={styles.skelList}>
       {Array.from({ length: count }).map((_, index) => (
@@ -405,6 +430,7 @@ export function SkeletonList({ count = 6 }: { count?: number }) {
 }
 
 export function SkeletonBlock({ style }: { style?: StyleProp<ViewStyle> }) {
+  const styles = useStyles();
   const reducedMotion = useReducedMotion();
   const opacity = useRef(new Animated.Value(0.72)).current;
 
@@ -426,7 +452,7 @@ export function SkeletonBlock({ style }: { style?: StyleProp<ViewStyle> }) {
   return <Animated.View accessibilityElementsHidden style={[styles.skeleton, style, { opacity }]} />;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors }) => ({
   screen: { flex: 1, backgroundColor: colors.bg },
   topBar: {
     backgroundColor: colors.bg,
@@ -518,9 +544,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chipSelected: { backgroundColor: colors.text },
+  chipSelected: { backgroundColor: colors.inverse },
   chipLabel: { fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text },
-  chipLabelSelected: { fontFamily: fonts.bodySemi, color: colors.onDark },
+  chipLabelSelected: { fontFamily: fonts.bodySemi, color: colors.onInverse },
   folder: { backgroundColor: colors.bg },
   folderImage: { aspectRatio: 0.75, backgroundColor: colors.imageWell, overflow: 'hidden' },
   fill: { width: '100%', height: '100%' },
@@ -580,5 +606,5 @@ const styles = StyleSheet.create({
   },
   skelList: { padding: space.screen, gap: 10 },
   skelRow: { height: 68, borderRadius: radius.card },
-  skeleton: { backgroundColor: '#eeeeee' },
-});
+  skeleton: { backgroundColor: colors.skeleton },
+}));

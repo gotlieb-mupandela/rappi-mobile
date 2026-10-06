@@ -1,10 +1,10 @@
 export const CATEGORY_NAMES: Record<string, string> = {
   sportswear: 'Sportswear',
-  shoes: 'Footwear',
+  shoes: 'Shoes',
   football: 'Football',
   basketball: 'Basketball',
-  'running-fitness': 'Running & Fitness',
-  'balls-bags': 'Balls & Bags',
+  'running-fitness': 'Running',
+  'balls-bags': 'Balls & bags',
   swimming: 'Swimming',
   rugby: 'Rugby',
   cricket: 'Cricket',
@@ -15,7 +15,27 @@ export const CATEGORY_NAMES: Record<string, string> = {
   hiking: 'Hiking',
   resort: 'Resort',
   lifestyle: 'Lifestyle',
-  'teampro-2026': 'Teampro 2026',
+  'teampro-2026': 'Team Pro',
+};
+
+export const CATEGORY_NAMES_FR: Record<string, string> = {
+  sportswear: 'Sportswear',
+  shoes: 'Chaussures',
+  football: 'Football',
+  basketball: 'Basketball',
+  'running-fitness': 'Course',
+  'balls-bags': 'Ballons & Sacs',
+  swimming: 'Natation',
+  rugby: 'Rugby',
+  cricket: 'Cricket',
+  boxing: 'Boxe',
+  hockey: 'Hockey',
+  brama: 'Brama',
+  padel: 'Padel',
+  hiking: 'Randonnée',
+  resort: 'Resort',
+  lifestyle: 'Lifestyle',
+  'teampro-2026': 'Teampro',
 };
 
 export const PRIMARY_CATEGORY_ORDER = [
@@ -55,8 +75,9 @@ export function hubImage(slug: string): string | undefined {
   return HOME_TILES.find((tile) => tile.href === `/category/${slug}`)?.image;
 }
 
-export function categoryName(slug: string): string {
-  if (CATEGORY_NAMES[slug]) return CATEGORY_NAMES[slug];
+export function categoryName(slug: string, language: 'en' | 'fr' = 'en'): string {
+  const names = language === 'fr' ? CATEGORY_NAMES_FR : CATEGORY_NAMES;
+  if (names[slug]) return names[slug];
   return slug
     .split('-')
     .filter(Boolean)

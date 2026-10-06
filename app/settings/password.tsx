@@ -1,18 +1,20 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import { FormScroll, LabeledField, PrimaryButton, Screen } from '@/src/components/ui';
 import { successHaptic } from '@/src/lib/haptics';
 import { authErrorMessage } from '@/src/lib/navigation';
 import { supabase } from '@/src/lib/supabase';
 import { useToast } from '@/src/lib/toast';
-import { colors, fonts } from '@/src/theme';
+import { makeStyles } from '@/src/lib/theme';
+import { fonts } from '@/src/theme';
 
 const MIN_LENGTH = 6;
 
 export default function ChangePasswordScreen() {
   const toast = useToast();
+  const styles = useStyles();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +78,7 @@ export default function ChangePasswordScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors }) => ({
   hint: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.muted },
   error: { fontFamily: fonts.body, fontSize: 13, color: colors.danger },
-});
+}));

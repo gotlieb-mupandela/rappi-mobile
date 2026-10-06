@@ -12,17 +12,18 @@ import { fetchStock } from '@/src/api/stock';
 import type { Product, StockResponse } from '@/src/api/types';
 import { SizePicker } from '@/src/components/SizePicker';
 import { EmptyState, ErrorState, PressableScale, Screen, SecondaryButton, SkeletonBlock, TextButton } from '@/src/components/ui';
+import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useAuth } from '@/src/lib/auth';
 import { useBag } from '@/src/lib/bag';
 import { tapHaptic } from '@/src/lib/haptics';
 import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
-import { formatMoney } from '@/src/lib/money';
 import { useReducedMotion } from '@/src/lib/motion';
 import { openLogin } from '@/src/lib/navigation';
 import { defaultSize, isAvailable, isOneSize, isSoldOut, productSizes, stockLine } from '@/src/lib/sizes';
 import { useToast } from '@/src/lib/toast';
+import { makeStyles, useTheme } from '@/src/lib/theme';
 import { useWishlist, useWishlistActions, type WishlistEntry } from '@/src/lib/wishlist';
-import { colors, fonts, radius, sectionLabel, shadow, space } from '@/src/theme';
+import { fonts, radius, space } from '@/src/theme';
 
 type Row =
   | { kind: 'item'; entry: WishlistEntry; product: Product }
@@ -32,6 +33,7 @@ type Row =
 type GoneItem = { entry: WishlistEntry; product?: Product };
 
 export default function WishlistScreen() {
+  const styles = useStyles();
   const wishlist = useWishlist();
   const { user } = useAuth();
   const { removeWithUndo } = useWishlistActions();
@@ -167,6 +169,8 @@ export default function WishlistScreen() {
 }
 
 function ListHeader({ count, synced }: { count: number; synced: boolean }) {
+  const { colors, sectionLabel } = useTheme();
+  const styles = useStyles();
   return (
     <View style={styles.header}>
       <View style={styles.headerRow}>
@@ -215,6 +219,9 @@ function WishlistItem({
   stock?: StockResponse;
   onRemove: () => void;
 }) {
+  const { formatMoney } = useLocale();
+  const { colors } = useTheme();
+  const styles = useStyles();
   const bag = useBag();
   const toast = useToast();
   const { setSize: rememberSize } = useWishlist();
@@ -271,7 +278,7 @@ function WishlistItem({
             {name}
           </Text>
           <Text style={styles.price}>{formatMoney(product.price)}</Text>
-          {soldOut || lowStock ? <Text style={[styles.stock, { color: line.color }]}>{line.text}</Text> : null}
+          {soldOut || lowStock ? <Text style={[styles.stock, { color: colors[line.tone] }]}>{line.text}</Text> : null}
         </Pressable>
         <Pressable
           accessibilityRole="button"
@@ -299,6 +306,8 @@ function WishlistItem({
 }
 
 function GoneSection({ items, onRemove, onClear }: { items: GoneItem[]; onRemove: (code: string) => void; onClear: () => void }) {
+  const { colors, sectionLabel } = useTheme();
+  const styles = useStyles();
   return (
     <View style={styles.gone}>
       <View style={styles.headerRow}>
@@ -337,7 +346,7 @@ function GoneSection({ items, onRemove, onClear }: { items: GoneItem[]; onRemove
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, shadow }) => ({
   flex: { flex: 1 },
   list: { padding: space.screen, paddingTop: 12, gap: space.gap, paddingBottom: 40 },
   skeleton: { height: 168, borderRadius: radius.card },
@@ -405,7 +414,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 8,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.photo,
     padding: 4,
     overflow: 'hidden',
     alignItems: 'center',
@@ -413,4 +422,4 @@ const styles = StyleSheet.create({
   },
   goneName: { fontFamily: fonts.bodySemi, fontSize: 14, color: colors.muted },
   goneNote: { fontFamily: fonts.body, fontSize: 12, color: colors.muted },
-});
+}));

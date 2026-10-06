@@ -107,7 +107,7 @@ export type CreatePaymentBody = {
   phone: string;
   address: string;
   city: string;
-  country: 'Namibia';
+  country: string;
   notes: string;
   shippingMethod: ShippingMethod;
   lines: CheckoutLine[];

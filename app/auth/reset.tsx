@@ -1,11 +1,12 @@
 import * as Linking from 'expo-linking';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import { BrandMark, Field, FormScroll, PrimaryButton, Screen } from '@/src/components/ui';
 import { authErrorMessage, finishAuth } from '@/src/lib/navigation';
 import { supabase } from '@/src/lib/supabase';
-import { colors, fonts } from '@/src/theme';
+import { makeStyles } from '@/src/lib/theme';
+import { fonts } from '@/src/theme';
 
 function linkParams(url: string): URLSearchParams {
   const hash = url.split('#')[1] ?? '';
@@ -15,6 +16,7 @@ function linkParams(url: string): URLSearchParams {
 
 export default function ResetScreen() {
   const url = Linking.useURL();
+  const styles = useStyles();
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -93,7 +95,7 @@ export default function ResetScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors }) => ({
   hint: { fontFamily: fonts.body, color: colors.muted },
   error: { fontFamily: fonts.body, color: colors.danger },
-});
+}));

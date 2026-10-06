@@ -1,15 +1,19 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import { GoogleButton, OrDivider } from '@/src/components/GoogleButton';
 import { BrandMark, Field, FormScroll, PrimaryButton, Screen } from '@/src/components/ui';
+import { useLocale } from '@/src/i18n/LocaleProvider';
 import { authErrorMessage, finishAuth } from '@/src/lib/navigation';
 import { supabase } from '@/src/lib/supabase';
-import { colors, displayTitle, fonts } from '@/src/theme';
+import { makeStyles } from '@/src/lib/theme';
+import { fonts } from '@/src/theme';
 
 export default function SignupScreen() {
+  const { t } = useLocale();
+  const styles = useStyles();
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
@@ -34,7 +38,7 @@ export default function SignupScreen() {
         return;
       }
       if (!data.session) {
-        setInfo('Check your email to confirm, then sign in.');
+        setInfo(t('auth.confirmEmail'));
         return;
       }
       void queryClient.invalidateQueries({ queryKey: ['profile'] });
@@ -47,16 +51,16 @@ export default function SignupScreen() {
   };
 
   return (
-    <Screen title="Create account" back>
+    <Screen title={t('auth.createAccount')} back>
       <FormScroll>
         <BrandMark />
-        <Text style={styles.heading}>Join Rappi</Text>
-        <Text style={styles.hint}>One account for the app and rappisportshub.com.</Text>
+        <Text style={styles.heading}>{t('auth.join')}</Text>
+        <Text style={styles.hint}>{t('auth.signupHint')}</Text>
         <GoogleButton returnTo={returnTo} />
         <OrDivider />
-        <Field placeholder="Full name" autoComplete="name" textContentType="name" value={name} onChangeText={setName} />
+        <Field placeholder={t('auth.fullName')} autoComplete="name" textContentType="name" value={name} onChangeText={setName} />
         <Field
-          placeholder="Email"
+          placeholder={t('auth.email')}
           autoCapitalize="none"
           autoComplete="email"
           keyboardType="email-address"
@@ -65,7 +69,7 @@ export default function SignupScreen() {
           onChangeText={setEmail}
         />
         <Field
-          placeholder="Password"
+          placeholder={t('auth.password')}
           secureTextEntry
           autoComplete="new-password"
           textContentType="newPassword"
@@ -75,7 +79,7 @@ export default function SignupScreen() {
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {info ? <Text style={styles.info}>{info}</Text> : null}
         <PrimaryButton
-          label={busy ? 'Please wait' : 'Create account'}
+          label={busy ? t('auth.pleaseWait') : t('auth.createAccount')}
           disabled={busy || !email.trim() || !password || !name.trim()}
           onPress={submit}
         />
@@ -84,9 +88,9 @@ export default function SignupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, displayTitle }) => ({
   heading: { ...displayTitle, marginTop: 8 },
   hint: { fontFamily: fonts.body, fontSize: 14, color: colors.muted, marginBottom: 8 },
   error: { fontFamily: fonts.body, color: colors.danger },
   info: { fontFamily: fonts.bodySemi, color: colors.accentText },
-});
+}));

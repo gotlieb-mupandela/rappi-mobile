@@ -1,6 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { colors, fonts, radius } from '@/src/theme';
+import { makeStyles } from '@/src/lib/theme';
+import { fonts, radius } from '@/src/theme';
 
 type Props = {
   value: number;
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export function QtyStepper({ value, min = 1, max = 99, onChange }: Props) {
+  const styles = useStyles();
   return (
     <View style={styles.row}>
       <Pressable
@@ -31,7 +33,7 @@ export function QtyStepper({ value, min = 1, max = 99, onChange }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors }) => ({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -60,4 +62,4 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.85 },
   disabled: { opacity: 0.4 },
-});
+}));

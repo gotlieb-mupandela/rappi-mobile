@@ -1,10 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react';
-import { AccessibilityInfo, Animated, Pressable, StyleSheet, Text } from 'react-native';
+import { AccessibilityInfo, Animated, Pressable, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useReducedMotion } from '@/src/lib/motion';
-import { colors, fonts, radius, shadow, space } from '@/src/theme';
+import { makeStyles, useTheme } from '@/src/lib/theme';
+import { fonts, radius, space } from '@/src/theme';
 
 type ToastOptions = {
   icon?: ComponentProps<typeof Ionicons>['name'];
@@ -20,6 +21,8 @@ type ToastMessage = ToastOptions & { text: string };
 const ToastContext = createContext<ToastContextValue>({ show: () => undefined });
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
   const [message, setMessage] = useState<ToastMessage | null>(null);
@@ -62,7 +65,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             !message.action && styles.plain,
             { top: insets.top + space.topBar + 8, opacity: progress, transform: [{ translateY }] },
           ]}>
-          {message.icon ? <Ionicons name={message.icon} size={18} color={message.icon === 'heart' ? colors.accent : colors.onDark} /> : null}
+          {message.icon ? <Ionicons name={message.icon} size={18} color={message.icon === 'heart' ? colors.accent : colors.onInverse} /> : null}
           <Text style={styles.text} numberOfLines={2}>
             {message.text}
           </Text>
@@ -88,7 +91,7 @@ export function useToast(): ToastContextValue {
   return useContext(ToastContext);
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, shadow }) => ({
   toast: {
     position: 'absolute',
     left: space.screen,
@@ -96,7 +99,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: colors.text,
+    backgroundColor: colors.inverse,
     borderRadius: radius.card,
     paddingLeft: 16,
     paddingRight: 8,
@@ -110,7 +113,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontFamily: fonts.bodySemi,
     fontSize: 14,
-    color: colors.onDark,
+    color: colors.onInverse,
   },
   action: { minHeight: 36, paddingHorizontal: 12, borderRadius: radius.chip, alignItems: 'center', justifyContent: 'center' },
   actionLabel: {
@@ -118,7 +121,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
-    color: colors.accentBright,
+    color: colors.accentOnInverse,
   },
   pressed: { opacity: 0.7 },
-});
+}));

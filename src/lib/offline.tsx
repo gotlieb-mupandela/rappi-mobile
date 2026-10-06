@@ -3,7 +3,8 @@ import { onlineManager } from '@tanstack/react-query';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, fonts, space } from '@/src/theme';
+import { makeStyles } from '@/src/lib/theme';
+import { fonts, space } from '@/src/theme';
 
 const OfflineContext = createContext(false);
 
@@ -35,6 +36,7 @@ export function useOffline(): boolean {
 }
 
 export function OfflineBanner() {
+  const styles = useStyles();
   const offline = useOffline();
   if (!offline) return null;
   return (
@@ -44,7 +46,7 @@ export function OfflineBanner() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors }) => ({
   banner: {
     backgroundColor: colors.elevated,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -57,4 +59,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.muted,
   },
-});
+}));

@@ -1,10 +1,13 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Linking, ScrollView, StyleSheet } from 'react-native';
 
 import { openSitePage } from '@/src/api/account';
-import { SettingsGroup, SettingsRow, SettingsSwitchRow } from '@/src/components/settings';
+import { ActionSheet, SettingsGroup, SettingsRow, SettingsSwitchRow } from '@/src/components/settings';
 import { Screen } from '@/src/components/ui';
+import { useLocale } from '@/src/i18n/LocaleProvider';
+import { MARKETS } from '@/src/i18n/market';
 import { useAuth } from '@/src/lib/auth';
 import { hapticsSupported, setHapticsEnabled, tapHaptic, useHapticsEnabled } from '@/src/lib/haptics';
 import { enableNotifications, useNotificationState } from '@/src/lib/push';
@@ -17,7 +20,9 @@ function openSystemSettings() {
 }
 
 export default function SettingsScreen() {
+  const { market, setMarket, t } = useLocale();
   const { user } = useAuth();
+  const [marketOpen, setMarketOpen] = useState(false);
   const haptics = useHapticsEnabled();
   const [notifications, refreshNotifications] = useNotificationState();
 
@@ -40,8 +45,17 @@ export default function SettingsScreen() {
         : 'Sign in to get updates about your orders on this phone.';
 
   return (
-    <Screen title="Settings" back>
+    <Screen title={t('settings.title')} back>
       <ScrollView contentContainerStyle={styles.content}>
+        <SettingsGroup title={t('settings.preferences')}>
+          <SettingsRow
+            icon="language-outline"
+            label={t('settings.languageCurrency')}
+            value={MARKETS[market].label}
+            onPress={() => setMarketOpen(true)}
+          />
+        </SettingsGroup>
+
         <SettingsGroup title="Notifications" footer={notificationFooter}>
           <SettingsSwitchRow
             icon="notifications-outline"
@@ -81,6 +95,15 @@ export default function SettingsScreen() {
           <SettingsRow icon="shield-checkmark-outline" label="Privacy policy" external onPress={() => openSitePage('privacy')} />
         </SettingsGroup>
       </ScrollView>
+      <ActionSheet
+        visible={marketOpen}
+        title={t('market.title')}
+        onClose={() => setMarketOpen(false)}
+        options={[
+          { label: MARKETS.na.label, icon: market === 'na' ? 'checkmark-circle' : 'ellipse-outline', onPress: () => void setMarket('na') },
+          { label: MARKETS.eu.label, icon: market === 'eu' ? 'checkmark-circle' : 'ellipse-outline', onPress: () => void setMarket('eu') },
+        ]}
+      />
     </Screen>
   );
 }

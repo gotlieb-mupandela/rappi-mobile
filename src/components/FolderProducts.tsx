@@ -1,12 +1,13 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { fetchFolderCatalog } from '@/src/api/catalog';
 import type { CatalogPage, CatalogQuery, Product } from '@/src/api/types';
 import { ProductCard } from '@/src/components/ProductCard';
 import { Chip, EmptyState, ErrorState, SkeletonGrid } from '@/src/components/ui';
-import { colors, displayTitle, fonts, space } from '@/src/theme';
+import { makeStyles } from '@/src/lib/theme';
+import { fonts, space } from '@/src/theme';
 
 const PAGE_SIZE = 24;
 
@@ -61,6 +62,7 @@ type Props = {
 };
 
 export function FolderProducts({ query, byLine, emptyAction }: Props) {
+  const styles = useStyles();
   const [page, setPage] = useState(1);
   const scroll = useRef<ScrollView>(null);
   const sectionY = useRef<Record<string, number>>({});
@@ -135,6 +137,7 @@ export function FolderProducts({ query, byLine, emptyAction }: Props) {
 }
 
 function PagerButton({ label, disabled, onPress }: { label: string; disabled: boolean; onPress: () => void }) {
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityRole="button"
@@ -147,7 +150,7 @@ function PagerButton({ label, disabled, onPress }: { label: string; disabled: bo
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, displayTitle }) => ({
   content: { paddingBottom: 40 },
   anchors: { paddingHorizontal: space.screen, paddingTop: 4, gap: 8 },
   section: { paddingHorizontal: space.screen, paddingTop: 24 },
@@ -174,4 +177,4 @@ const styles = StyleSheet.create({
   pageLabel: { fontFamily: fonts.body, fontSize: 13, color: colors.muted },
   disabled: { opacity: 0.35 },
   pressed: { opacity: 0.8 },
-});
+}));

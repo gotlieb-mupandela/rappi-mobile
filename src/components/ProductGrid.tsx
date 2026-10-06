@@ -7,7 +7,9 @@ import { fetchCatalog, sizeFacets } from '@/src/api/catalog';
 import type { CatalogQuery } from '@/src/api/types';
 import { ProductCard } from '@/src/components/ProductCard';
 import { Chip, EmptyState, ErrorState, SkeletonBlock, SkeletonGrid } from '@/src/components/ui';
-import { colors, fonts, sectionLabel, space } from '@/src/theme';
+import { useLocale } from '@/src/i18n/LocaleProvider';
+import { makeStyles, useTheme } from '@/src/lib/theme';
+import { fonts, space } from '@/src/theme';
 
 type Props = {
   query: Omit<CatalogQuery, 'page' | 'pageSize'>;
@@ -17,13 +19,16 @@ type Props = {
 };
 
 const AUDIENCES = [
-  { slug: undefined, label: 'All' },
-  { slug: 'men', label: 'Men' },
-  { slug: 'women', label: 'Women' },
-  { slug: 'kids', label: 'Kids' },
+  { slug: undefined, labelKey: 'common.all' },
+  { slug: 'men', labelKey: 'common.men' },
+  { slug: 'women', labelKey: 'common.women' },
+  { slug: 'kids', labelKey: 'common.kids' },
 ] as const;
 
 export function ProductGrid({ query, emptyMessage, emptyAction, showFilters }: Props) {
+  const { t } = useLocale();
+  const { sectionLabel } = useTheme();
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
   const [audience, setAudience] = useState<string | undefined>();
   const [size, setSize] = useState<string | undefined>();
@@ -115,14 +120,14 @@ export function ProductGrid({ query, emptyMessage, emptyAction, showFilters }: P
               ? null
               : AUDIENCES.map((item) => (
                   <Chip
-                    key={item.label}
-                    label={item.label}
+                    key={item.labelKey}
+                    label={t(item.labelKey)}
                     selected={audience === item.slug}
                     onPress={() => setAudience(item.slug)}
                   />
                 ))}
             {sizeOptions.length > 0 || size ? (
-              <Chip label={size ? `Size ${size}` : 'Size'} selected={!!size} onPress={() => setSizeOpen((open) => !open)} />
+              <Chip label={size ? `${t('common.size')} ${size}` : t('common.size')} selected={!!size} onPress={() => setSizeOpen((open) => !open)} />
             ) : null}
           </ScrollView>
         </View>
@@ -162,7 +167,7 @@ export function ProductGrid({ query, emptyMessage, emptyAction, showFilters }: P
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, sectionLabel }) => ({
   flex: { flex: 1 },
   header: {
     paddingHorizontal: space.screen,
@@ -195,4 +200,4 @@ const styles = StyleSheet.create({
   cell: { flex: 1 },
   loadingRow: { flexDirection: 'row', gap: space.gap, marginTop: space.gap },
   loadingCard: { flex: 1, aspectRatio: 0.72, borderRadius: 14 },
-});
+}));

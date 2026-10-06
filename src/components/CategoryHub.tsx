@@ -2,30 +2,35 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { ALL_FOLDER, fetchCatalog, fetchHubTypes, fetchNav, subFolderKey } from '@/src/api/catalog';
 import { openCatalogFolder } from '@/src/components/FolderBrowser';
 import { MenuGrid } from '@/src/components/MenuGrid';
 import { ProductCard } from '@/src/components/ProductCard';
 import { Chip, ErrorState, PressableScale, Screen, SecondaryButton, SkeletonBlock, SkeletonGrid } from '@/src/components/ui';
+import { useLocale } from '@/src/i18n/LocaleProvider';
 import { categoryName, hubImage } from '@/src/lib/categories';
 import { pressHaptic, tapHaptic } from '@/src/lib/haptics';
 import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
 import { AUDIENCE_IMAGES, HUB_DESCRIPTIONS, HUB_TYPES, menuImage, type MenuNode } from '@/src/lib/menus';
-import { colors, displayTitle, fonts, radius, sectionLabel, space } from '@/src/theme';
+import { makeStyles, useTheme } from '@/src/lib/theme';
+import { fonts, radius, space } from '@/src/theme';
 
 const ATHLETES = [
-  { slug: 'men', label: 'Men' },
-  { slug: 'women', label: 'Women' },
-  { slug: 'kids', label: 'Kids' },
+  { slug: 'men', labelKey: 'common.men' },
+  { slug: 'women', labelKey: 'common.women' },
+  { slug: 'kids', labelKey: 'common.kids' },
 ] as const;
 
 const RAIL_SIZE = 10;
 const SHADE = require('@/assets/images/shade.png');
 
 export function CategoryHub({ slug }: { slug: string }) {
-  const name = categoryName(slug);
+  const { folderName, market, t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useStyles();
+  const name = categoryName(slug, market === 'eu' ? 'fr' : 'en');
 
   const nav = useQuery({ queryKey: ['catalog-nav'], queryFn: fetchNav, staleTime: 60_000 });
   const overview = useQuery({
@@ -51,7 +56,7 @@ export function CategoryHub({ slug }: { slug: string }) {
   const crumbs = [name];
   const types: MenuNode[] =
     staticTypes ??
-    (folders.data ?? []).map((folder) => ({ key: folder.key, name: folder.name, image: folder.imageUrl, folder: folder.key }));
+    (folders.data ?? []).map((folder) => ({ key: folder.key, name: folderName(folder.key, folder.name), image: folder.imageUrl, folder: folder.key }));
   const subs = nav.data?.taxonomy?.[slug] ?? [];
   const products = overview.data?.products ?? [];
   const heroImage = hubImage(slug) ?? sizedImage(products[0]?.imageUrl, IMAGE_WIDTH.full);
@@ -63,7 +68,7 @@ export function CategoryHub({ slug }: { slug: string }) {
     }
     openCatalogFolder({ cat: slug, folder: ALL_FOLDER, name: label, audience, crumbs });
   };
-  const athleteCards = ATHLETES.map((athlete, index) => ({ ...athlete, data: athletes[index].data })).filter(
+  const athleteCards = ATHLETES.map((athlete, index) => ({ ...athlete, label: t(athlete.labelKey), data: athletes[index].data })).filter(
     (athlete) => (athlete.data?.total ?? 0) > 0,
   );
 
@@ -184,6 +189,8 @@ export function CategoryHub({ slug }: { slug: string }) {
 }
 
 function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -197,12 +204,12 @@ function SectionHeader({ title, action, onAction }: { title: string; action?: st
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, displayTitle, sectionLabel }) => ({
   content: { paddingBottom: 48 },
   fill: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   pressed: { opacity: 0.85 },
   padded: { paddingHorizontal: space.screen },
-  hero: { height: 360, backgroundColor: colors.text, justifyContent: 'flex-end', overflow: 'hidden' },
+  hero: { height: 360, backgroundColor: '#121212', justifyContent: 'flex-end', overflow: 'hidden' },
   heroShade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '75%' },
   heroText: { padding: space.screen, paddingBottom: 24, gap: 6 },
   eyebrow: { fontFamily: fonts.bodyBold, fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)' },
@@ -241,4 +248,4 @@ const styles = StyleSheet.create({
   athleteCard: { aspectRatio: 0.72, borderRadius: radius.card, overflow: 'hidden', backgroundColor: colors.imageWell, justifyContent: 'flex-end' },
   athleteShade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '55%' },
   athleteName: { padding: 12, fontFamily: fonts.displayBold, fontSize: 18, letterSpacing: 0.6, textTransform: 'uppercase', color: colors.onDark },
-});
+}));

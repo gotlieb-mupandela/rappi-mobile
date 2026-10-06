@@ -3,15 +3,16 @@ import { router, usePathname, type Href } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useBag } from '@/src/lib/bag';
 import { tapHaptic } from '@/src/lib/haptics';
-import { colors, fonts } from '@/src/theme';
+import { makeStyles, useTheme } from '@/src/lib/theme';
+import { fonts } from '@/src/theme';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 type Tab = {
   key: string;
-  label: string;
   href: Href;
   icon: IconName;
   activeIcon: IconName;
@@ -19,19 +20,17 @@ type Tab = {
 };
 
 const TABS: Tab[] = [
-  { key: 'home', label: 'Home', href: '/', icon: 'home-outline', activeIcon: 'home', match: (p) => p === '/' },
+  { key: 'home', href: '/', icon: 'home-outline', activeIcon: 'home', match: (p) => p === '/' },
   {
     key: 'shop',
-    label: 'Shop',
     href: '/shop',
     icon: 'grid-outline',
     activeIcon: 'grid',
     match: (p) => p === '/shop' || p.startsWith('/category') || p.startsWith('/menu') || p.startsWith('/product'),
   },
-  { key: 'search', label: 'Search', href: '/search', icon: 'search-outline', activeIcon: 'search', match: (p) => p === '/search' },
+  { key: 'search', href: '/search', icon: 'search-outline', activeIcon: 'search', match: (p) => p === '/search' },
   {
     key: 'bag',
-    label: 'Bag',
     href: '/bag',
     icon: 'bag-outline',
     activeIcon: 'bag',
@@ -39,7 +38,6 @@ const TABS: Tab[] = [
   },
   {
     key: 'account',
-    label: 'Account',
     href: '/account',
     icon: 'person-outline',
     activeIcon: 'person',
@@ -50,12 +48,16 @@ const TABS: Tab[] = [
 ];
 
 export function TabBar() {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  const { t } = useLocale();
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const { totalQty } = useBag();
   return (
     <View style={[styles.bar, { paddingBottom: insets.bottom }]}>
       {TABS.map((tab) => {
+        const label = t(`tabs.${tab.key}`);
         const active = tab.match(pathname);
         const color = active ? colors.accent : colors.muted;
         const labelColor = active ? colors.accentText : colors.muted;
@@ -63,7 +65,7 @@ export function TabBar() {
           <Pressable
             key={tab.key}
             accessibilityRole="tab"
-            accessibilityLabel={tab.label}
+            accessibilityLabel={label}
             accessibilityState={{ selected: active }}
             onPress={() => {
               if (pathname === tab.href) return;
@@ -80,7 +82,7 @@ export function TabBar() {
                 </View>
               ) : null}
             </View>
-            <Text style={[styles.label, { color: labelColor }]}>{tab.label}</Text>
+            <Text style={[styles.label, { color: labelColor }]}>{label}</Text>
           </Pressable>
         );
       })}
@@ -88,7 +90,7 @@ export function TabBar() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors }) => ({
   bar: {
     flexDirection: 'row',
     backgroundColor: colors.bg,
@@ -125,4 +127,4 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold,
     fontSize: 9,
   },
-});
+}));

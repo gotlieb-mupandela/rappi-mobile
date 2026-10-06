@@ -1,7 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import type { ProductSize } from '@/src/api/types';
-import { colors, fonts, radius } from '@/src/theme';
+import { makeStyles } from '@/src/lib/theme';
+import { fonts, radius } from '@/src/theme';
 
 type Props = {
   sizes: ProductSize[];
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export function SizePicker({ sizes, value, onChange }: Props) {
+  const styles = useStyles();
   return (
     <View style={styles.wrap}>
       {sizes.map((item) => {
@@ -34,7 +36,7 @@ export function SizePicker({ sizes, value, onChange }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors }) => ({
   wrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -68,4 +70,4 @@ const styles = StyleSheet.create({
     color: colors.muted,
   },
   pressed: { opacity: 0.85 },
-});
+}));
