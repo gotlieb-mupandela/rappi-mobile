@@ -40,4 +40,4 @@ Never put the service-role key, `DPO_COMPANY_TOKEN`, or `RESEND_API_KEY` in the 
 
 Home photo tiles (`GET /api/catalog?cat=&pageSize=1`), Shop from `/api/catalog/nav`, folders from `/api/catalog/folders`, leaf products from `/api/catalog?cat=&group=&pageSize=24`, search, product + stock, bag, checkout + DPO browser + result, auth, account, orders, wishlist, teams quote, and push after the first paid order.
 
-Package id: `com.rappisportshub.app`. URL scheme: `rappisport`.
+Android package: `com.rappisporthub.app`. iOS bundle id: `com.rappisportshub.app`. URL scheme: `rappisport`.

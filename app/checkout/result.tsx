@@ -5,6 +5,7 @@ import { Text, View } from 'react-native';
 
 import { PrimaryButton, Screen, SecondaryButton } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
+import { usePendingPayment } from '@/src/lib/pendingPayment';
 import { askAndRegisterPush } from '@/src/lib/push';
 import { makeStyles } from '@/src/lib/theme';
 import { fonts, space } from '@/src/theme';
@@ -14,6 +15,7 @@ export default function CheckoutResultScreen() {
   const styles = useStyles();
   const { status, ref, orderId } = useLocalSearchParams<{ status?: string; ref?: string; orderId?: string }>();
   const queryClient = useQueryClient();
+  const payments = usePendingPayment();
   const kind =
     status === 'paid' ? 'paid' : status === 'cancel' ? 'cancel' : status === 'failed' ? 'failed' : 'unknown';
   const copy = {
@@ -41,6 +43,13 @@ export default function CheckoutResultScreen() {
         <Text style={styles.body}>{copy.body}</Text>
         {kind === 'paid' && ref ? <Text style={styles.ref}>{t('payment.reference', { ref })}</Text> : null}
         <View style={styles.actions}>
+          {kind === 'unknown' && payments.pending ? (
+            <PrimaryButton
+              label={t('payment.checkAgain')}
+              disabled={payments.checking}
+              onPress={() => void payments.recheck()}
+            />
+          ) : null}
           {kind === 'paid' && orderId ? (
             <PrimaryButton
               label={t('payment.viewOrder')}
@@ -49,6 +58,8 @@ export default function CheckoutResultScreen() {
                 router.push({ pathname: '/orders/[id]', params: { id: orderId } });
               }}
             />
+          ) : kind === 'unknown' && payments.pending ? (
+            <SecondaryButton label={t('orders.title')} onPress={() => leave('/orders')} />
           ) : (
             <PrimaryButton label={t('orders.title')} onPress={() => leave('/orders')} />
           )}
