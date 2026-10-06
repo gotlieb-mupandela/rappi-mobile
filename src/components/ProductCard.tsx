@@ -3,7 +3,9 @@ import { Link } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { Product } from '@/src/api/types';
+import { HeartButton } from '@/src/components/HeartButton';
 import { PressableScale } from '@/src/components/ui';
+import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
 import { formatMoney } from '@/src/lib/money';
 import { colors, fonts, radius } from '@/src/theme';
 
@@ -37,10 +39,11 @@ export function ProductCard({ product }: Props) {
         <View style={styles.well}>
           {product.imageUrl ? (
             <Image
-              source={{ uri: product.imageUrl }}
+              source={{ uri: sizedImage(product.imageUrl, IMAGE_WIDTH.card) }}
               style={[styles.image, badge?.tone === 'sold' && styles.soldImage]}
               contentFit="contain"
-              cachePolicy="disk"
+              cachePolicy="memory-disk"
+              recyclingKey={product.code}
               transition={200}
             />
           ) : null}
@@ -49,6 +52,7 @@ export function ProductCard({ product }: Props) {
               <Text style={[styles.badgeText, badge.tone === 'new' ? styles.badgeTextDark : styles.badgeTextLight]}>{badge.label}</Text>
             </View>
           ) : null}
+          {product.available === false ? null : <HeartButton code={product.code} id={product.id} name={name} variant="overlay" />}
         </View>
         <View style={styles.body}>
           <Text style={styles.name} numberOfLines={2} ellipsizeMode="tail">

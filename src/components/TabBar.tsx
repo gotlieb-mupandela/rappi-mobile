@@ -26,7 +26,7 @@ const TABS: Tab[] = [
     href: '/shop',
     icon: 'grid-outline',
     activeIcon: 'grid',
-    match: (p) => p === '/shop' || p.startsWith('/category') || p.startsWith('/product'),
+    match: (p) => p === '/shop' || p.startsWith('/category') || p.startsWith('/menu') || p.startsWith('/product'),
   },
   { key: 'search', label: 'Search', href: '/search', icon: 'search-outline', activeIcon: 'search', match: (p) => p === '/search' },
   {
@@ -45,7 +45,7 @@ const TABS: Tab[] = [
     activeIcon: 'person',
     match: (p) =>
       p === '/account' ||
-      ['/orders', '/wishlist', '/auth', '/teams'].some((prefix) => p.startsWith(prefix)),
+      ['/orders', '/wishlist', '/auth', '/settings', '/profile'].some((prefix) => p.startsWith(prefix)),
   },
 ];
 

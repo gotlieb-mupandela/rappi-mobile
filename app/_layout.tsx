@@ -4,7 +4,11 @@ import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
 import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
 import { Oswald_600SemiBold } from '@expo-google-fonts/oswald/600SemiBold';
 import { Oswald_700Bold } from '@expo-google-fonts/oswald/700Bold';
-import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import { focusManager, QueryClient } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import Constants from 'expo-constants';
 import { useFonts } from 'expo-font';
 import { Stack, type ErrorBoundaryProps } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -55,6 +59,23 @@ const crash = StyleSheet.create({
   buttonLabel: { fontSize: 14, fontWeight: '700', letterSpacing: 1, color: colors.onAccent },
 });
 
+const CACHE_MAX_AGE = 7 * 24 * 60 * 60_000;
+
+/** Public catalog data only; orders, profile and live stock are never written to disk. */
+const PERSISTED_QUERIES = new Set([
+  'catalog',
+  'catalog-nav',
+  'product',
+  'folder-products',
+  'site-folders',
+  'folder-cover',
+  'hub-overview',
+  'hub-types',
+  'hub-athlete',
+]);
+
+const persister = createAsyncStoragePersister({ storage: AsyncStorage, key: 'rappi-query-cache', throttleTime: 2_000 });
+
 function AboveTabBar({ children }: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
   return (
@@ -70,10 +91,13 @@ export default function RootLayout() {
       new QueryClient({
         defaultOptions: {
           queries: {
-            retry: (failureCount, error) =>
-              failureCount < 1 &&
-              (!(error instanceof ApiError) || error.status === 0 || error.status >= 500),
+            retry: (failureCount, error) => {
+              if (!(error instanceof ApiError)) return failureCount < 1;
+              if (error.status === 0) return failureCount < 3;
+              return error.status >= 500 && failureCount < 1;
+            },
             staleTime: 60_000,
+            gcTime: CACHE_MAX_AGE,
             refetchOnReconnect: true,
             refetchOnWindowFocus: true,
           },
@@ -126,7 +150,17 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{
+            persister,
+            maxAge: CACHE_MAX_AGE,
+            buster: Constants.expoConfig?.version ?? '',
+            dehydrateOptions: {
+              shouldDehydrateQuery: (query) =>
+                query.state.status === 'success' && PERSISTED_QUERIES.has(String(query.queryKey[0])),
+            },
+          }}>
           <AuthProvider>
             <BagProvider>
               <WishlistProvider>
@@ -152,7 +186,7 @@ export default function RootLayout() {
               </WishlistProvider>
             </BagProvider>
           </AuthProvider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

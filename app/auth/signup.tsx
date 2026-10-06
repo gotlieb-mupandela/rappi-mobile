@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
 import { GoogleButton, OrDivider } from '@/src/components/GoogleButton';
-import { Field, FormScroll, PrimaryButton, Screen } from '@/src/components/ui';
+import { BrandMark, Field, FormScroll, PrimaryButton, Screen } from '@/src/components/ui';
 import { authErrorMessage, finishAuth } from '@/src/lib/navigation';
 import { supabase } from '@/src/lib/supabase';
 import { colors, displayTitle, fonts } from '@/src/theme';
@@ -49,6 +49,7 @@ export default function SignupScreen() {
   return (
     <Screen title="Create account" back>
       <FormScroll>
+        <BrandMark />
         <Text style={styles.heading}>Join Rappi</Text>
         <Text style={styles.hint}>One account for the app and rappisportshub.com.</Text>
         <GoogleButton returnTo={returnTo} />

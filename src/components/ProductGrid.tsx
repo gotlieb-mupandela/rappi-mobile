@@ -32,7 +32,8 @@ export function ProductGrid({ query, emptyMessage, emptyAction, showFilters }: P
   const catalog = useInfiniteQuery({
     queryKey: ['catalog', query, audience ?? null, size ?? null],
     initialPageParam: 1,
-    queryFn: ({ pageParam }) => fetchCatalog({ ...query, audience, size, page: pageParam, pageSize: 24 }),
+    queryFn: ({ pageParam }) =>
+      fetchCatalog({ ...query, audience: audience ?? query.audience, size, page: pageParam, pageSize: 24 }),
     getNextPageParam: (last) => (last.page < last.pageCount ? last.page + 1 : undefined),
     staleTime: 60_000,
   });
@@ -45,7 +46,6 @@ export function ProductGrid({ query, emptyMessage, emptyAction, showFilters }: P
       return true;
     });
   }, [catalog.data]);
-  const total = catalog.data?.pages[0]?.total;
   const sizes = sizeFacets(catalog.data?.pages[0]?.facets?.sizes ?? []);
   const unfilteredSizes = useRef(sizes);
   if (!size && sizes.length > 0) unfilteredSizes.current = sizes;
@@ -107,19 +107,20 @@ export function ProductGrid({ query, emptyMessage, emptyAction, showFilters }: P
     <View style={styles.flex}>
       <View style={styles.header}>
         <Text style={sectionLabel}>PRODUCTS</Text>
-        {total != null ? <Text style={styles.total}>{total} products</Text> : null}
       </View>
       {showFilters ? (
         <View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-            {AUDIENCES.map((item) => (
-              <Chip
-                key={item.label}
-                label={item.label}
-                selected={audience === item.slug}
-                onPress={() => setAudience(item.slug)}
-              />
-            ))}
+            {query.audience
+              ? null
+              : AUDIENCES.map((item) => (
+                  <Chip
+                    key={item.label}
+                    label={item.label}
+                    selected={audience === item.slug}
+                    onPress={() => setAudience(item.slug)}
+                  />
+                ))}
             {sizeOptions.length > 0 || size ? (
               <Chip label={size ? `Size ${size}` : 'Size'} selected={!!size} onPress={() => setSizeOpen((open) => !open)} />
             ) : null}
@@ -171,7 +172,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  total: { fontFamily: fonts.body, fontSize: 13, color: colors.muted },
   chips: { paddingHorizontal: space.screen, gap: 8, paddingBottom: 8 },
   modal: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.28)' },
   sizeSheet: {

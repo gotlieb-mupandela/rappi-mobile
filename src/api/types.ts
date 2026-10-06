@@ -76,6 +76,8 @@ export type Folder = {
   count: number;
   hasChildren: boolean;
   imageUrl?: string;
+  /** Category to open the folder in when it differs from the parent's, e.g. teamwear lines under Football. */
+  cat?: string;
 };
 
 export type FoldersResponse = {
@@ -119,14 +121,4 @@ export type CreatePaymentSuccess = {
 
 export type ApiErrorBody = {
   error?: string;
-};
-
-export type QuoteBody = {
-  name: string;
-  email: string;
-  organisation: string;
-  sport: string;
-  players: string;
-  sizes: string;
-  notes: string;
 };

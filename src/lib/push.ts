@@ -3,7 +3,8 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
-import { Platform } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { AppState, Platform } from 'react-native';
 
 import { subscribePush } from '@/src/api/push';
 import { supabase } from '@/src/lib/supabase';
@@ -15,7 +16,7 @@ Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
     shouldShowList: true,
-    shouldPlaySound: false,
+    shouldPlaySound: true,
     shouldSetBadge: false,
   }),
 });
@@ -41,9 +42,12 @@ export async function registerPushIfNeeded(ask = false): Promise<void> {
     if (!id) return;
 
     if (Platform.OS === 'android') {
+      // Android locks a channel's importance once it's created; existing installs need a reinstall to pick up changes.
       await Notifications.setNotificationChannelAsync('default', {
         name: 'Orders',
-        importance: Notifications.AndroidImportance.DEFAULT,
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
       });
     }
 
@@ -65,6 +69,48 @@ export async function registerPushIfNeeded(ask = false): Promise<void> {
   } catch {
     // Push is best effort; the next sign-in or payment retries.
   }
+}
+
+export type NotificationState = 'on' | 'off' | 'blocked' | 'unsupported';
+
+export async function notificationState(): Promise<NotificationState> {
+  if (Platform.OS === 'web') return 'unsupported';
+  try {
+    const permission = await Notifications.getPermissionsAsync();
+    if (permission.granted) return 'on';
+    return permission.canAskAgain ? 'off' : 'blocked';
+  } catch {
+    return 'unsupported';
+  }
+}
+
+/** Asks for permission when the system still allows it; otherwise the caller should open system settings. */
+export async function enableNotifications(): Promise<NotificationState> {
+  const current = await notificationState();
+  if (current !== 'off') return current;
+  try {
+    await Notifications.requestPermissionsAsync();
+    await AsyncStorage.setItem(ASKED_KEY, '1');
+  } catch {
+    return current;
+  }
+  await registerPushIfNeeded();
+  return notificationState();
+}
+
+export function useNotificationState(): [NotificationState | null, () => void] {
+  const [state, setState] = useState<NotificationState | null>(null);
+  const refresh = useCallback(() => {
+    void notificationState().then(setState);
+  }, []);
+  useEffect(() => {
+    refresh();
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') refresh();
+    });
+    return () => sub.remove();
+  }, [refresh]);
+  return [state, refresh];
 }
 
 export function forgetPushRegistration(): Promise<void> {

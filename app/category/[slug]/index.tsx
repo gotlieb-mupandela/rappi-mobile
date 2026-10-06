@@ -1,8 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 
-import { FolderBrowser } from '@/src/components/FolderBrowser';
+import { CategoryHub } from '@/src/components/CategoryHub';
 
 export default function CategoryScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
-  return <FolderBrowser slug={slug} trail={[]} leaf={false} />;
+  return <CategoryHub slug={slug} />;
 }

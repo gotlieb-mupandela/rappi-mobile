@@ -2,7 +2,7 @@ import * as Linking from 'expo-linking';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
-import { Field, FormScroll, PrimaryButton, Screen } from '@/src/components/ui';
+import { BrandMark, Field, FormScroll, PrimaryButton, Screen } from '@/src/components/ui';
 import { authErrorMessage, finishAuth } from '@/src/lib/navigation';
 import { supabase } from '@/src/lib/supabase';
 import { colors, fonts } from '@/src/theme';
@@ -76,6 +76,7 @@ export default function ResetScreen() {
   return (
     <Screen title="New password" back>
       <FormScroll>
+        <BrandMark />
         <Text style={styles.hint}>Choose a new password for your Rappi account.</Text>
         <Field
           placeholder="New password"

@@ -19,8 +19,8 @@ import {
 import { useEffect, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { Folder } from '@/src/api/types';
 import { pressHaptic, tapHaptic } from '@/src/lib/haptics';
+import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
 import { OfflineBanner } from '@/src/lib/offline';
 import { useReducedMotion } from '@/src/lib/motion';
 import { buttonLabel, colors, fonts, radius, space } from '@/src/theme';
@@ -250,29 +250,65 @@ export function Chip({
   );
 }
 
-export function FolderCard({ folder, onPress }: { folder: Folder; onPress: () => void }) {
+export function BrandMark({ height = 96 }: { height?: number }) {
+  return (
+    <Image
+      source={require('@/assets/images/logo.png')}
+      style={{ height, aspectRatio: 593 / 360, alignSelf: 'center' }}
+      contentFit="contain"
+      accessibilityLabel="Rappi Sports Hub"
+    />
+  );
+}
+
+export function FolderCard({
+  name,
+  imageUrl,
+  onPress,
+}: {
+  name: string;
+  imageUrl?: string;
+  onPress: () => void;
+}) {
   return (
     <PressableScale
       accessibilityRole="button"
-      accessibilityLabel={`${folder.name}, ${folder.count} products`}
+      accessibilityLabel={name}
       onPress={() => {
         tapHaptic();
         onPress();
       }}
       style={styles.folder}>
       <View style={styles.folderImage}>
-        {folder.imageUrl ? (
-          <Image source={{ uri: folder.imageUrl }} style={styles.fill} contentFit="contain" cachePolicy="disk" transition={180} />
+        {imageUrl ? (
+          <Image source={{ uri: sizedImage(imageUrl, IMAGE_WIDTH.card) }} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={180} />
         ) : null}
       </View>
-      <View style={styles.folderBody}>
-        <Text style={styles.folderName} numberOfLines={2}>
-          {folder.name}
+      <Text style={styles.folderName} numberOfLines={2}>
+        {name}
+      </Text>
+    </PressableScale>
+  );
+}
+
+/** Rounded category card for hub pages: square photo with the name underneath. */
+export function TypeCard({ name, imageUrl, onPress }: { name: string; imageUrl?: string; onPress: () => void }) {
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={name}
+      onPress={() => {
+        tapHaptic();
+        onPress();
+      }}>
+      <View style={styles.typeImage}>
+        {imageUrl ? <Image source={{ uri: imageUrl }} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={180} /> : null}
+      </View>
+      <View style={styles.typeRow}>
+        <Text style={styles.typeName} numberOfLines={1}>
+          {name}
         </Text>
-        <View style={styles.folderMeta}>
-          <Text style={styles.folderCount}>{folder.count} products</Text>
-          <Ionicons name={folder.hasChildren ? 'chevron-forward' : 'arrow-forward'} size={14} color={colors.text} />
-        </View>
+        <Ionicons name="arrow-forward" size={14} color={colors.muted} />
       </View>
     </PressableScale>
   );
@@ -485,27 +521,23 @@ const styles = StyleSheet.create({
   chipSelected: { backgroundColor: colors.text },
   chipLabel: { fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text },
   chipLabelSelected: { fontFamily: fonts.bodySemi, color: colors.onDark },
-  folder: {
-    flex: 1,
-    backgroundColor: colors.bg,
-    borderRadius: radius.folder,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    overflow: 'hidden',
-  },
-  folderImage: { height: 136, backgroundColor: colors.imageWell, padding: 14 },
+  folder: { backgroundColor: colors.bg },
+  folderImage: { aspectRatio: 0.75, backgroundColor: colors.imageWell, overflow: 'hidden' },
   fill: { width: '100%', height: '100%' },
-  folderBody: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 14 },
   folderName: {
-    fontFamily: fonts.displayBold,
-    fontSize: 15,
-    letterSpacing: 0.8,
+    paddingHorizontal: 6,
+    paddingTop: 10,
+    paddingBottom: 4,
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
+    textAlign: 'center',
     color: colors.text,
   },
-  folderMeta: { marginTop: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  folderCount: { fontFamily: fonts.body, fontSize: 12, color: colors.muted },
-  folderMore: { marginTop: 4, fontFamily: fonts.bodySemi, fontSize: 12, color: colors.accentText },
+  typeImage: { aspectRatio: 1, borderRadius: radius.card, backgroundColor: colors.imageWell, overflow: 'hidden' },
+  typeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 10, paddingHorizontal: 2 },
+  typeName: { flex: 1, fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text, textTransform: 'capitalize' },
   listCard: {
     minHeight: 68,
     borderRadius: radius.card,

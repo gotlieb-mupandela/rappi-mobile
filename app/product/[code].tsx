@@ -1,24 +1,25 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { isUnavailableStatus } from '@/src/api/client';
 import { fetchProduct } from '@/src/api/product';
 import { fetchStock } from '@/src/api/stock';
+import { HeartButton } from '@/src/components/HeartButton';
 import { QtyStepper } from '@/src/components/QtyStepper';
 import { SizePicker } from '@/src/components/SizePicker';
 import { EmptyState, ErrorState, PrimaryButton, Screen } from '@/src/components/ui';
 import { useBag } from '@/src/lib/bag';
 import { categoryName } from '@/src/lib/categories';
+import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
 import { formatMoney } from '@/src/lib/money';
 import { defaultSize, isAvailable, isOneSize, isPack, isSoldOut, productSizes, stockLine } from '@/src/lib/sizes';
 import { useToast } from '@/src/lib/toast';
-import { useWishlist } from '@/src/lib/wishlist';
+import { useWishlist, useWishlistActions } from '@/src/lib/wishlist';
 import { colors, fonts, space } from '@/src/theme';
 
 export default function ProductScreen() {
@@ -35,6 +36,7 @@ export default function ProductScreen() {
   const toast = useToast();
   const bag = useBag();
   const wishlist = useWishlist();
+  const { removeWithUndo } = useWishlistActions();
   const [index, setIndex] = useState(0);
   const [size, setSize] = useState<string>();
   const [qty, setQty] = useState(1);
@@ -62,10 +64,10 @@ export default function ProductScreen() {
   );
 
   const gone = isUnavailableStatus(product.error) || (product.data != null && !isAvailable(product.data, stock.data));
-  const { drop } = wishlist;
+  const { learnIds } = wishlist;
   useEffect(() => {
-    if (gone) drop(code);
-  }, [code, drop, gone]);
+    if (product.data?.id) learnIds({ [product.data.code]: product.data.id });
+  }, [learnIds, product.data]);
 
   const sizes = useMemo(() => (product.data ? productSizes(product.data, stock.data) : []), [product.data, stock.data]);
   const oneSize = isOneSize(sizes);
@@ -94,6 +96,7 @@ export default function ProductScreen() {
   const add = () => {
     if (!product.data || !selected || !canAdd) return;
     bag.add({
+      id: product.data.id,
       code: product.data.code,
       size: selected.size,
       name: product.data.displayName || product.data.name,
@@ -102,30 +105,26 @@ export default function ProductScreen() {
       qty,
     });
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    toast.show('Added to bag');
+    toast.show('Added to bag', { icon: 'bag-check-outline', action: { label: 'View bag', onPress: () => router.navigate('/(tabs)/bag') } });
   };
 
   const line = stockLine(soldOut ? 0 : stockCount);
   const pack = product.data ? isPack(product.data) : false;
   const saved = wishlist.has(code);
+  const name = product.data ? product.data.displayName || product.data.name : undefined;
 
   return (
     <Screen
       title={product.data ? categoryName(product.data.category) : 'Product'}
       back
-      right={
-        gone ? null : (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={saved ? 'Remove from wishlist' : 'Save to wishlist'}
-            onPress={() => wishlist.toggle(code)}
-            style={({ pressed }) => [styles.heart, pressed && styles.pressed]}>
-            <Ionicons name={saved ? 'heart' : 'heart-outline'} size={24} color={saved ? colors.accent : colors.text} />
-          </Pressable>
-        )
-      }>
+      right={gone && !saved ? null : <HeartButton code={code} id={product.data?.id} name={name} />}>
       {gone ? (
-        <EmptyState message="This product is no longer available." />
+        <EmptyState
+          icon={saved ? 'heart-dislike-outline' : 'bag-handle-outline'}
+          message={saved ? 'This item from your wishlist is no longer sold.' : 'This product is no longer available.'}
+          action={saved ? 'Remove from wishlist' : 'Browse shop'}
+          onPress={saved ? () => removeWithUndo(code) : () => router.navigate('/(tabs)/shop')}
+        />
       ) : product.isError ? (
         <ErrorState message="Can't load the shop" onRetry={() => product.refetch()} />
       ) : product.isPending ? (
@@ -147,7 +146,16 @@ export default function ProductScreen() {
                 }}>
                 {images.length > 0 ? (
                   images.map((uri) => (
-                    <Image key={uri} source={{ uri }} style={{ width, height: width }} contentFit="contain" cachePolicy="disk" transition={200} />
+                    <Image
+                      key={uri}
+                      source={{ uri: sizedImage(uri, IMAGE_WIDTH.full) }}
+                      placeholder={{ uri: sizedImage(uri, IMAGE_WIDTH.card) }}
+                      placeholderContentFit="contain"
+                      style={{ width, height: width }}
+                      contentFit="contain"
+                      cachePolicy="memory-disk"
+                      transition={200}
+                    />
                   ))
                 ) : (
                   <View style={{ width, height: width }} />
@@ -191,8 +199,6 @@ export default function ProductScreen() {
 }
 
 const styles = StyleSheet.create({
-  heart: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  pressed: { opacity: 0.85 },
   body: { paddingBottom: 24 },
   gallery: { backgroundColor: colors.imageWell },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingVertical: 10 },

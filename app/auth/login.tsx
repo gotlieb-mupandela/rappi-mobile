@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
 import { GoogleButton, OrDivider } from '@/src/components/GoogleButton';
-import { Field, FormScroll, PrimaryButton, Screen, TextButton } from '@/src/components/ui';
+import { BrandMark, Field, FormScroll, PrimaryButton, Screen, TextButton } from '@/src/components/ui';
 import { authErrorMessage, finishAuth } from '@/src/lib/navigation';
 import { supabase } from '@/src/lib/supabase';
 import { colors, displayTitle, fonts } from '@/src/theme';
@@ -35,6 +35,7 @@ export default function LoginScreen() {
   return (
     <Screen title="Sign in" back>
       <FormScroll>
+        <BrandMark />
         <Text style={styles.heading}>Welcome back</Text>
         <Text style={styles.hint}>Use the same account as rappisportshub.com.</Text>
         <GoogleButton returnTo={returnTo} />

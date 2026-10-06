@@ -1,66 +1,45 @@
-import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { fetchNav } from '@/src/api/catalog';
-import { ErrorState, ListCard, Screen, SkeletonList } from '@/src/components/ui';
-import { CATEGORY_NAMES, PRIMARY_CATEGORY_ORDER, categoryName, isHiddenCategory } from '@/src/lib/categories';
-import { sectionLabel, space } from '@/src/theme';
+import { FolderCard, Screen } from '@/src/components/ui';
+import { findMenu, menuImage, NAV_MENU_KEYS, type Menu } from '@/src/lib/menus';
+import { space } from '@/src/theme';
+
+const NAV_MENUS = NAV_MENU_KEYS.map((key) => findMenu(key)).filter((menu): menu is Menu => !!menu);
 
 export default function ShopScreen() {
-  const nav = useQuery({
-    queryKey: ['catalog-nav'],
-    queryFn: fetchNav,
-    staleTime: 60_000,
-  });
-
-  const counts = nav.data?.categoryCounts ?? {};
-  const slugs = Object.keys(counts).filter((slug) => !isHiddenCategory(slug) && counts[slug] > 0);
-  const primary = PRIMARY_CATEGORY_ORDER.filter((slug) => slugs.includes(slug));
-  const more = slugs
-    .filter((slug) => !PRIMARY_CATEGORY_ORDER.includes(slug as (typeof PRIMARY_CATEGORY_ORDER)[number]))
-    .sort((a, b) => categoryName(a).localeCompare(categoryName(b)));
+  const menuCells: (Menu | null)[] = NAV_MENUS.length % 2 === 1 ? [...NAV_MENUS, null] : NAV_MENUS;
+  const menuRows: (Menu | null)[][] = [];
+  for (let index = 0; index < menuCells.length; index += 2) menuRows.push(menuCells.slice(index, index + 2));
 
   return (
     <Screen title="Shop">
-      {nav.isPending ? <SkeletonList /> : null}
-      {nav.isError && !nav.data ? <ErrorState message="Can't load the shop" onRetry={() => nav.refetch()} /> : null}
-      {nav.data ? (
-        <ScrollView contentContainerStyle={styles.content}>
-          <Text style={sectionLabel}>CATEGORIES</Text>
-          <View style={styles.list}>
-            {primary.map((slug) => (
-              <ListCard
-                key={slug}
-                title={CATEGORY_NAMES[slug] ?? categoryName(slug)}
-                subtitle={`${counts[slug]} products`}
-                onPress={() => router.push(`/category/${slug}`)}
-              />
-            ))}
-          </View>
-          {more.length > 0 ? (
-            <>
-              <Text style={[sectionLabel, styles.more]}>MORE</Text>
-              <View style={styles.list}>
-                {more.map((slug) => (
-                  <ListCard
-                    key={slug}
-                    title={categoryName(slug)}
-                    subtitle={`${counts[slug]} products`}
-                    onPress={() => router.push(`/category/${slug}`)}
-                  />
-                ))}
-              </View>
-            </>
-          ) : null}
-        </ScrollView>
-      ) : null}
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.menus}>
+          {menuRows.map((row, rowIndex) => (
+            <View key={rowIndex} style={styles.menuRow}>
+              {row.map((menu) => (
+                <View key={menu?.key ?? 'filler'} style={styles.menuCell}>
+                  {menu ? (
+                    <FolderCard
+                      name={menu.name}
+                      imageUrl={menuImage(menu.image)}
+                      onPress={() => router.push({ pathname: '/menu/[menu]', params: { menu: menu.key } })}
+                    />
+                  ) : null}
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
+      </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: space.screen, gap: 8 },
-  list: { gap: 8 },
-  more: { marginTop: 16 },
+  content: { padding: space.screen, paddingBottom: 40 },
+  menus: { gap: space.gap },
+  menuRow: { flexDirection: 'row', gap: space.gap },
+  menuCell: { flex: 1 },
 });

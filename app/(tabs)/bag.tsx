@@ -1,5 +1,7 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 
@@ -7,13 +9,20 @@ import { EmptyState, PrimaryButton, Screen, SkeletonList } from '@/src/component
 import { QtyStepper } from '@/src/components/QtyStepper';
 import { useAuth } from '@/src/lib/auth';
 import { useBag } from '@/src/lib/bag';
+import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
 import { formatMoney } from '@/src/lib/money';
 import { openLogin } from '@/src/lib/navigation';
 import { colors, fonts, radius, shadow, space } from '@/src/theme';
 
 export default function BagScreen() {
-  const { lines, ready, subtotal, setQty, remove } = useBag();
+  const { lines, ready, synced, subtotal, setQty, remove, refresh } = useBag();
   const { session } = useAuth();
+
+  useFocusEffect(
+    useCallback(() => {
+      if (synced) void refresh();
+    }, [refresh, synced]),
+  );
 
   const checkout = () => {
     if (!session) {
@@ -42,14 +51,26 @@ export default function BagScreen() {
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Remove ${line.name} from bag`}
-                    style={styles.delete}
+                    style={styles.deleteWrap}
                     onPress={() => remove(line.code, line.size)}>
-                    <Text style={styles.deleteText}>Remove</Text>
+                    {({ pressed }) => (
+                      <View style={[styles.delete, pressed && styles.deletePressed]}>
+                        <Ionicons name="trash-outline" size={20} color={colors.onDark} />
+                      </View>
+                    )}
                   </Pressable>
                 )}>
                 <View style={styles.card}>
                   <View style={styles.photo}>
-                    {line.imageUrl ? <Image source={{ uri: line.imageUrl }} style={styles.fill} contentFit="contain" transition={150} /> : null}
+                    {line.imageUrl ? (
+                      <Image
+                        source={{ uri: sizedImage(line.imageUrl, IMAGE_WIDTH.thumb) }}
+                        style={styles.fill}
+                        contentFit="contain"
+                        cachePolicy="memory-disk"
+                        transition={150}
+                      />
+                    ) : null}
                   </View>
                   <View style={styles.body}>
                     <Text style={styles.name} numberOfLines={2}>
@@ -95,8 +116,9 @@ const styles = StyleSheet.create({
   name: { fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text },
   meta: { fontFamily: fonts.body, fontSize: 13, color: colors.muted },
   total: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.accentText, fontVariant: ['tabular-nums'] },
-  delete: { backgroundColor: colors.danger, justifyContent: 'center', paddingHorizontal: 16, marginLeft: 8, borderRadius: radius.card },
-  deleteText: { color: colors.onDark, fontFamily: fonts.bodySemi },
+  deleteWrap: { justifyContent: 'center', paddingLeft: 10 },
+  delete: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center' },
+  deletePressed: { opacity: 0.85 },
   footer: {
     padding: space.screen,
     borderTopWidth: StyleSheet.hairlineWidth,

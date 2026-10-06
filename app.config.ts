@@ -1,4 +1,9 @@
+import { existsSync } from 'node:fs';
 import type { ExpoConfig } from 'expo/config';
+
+// Android can't receive push notifications without Firebase config. EAS can supply it as a file env var instead.
+const googleServicesFile =
+  process.env.GOOGLE_SERVICES_JSON ?? (existsSync('./google-services.json') ? './google-services.json' : undefined);
 
 const config: ExpoConfig = {
   name: 'Rappi Sport',
@@ -18,6 +23,7 @@ const config: ExpoConfig = {
   },
   android: {
     package: 'com.rappisportshub.app',
+    googleServicesFile,
     adaptiveIcon: {
       backgroundColor: '#121212',
       foregroundImage: './assets/images/adaptive-foreground.png',
@@ -38,6 +44,14 @@ const config: ExpoConfig = {
       'expo-notifications',
       {
         color: '#41d113',
+      },
+    ],
+    [
+      'expo-image-picker',
+      {
+        photosPermission: 'Rappi Sport uses your photos so you can choose a profile picture.',
+        cameraPermission: 'Rappi Sport uses the camera so you can take a profile picture.',
+        microphonePermission: false,
       },
     ],
     [
