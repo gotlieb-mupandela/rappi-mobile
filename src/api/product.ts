@@ -17,7 +17,7 @@ export async function fetchProduct(code: string): Promise<Product> {
       const page = await fetchCatalog({ q: code, page: pageNumber, pageSize: 24 });
       const match = page.products.find((product) => product.code === code);
       if (match) return match;
-      if (pageNumber >= page.pageCount) break;
+      if (!page.products.length || pageNumber >= (page.pageCount ?? 0) || pageNumber >= 20) break;
       pageNumber += 1;
     }
     throw new ApiError(GONE, 404);

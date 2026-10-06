@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useLocale } from '@/src/i18n/LocaleProvider';
@@ -179,7 +179,9 @@ export function ActionSheet({
               onPress={() => {
                 tapHaptic();
                 onClose();
-                option.onPress();
+                // iOS can't present a picker or alert while this sheet is still animating closed.
+                if (Platform.OS === 'ios') setTimeout(option.onPress, 350);
+                else option.onPress();
               }}
               style={({ pressed }) => [styles.sheetRow, pressed && styles.rowPressed]}>
               <RowIcon icon={option.icon} danger={option.danger} />

@@ -13,9 +13,9 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const update = (state: Network.NetworkState) => {
-      const nextOffline = state.isConnected === false || state.isInternetReachable === false;
-      setOffline(nextOffline);
-      onlineManager.setOnline(!nextOffline);
+      setOffline(state.isConnected === false || state.isInternetReachable === false);
+      // Reachability checks fail on some working networks (captive DNS, VPNs), so only a lost connection pauses queries.
+      onlineManager.setOnline(state.isConnected !== false);
     };
 
     void Network.getNetworkStateAsync().then(update).catch(() => {

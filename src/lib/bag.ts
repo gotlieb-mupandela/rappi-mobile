@@ -206,8 +206,9 @@ export function BagProvider({ children }: { children: ReactNode }) {
   );
 
   const add = useCallback<BagContextValue['add']>(
-    (line) => {
-      const qty = clampQty(line.qty ?? 1);
+    (input) => {
+      const qty = clampQty(input.qty ?? 1);
+      const line = { ...input, name: input.name || input.code, imageUrl: input.imageUrl ?? '' };
       changeLines((prev) => {
         const index = prev.findIndex((item) => item.code === line.code && item.size === line.size);
         if (index < 0) return [...prev, { ...line, id: line.id || undefined, qty }];

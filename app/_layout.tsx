@@ -26,6 +26,7 @@ import type { Market } from '@/src/i18n/market';
 import { AuthProvider } from '@/src/lib/auth';
 import { BagProvider } from '@/src/lib/bag';
 import { OfflineProvider } from '@/src/lib/offline';
+import { PendingPaymentProvider } from '@/src/lib/pendingPayment';
 import { listenForPushOpens } from '@/src/lib/push';
 import { supabase } from '@/src/lib/supabase';
 import { ToastProvider } from '@/src/lib/toast';
@@ -87,6 +88,8 @@ function AboveTabBar({ children }: { children: React.ReactNode }) {
 }
 
 function AppShell({ reduceMotion }: { reduceMotion: boolean }) {
+  // Opening an order navigates, so this must run after the Stack below has mounted.
+  useEffect(() => listenForPushOpens(), []);
   return (
     <>
       <StatusBar style="dark" />
@@ -130,7 +133,7 @@ export default function RootLayout() {
         },
       }),
   );
-  const [loaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_600SemiBold,
     Inter_700Bold,
@@ -144,14 +147,12 @@ export default function RootLayout() {
       .catch(() => setMarket('na'));
   }, []);
 
-  const ready = loaded && !!market;
+  const ready = (fontsLoaded || !!fontError) && !!market;
   useEffect(() => {
     if (ready) {
       void SplashScreen.hideAsync();
     }
   }, [ready]);
-
-  useEffect(() => listenForPushOpens(), []);
 
   const [reduceMotion, setReduceMotion] = useState(false);
   useEffect(() => {
@@ -197,13 +198,15 @@ export default function RootLayout() {
           >
             <AuthProvider>
               <BagProvider>
-                <WishlistProvider>
-                  <OfflineProvider>
-                    <ToastProvider>
-                      <AppShell reduceMotion={reduceMotion} />
-                    </ToastProvider>
-                  </OfflineProvider>
-                </WishlistProvider>
+                <PendingPaymentProvider>
+                  <WishlistProvider>
+                    <OfflineProvider>
+                      <ToastProvider>
+                        <AppShell reduceMotion={reduceMotion} />
+                      </ToastProvider>
+                    </OfflineProvider>
+                  </WishlistProvider>
+                </PendingPaymentProvider>
               </BagProvider>
             </AuthProvider>
           </PersistQueryClientProvider>

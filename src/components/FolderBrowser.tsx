@@ -8,6 +8,7 @@ import { FolderProducts } from '@/src/components/FolderProducts';
 import { EmptyState, ErrorState, FolderCard, PathTrail, Screen, SkeletonGrid, TypeCard } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { categoryName } from '@/src/lib/categories';
+import { goBack } from '@/src/lib/navigation';
 import { space } from '@/src/theme';
 
 export type TrailStep = { key: string; name: string };
@@ -16,7 +17,7 @@ export function parseTrail(raw: string | string[] | undefined): TrailStep[] {
   if (typeof raw !== 'string' || !raw) return [];
   try {
     const parsed = JSON.parse(raw) as TrailStep[];
-    return Array.isArray(parsed) ? parsed.filter((step) => step && typeof step.key === 'string') : [];
+    return Array.isArray(parsed) ? parsed.filter((step) => step && typeof step.key === 'string' && typeof step.name === 'string') : [];
   } catch {
     return [];
   }
@@ -115,7 +116,7 @@ export function FolderBrowser({ slug, trail, leaf, audience, crumbs }: Props) {
       leaf: false,
     });
 
-  const back = { label: 'Back', onPress: () => router.back() };
+  const back = { label: 'Back', onPress: goBack };
   const productQuery = folderProductQuery(slug, current?.key, audience);
   const showProducts = leaf || (folders.data && folders.data.length === 0);
   const cells: (Folder | null)[] = visibleFolders
@@ -158,7 +159,7 @@ export function FolderBrowser({ slug, trail, leaf, audience, crumbs }: Props) {
               ) : null}
             </View>
           )}
-          ListEmptyComponent={<EmptyState message="Nothing here right now." action="Back" onPress={() => router.back()} />}
+          ListEmptyComponent={<EmptyState message="Nothing here right now." action="Back" onPress={goBack} />}
         />
       ) : null}
     </Screen>

@@ -7,13 +7,14 @@ import { ApiError, isNetworkError, NETWORK_MESSAGE } from '@/src/api/client';
 import { createPayment, openPaymentPage, waitForPaidPayment } from '@/src/api/checkout';
 import type { ShippingMethod } from '@/src/api/types';
 import { ActionSheet } from '@/src/components/settings';
-import { EmptyState, FormScroll, LabeledField, PrimaryButton, Screen } from '@/src/components/ui';
+import { EmptyState, FormScroll, LabeledField, PrimaryButton, Screen, SecondaryButton } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useAuth } from '@/src/lib/auth';
 import { useBag } from '@/src/lib/bag';
 import { vatOn } from '@/src/lib/money';
 import { openLogin } from '@/src/lib/navigation';
 import { fetchProfile, latestOrderId, waitForNewOrder } from '@/src/lib/orders';
+import { usePendingPayment } from '@/src/lib/pendingPayment';
 import { makeStyles, useTheme } from '@/src/lib/theme';
 import { fonts, radius } from '@/src/theme';
 
@@ -41,6 +42,7 @@ export default function CheckoutScreen() {
   const { sectionLabel } = useTheme();
   const styles = useStyles();
   const bag = useBag();
+  const payments = usePendingPayment();
   const profile = useQuery({
     queryKey: ['profile', session?.user.id],
     enabled: !!session?.user.id,
@@ -130,48 +132,56 @@ export default function CheckoutScreen() {
       return;
     }
 
+    await payments.start(payment.companyRef);
+
     let outcome: Awaited<ReturnType<typeof openPaymentPage>>;
     try {
       setBusy(t('checkout.openingDpo'));
       outcome = await openPaymentPage(payment.paymentUrl);
     } catch {
+      payments.finish('settled');
       setBusy(null);
       setError("Can't open the payment page.");
       return;
     }
 
     if (outcome === 'cancel') {
+      payments.finish('settled');
       setBusy(null);
       router.replace({ pathname: '/checkout/result', params: { status: 'cancel' } });
       return;
     }
 
     setBusy('Checking your order');
-    const paymentStatus = await waitForPaidPayment(payment.companyRef);
+    let paymentStatus: Awaited<ReturnType<typeof waitForPaidPayment>> = null;
+    let fallbackOrderId: string | null = null;
+    try {
+      paymentStatus = await waitForPaidPayment(payment.companyRef);
+      if (!paymentStatus && previousOrder !== undefined) fallbackOrderId = await waitForNewOrder(previousOrder);
+    } catch {
+      // Treated as unconfirmed below; the saved payment is checked again when the app returns to the foreground.
+    }
+    setBusy(null);
     if (paymentStatus?.status === 'cancelled') {
-      setBusy(null);
+      payments.finish('settled');
       router.replace({ pathname: '/checkout/result', params: { status: 'cancel' } });
       return;
     }
     if (paymentStatus?.status === 'failed' || paymentStatus?.status === 'error') {
-      setBusy(null);
+      payments.finish('settled');
       router.replace({ pathname: '/checkout/result', params: { status: 'failed' } });
       return;
     }
-    const fallbackOrderId =
-      !paymentStatus && previousOrder !== undefined
-        ? await waitForNewOrder(previousOrder)
-        : null;
-    const orderId = paymentStatus?.orderId ?? fallbackOrderId;
-    setBusy(null);
     if (paymentStatus?.status === 'paid' || fallbackOrderId) {
+      payments.finish('settled');
       bag.clear();
       router.replace({
         pathname: '/checkout/result',
-        params: { status: 'paid', ref: payment.companyRef ?? '', orderId: orderId ?? '' },
+        params: { status: 'paid', ref: payment.companyRef ?? '', orderId: paymentStatus?.orderId ?? fallbackOrderId ?? '' },
       });
       return;
     }
+    payments.finish('unknown');
     router.replace({ pathname: '/checkout/result', params: { status: 'unknown' } });
   };
 
@@ -281,7 +291,22 @@ export default function CheckoutScreen() {
           <Text style={styles.hint}>{t('checkout.totalsNote')}</Text>
         </View>
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <PrimaryButton label={busy ?? t('checkout.payDpo')} disabled={!canPay || !!busy} onPress={pay} />
+        {payments.pending && !busy ? (
+          <View style={styles.pending}>
+            <Text style={styles.pendingTitle}>{t('payment.pendingTitle')}</Text>
+            <Text style={styles.pendingBody}>{t('payment.pendingBody')}</Text>
+            <SecondaryButton
+              label={t('payment.checkAgain')}
+              disabled={payments.checking}
+              onPress={() => void payments.recheck()}
+            />
+          </View>
+        ) : null}
+        <PrimaryButton
+          label={busy ?? (payments.pending ? t('payment.payAgain') : t('checkout.payDpo'))}
+          disabled={!canPay || !!busy || payments.checking}
+          onPress={pay}
+        />
       </FormScroll>
       <ActionSheet
         visible={countryOpen}
@@ -352,4 +377,7 @@ const useStyles = makeStyles(({ colors }) => ({
   bold: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.text },
   hint: { fontFamily: fonts.body, fontSize: 12, color: colors.muted, marginTop: 4, marginBottom: 6 },
   error: { fontFamily: fonts.body, fontSize: 14, color: colors.danger, marginBottom: 6 },
+  pending: { gap: 8, padding: 16, borderRadius: radius.card, backgroundColor: colors.surface, marginBottom: 6 },
+  pendingTitle: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.warn },
+  pendingBody: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.text },
 }));

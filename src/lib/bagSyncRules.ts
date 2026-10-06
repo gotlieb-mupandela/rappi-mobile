@@ -44,10 +44,8 @@ function parseLine(line: unknown): BagLine | null {
   if (!line || typeof line !== 'object') return null;
   const value = line as Record<string, unknown>;
   if (
-    typeof value.code !== 'string' ||
+    !isText(value.code) ||
     typeof value.size !== 'string' ||
-    typeof value.name !== 'string' ||
-    typeof value.imageUrl !== 'string' ||
     typeof value.qty !== 'number' ||
     !Number.isFinite(value.qty) ||
     value.qty <= 0 ||
@@ -61,8 +59,9 @@ function parseLine(line: unknown): BagLine | null {
     code: value.code,
     size: value.size,
     qty: clampQty(value.qty),
-    name: value.name,
-    imageUrl: value.imageUrl,
+    // Products without a name or photo are still sold; dropping the line here would also delete it from the account bag.
+    name: isText(value.name) ? value.name : value.code,
+    imageUrl: typeof value.imageUrl === 'string' ? value.imageUrl : '',
     price: value.price,
     id: isText(value.id) ? value.id : undefined,
   };

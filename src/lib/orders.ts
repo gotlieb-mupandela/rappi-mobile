@@ -29,8 +29,8 @@ export type Order = {
   order_items?: OrderItem[];
 };
 
-export function orderStatusLabel(status: string, language: 'en' | 'fr' = 'en'): string | null {
-  if (status === 'stock_short') return null;
+export function orderStatusLabel(status: string | null | undefined, language: 'en' | 'fr' = 'en'): string | null {
+  if (!status || status === 'stock_short') return null;
   if (language === 'fr') {
     if (status === 'reserved') return 'Reçue';
     if (status === 'preparing') return 'En préparation';

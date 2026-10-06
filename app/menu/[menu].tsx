@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet } from 'react-native';
 import { MenuGrid } from '@/src/components/MenuGrid';
 import { EmptyState, PathTrail, Screen } from '@/src/components/ui';
 import { findMenu, parseMenuPath, resolveMenuPath } from '@/src/lib/menus';
+import { goBack } from '@/src/lib/navigation';
 import { space } from '@/src/theme';
 
 export default function MenuScreen() {
@@ -15,7 +16,7 @@ export default function MenuScreen() {
   if (!menu || !resolved) {
     return (
       <Screen title="Shop" back>
-        <EmptyState message="This page isn't available." action="Back" onPress={() => router.back()} />
+        <EmptyState message="This page isn't available." action="Back" onPress={goBack} />
       </Screen>
     );
   }

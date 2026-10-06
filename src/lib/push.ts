@@ -126,7 +126,14 @@ function openOrderFrom(response: Notifications.NotificationResponse | null): voi
 
 export function listenForPushOpens(): () => void {
   if (Platform.OS === 'web') return () => undefined;
-  void Notifications.getLastNotificationResponseAsync().then(openOrderFrom);
+  // Cleared once handled so the same tap doesn't reopen the order on every later launch.
+  void Notifications.getLastNotificationResponseAsync()
+    .then((response) => {
+      if (!response) return;
+      openOrderFrom(response);
+      return Notifications.clearLastNotificationResponseAsync();
+    })
+    .catch(() => undefined);
   const sub = Notifications.addNotificationResponseReceivedListener(openOrderFrom);
   return () => sub.remove();
 }

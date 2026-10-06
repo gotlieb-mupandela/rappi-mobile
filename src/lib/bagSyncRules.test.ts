@@ -27,6 +27,13 @@ test('reads the old bare-array format as a guest bag', () => {
   assert.deepEqual(state.lines.map((line) => line.code), ['A.1']);
 });
 
+test('keeps lines for products without a photo or name', () => {
+  const state = parseStoredBag([{ ...shirt, imageUrl: null, name: null }]);
+  assert.equal(state.lines.length, 1);
+  assert.equal(state.lines[0].imageUrl, '');
+  assert.equal(state.lines[0].name, 'A.1');
+});
+
 test('guest changes stay local and are not queued for upload', () => {
   assert.deepEqual(withLines(EMPTY_BAG, [shirt]).pending, []);
 });

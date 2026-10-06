@@ -75,7 +75,8 @@ export function hubImage(slug: string): string | undefined {
   return HOME_TILES.find((tile) => tile.href === `/category/${slug}`)?.image;
 }
 
-export function categoryName(slug: string, language: 'en' | 'fr' = 'en'): string {
+export function categoryName(slug: string | null | undefined, language: 'en' | 'fr' = 'en'): string {
+  if (!slug) return '';
   const names = language === 'fr' ? CATEGORY_NAMES_FR : CATEGORY_NAMES;
   if (names[slug]) return names[slug];
   return slug

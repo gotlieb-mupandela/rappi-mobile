@@ -81,6 +81,10 @@ export const fr = {
     viewOrder: 'Voir la commande',
     keepShopping: 'Continuer mes achats',
     backToBag: 'Retour au panier',
+    pendingTitle: 'Paiement en cours de confirmation',
+    pendingBody: 'Si vous avez déjà payé, votre commande apparaîtra bientôt dans vos commandes. Payer à nouveau pourrait vous débiter deux fois.',
+    checkAgain: 'Vérifier à nouveau',
+    payAgain: 'Payer à nouveau',
   },
   home: {
     teamwear: 'Tenues d’équipe',

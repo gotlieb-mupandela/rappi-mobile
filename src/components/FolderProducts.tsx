@@ -40,7 +40,7 @@ export function sectionProducts(products: Product[], facets: CatalogPage['facets
       ? key
       : key === 'general'
         ? 'More'
-        : (facets?.subs.find((sub) => sub.slug === key)?.name ?? titleCase(key.replace(/-/g, ' ')));
+        : (facets?.subs?.find((sub) => sub.slug === key)?.name ?? titleCase(key.replace(/-/g, ' ')));
     const section = sections.get(key) ?? { key, title, products: [] };
     section.products.push(product);
     sections.set(key, section);

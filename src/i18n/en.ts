@@ -73,6 +73,10 @@ export const en = {
     viewOrder: 'View order',
     keepShopping: 'Keep shopping',
     backToBag: 'Back to bag',
+    pendingTitle: 'Payment still being confirmed',
+    pendingBody: "If you already paid, your order will appear in Orders shortly. Paying again could charge you twice.",
+    checkAgain: 'Check again',
+    payAgain: 'Pay again',
   },
   home: {
     teamwear: 'Teamwear',

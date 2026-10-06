@@ -11,6 +11,12 @@ export function authErrorMessage(error: AuthError | Error | unknown): string {
   return message || "Can't reach the store. Try again.";
 }
 
+/** Back, or Home when the screen was opened from a link with nothing behind it. */
+export function goBack(): void {
+  if (router.canGoBack()) router.back();
+  else router.replace('/');
+}
+
 export function openLogin(returnTo?: string): void {
   const safeReturnTo = internalPath(returnTo);
   router.push(safeReturnTo ? { pathname: '/auth/login', params: { returnTo: safeReturnTo } } : '/auth/login');
