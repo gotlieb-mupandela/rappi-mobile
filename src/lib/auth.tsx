@@ -1,7 +1,10 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Session, User } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
+import { clearLocalSession } from '@/src/lib/localSession';
+import { queryPersister } from '@/src/lib/queryPersister';
 import { supabase } from '@/src/lib/supabase';
 import { forgetPushRegistration, registerPushIfNeeded } from '@/src/lib/push';
 
@@ -42,9 +45,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = supabase.auth.onAuthStateChange((event, next) => {
       const nextUserId = next?.user.id ?? null;
       if (userId.current !== nextUserId) {
-        queryClient.removeQueries({ queryKey: ['orders'] });
-        queryClient.removeQueries({ queryKey: ['order'] });
-        queryClient.removeQueries({ queryKey: ['profile'] });
+        if (event === 'SIGNED_OUT') {
+          void clearLocalSession({
+            clearQueries: () => queryClient.clear(),
+            removePersistedQueries: () => queryPersister.removeClient(),
+            removeItems: (keys) => AsyncStorage.multiRemove([...keys]),
+          }).catch(() => undefined);
+        } else {
+          queryClient.removeQueries({ queryKey: ['orders'] });
+          queryClient.removeQueries({ queryKey: ['order'] });
+          queryClient.removeQueries({ queryKey: ['profile'] });
+        }
         userId.current = nextUserId;
       }
       setSession(next);

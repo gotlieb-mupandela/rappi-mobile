@@ -19,11 +19,12 @@ import {
   type SentLine,
 } from '@/src/lib/bagSyncRules';
 import { createQueuedJsonWriter, readStoredJson } from '@/src/lib/deviceStorage';
+import { BAG_STORAGE_KEY } from '@/src/lib/localSession';
 import { supabase } from '@/src/lib/supabase';
 
 export type { BagLine } from '@/src/lib/bagSyncRules';
 
-const KEY = 'bag';
+const KEY = BAG_STORAGE_KEY;
 const writeBag = createQueuedJsonWriter(KEY);
 const FOREIGN_KEY_VIOLATION = '23503';
 

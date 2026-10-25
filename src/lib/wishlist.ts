@@ -4,6 +4,7 @@ import { AppState } from 'react-native';
 
 import { useAuth } from '@/src/lib/auth';
 import { createQueuedJsonWriter, readStoredJson } from '@/src/lib/deviceStorage';
+import { WISHLIST_STORAGE_KEY } from '@/src/lib/localSession';
 import { successHaptic, tapHaptic } from '@/src/lib/haptics';
 import { supabase } from '@/src/lib/supabase';
 import { useToast } from '@/src/lib/toast';
@@ -25,7 +26,7 @@ import {
 
 export type { WishlistEntry } from '@/src/lib/wishlistRules';
 
-const KEY = 'wishlist';
+const KEY = WISHLIST_STORAGE_KEY;
 const writeWishlist = createQueuedJsonWriter(KEY);
 const FOREIGN_KEY_VIOLATION = '23503';
 
