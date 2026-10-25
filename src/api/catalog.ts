@@ -1,5 +1,15 @@
 import { apiFetch, isRouteMissing } from '@/src/api/client';
 import type { CatalogPage, CatalogQuery, Folder, FoldersResponse, NavResponse, Product } from '@/src/api/types';
+import { canonicalFolderSlug, folderQueryFields } from '@/src/lib/folderSlugs';
+
+/** Folder, nav, hub type, and subs facet queries. Refetch on mount and foreground once older than this. */
+export const CATALOG_STRUCTURE_STALE_MS = 10 * 60 * 1000;
+
+export const catalogStructureQuery = {
+  staleTime: CATALOG_STRUCTURE_STALE_MS,
+  refetchOnMount: true,
+  refetchOnWindowFocus: true,
+} as const;
 
 export function visibleProduct(product: Product): boolean {
   return product.available !== false && product.code !== 'DPO-TEST';
@@ -15,8 +25,8 @@ function queryString(params: CatalogQuery): string {
   const search = new URLSearchParams();
   if (params.q) search.set('q', params.q);
   if (params.cat) search.set('cat', params.cat);
-  if (params.sub) search.set('sub', params.sub);
-  if (params.group) search.set('group', params.group);
+  if (params.sub) search.set('sub', canonicalFolderSlug(params.sub));
+  if (params.group) search.set('group', canonicalFolderSlug(params.group));
   if (params.size) search.set('size', params.size);
   if (params.audience) search.set('audience', params.audience);
   if (params.max != null) search.set('max', String(params.max));
@@ -74,7 +84,9 @@ export function isSearchFolder(key: string): boolean {
 
 /** `sub:<slug>` for a whole subcategory, `sub:<slug>@<group>` for a subcategory inside a group (Jackets → Hoodies). */
 export function subFolderKey(sub: string, group?: string): string {
-  return group ? `${SUB_PREFIX}${sub}@${group}` : `${SUB_PREFIX}${sub}`;
+  const slug = canonicalFolderSlug(sub);
+  const folder = group ? canonicalFolderSlug(group) : undefined;
+  return folder ? `${SUB_PREFIX}${slug}@${folder}` : `${SUB_PREFIX}${slug}`;
 }
 
 export function searchFolderKey(q: string): string {
@@ -88,12 +100,7 @@ export function folderProductQuery(
 ): Pick<CatalogQuery, 'cat' | 'group' | 'sub' | 'q' | 'audience'> {
   const base = audience ? { cat, audience } : { cat };
   if (!key || key === ALL_FOLDER) return base;
-  if (isSubFolder(key)) {
-    const [sub, group] = key.slice(SUB_PREFIX.length).split('@');
-    return group ? { ...base, sub, group } : { ...base, sub };
-  }
-  if (isSearchFolder(key)) return { ...base, q: key.slice(SEARCH_PREFIX.length) };
-  return { ...base, group: key };
+  return { ...base, ...folderQueryFields(key) };
 }
 
 /** The website's names for the catalog's base product groups. */
@@ -154,7 +161,7 @@ export async function fetchFolders(cat: string, group?: string): Promise<Folder[
   if (group === ALL_FOLDER) group = undefined;
   if (group && (isSubFolder(group) || isSearchFolder(group))) return [];
   const search = new URLSearchParams({ cat });
-  if (group) search.set('group', group);
+  if (group) search.set('group', canonicalFolderSlug(group));
   try {
     const data = await apiFetch<FoldersResponse>(`/api/catalog/folders?${search.toString()}`);
     return (data.folders ?? []).filter((folder) => folder.count > 0);

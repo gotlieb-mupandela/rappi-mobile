@@ -2,13 +2,15 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { fetchFolderCatalog, fetchSiteFolders, folderProductQuery, isSubFolder } from '@/src/api/catalog';
+import { catalogStructureQuery, fetchFolderCatalog, fetchSiteFolders, folderProductQuery, isSubFolder } from '@/src/api/catalog';
 import type { Folder } from '@/src/api/types';
 import { FolderProducts } from '@/src/components/FolderProducts';
 import { EmptyState, ErrorState, FolderCard, PathTrail, Screen, SkeletonGrid, TypeCard } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { categoryName } from '@/src/lib/categories';
+import { canonicalFolderKey, isFlowFolderKey } from '@/src/lib/folderSlugs';
 import { goBack } from '@/src/lib/navigation';
+import { useFlowFolderLabel } from '@/src/lib/useFlowFolderLabel';
 import { space } from '@/src/theme';
 
 export type TrailStep = { key: string; name: string };
@@ -45,12 +47,13 @@ type OpenFolder = {
 };
 
 export function openCatalogFolder({ cat, folder, name, audience, crumbs, trail = [], leaf = false }: OpenFolder) {
+  const folderKey = canonicalFolderKey(folder);
   router.push({
     pathname: '/category/[slug]/[group]',
     params: {
       slug: cat,
-      group: folder,
-      trail: JSON.stringify([...trail, { key: folder, name }]),
+      group: folderKey,
+      trail: JSON.stringify([...trail, { key: folderKey, name }]),
       leaf: leaf ? '1' : '0',
       ...(audience ? { audience } : {}),
       ...(crumbs ? { crumbs: JSON.stringify(crumbs) } : {}),
@@ -73,14 +76,19 @@ export function FolderBrowser({ slug, trail, leaf, audience, crumbs }: Props) {
   const { folderName, market } = useLocale();
   const language = market === 'eu' ? 'fr' : 'en';
   const current = trail[trail.length - 1];
-  const title = current ? folderName(current.key, current.name) : categoryName(slug, language);
+  const flowLabel = useFlowFolderLabel(
+    slug,
+    trail.some((step) => isFlowFolderKey(step.key)),
+  );
+  const stepName = (step: TrailStep) => (isFlowFolderKey(step.key) ? flowLabel : step.name);
+  const title = current ? folderName(current.key, stepName(current)) : categoryName(slug, language);
   const rootCrumbs = crumbs ?? [categoryName(slug, language)];
 
   const folders = useQuery({
     queryKey: ['site-folders', slug, current?.key ?? null, audience ?? null],
     queryFn: () => fetchSiteFolders(slug, current?.key, audience),
     enabled: !leaf,
-    staleTime: 60_000,
+    ...catalogStructureQuery,
   });
   const coverQuery = (folder: Folder) => folderProductQuery(folder.cat ?? slug, folder.key, audience);
   // Folder counts ignore the audience, so for Men / Women / Kids hide folders with nothing for that audience.
@@ -96,7 +104,7 @@ export function FolderBrowser({ slug, trail, leaf, audience, crumbs }: Props) {
   });
   const visibleFolders = folders.data?.filter((_, index) => !audience || audienceCounts[index]?.data?.total !== 0);
 
-  const labels = [...rootCrumbs, ...trail.map((step) => folderName(step.key, step.name))];
+  const labels = [...rootCrumbs, ...trail.map((step) => folderName(step.key, stepName(step)))];
   const parts = labels.map((label, index) => {
     const pops = labels.length - 1 - index;
     return {
@@ -105,11 +113,13 @@ export function FolderBrowser({ slug, trail, leaf, audience, crumbs }: Props) {
     };
   });
 
+  const folderLabel = (folder: Folder) =>
+    isFlowFolderKey(folder.key) ? flowLabel : folderName(folder.key, folder.name);
   const openFolder = (folder: Folder) =>
     openCatalogFolder({
       cat: folder.cat ?? slug,
       folder: folder.key,
-      name: folderName(folder.key, folder.name),
+      name: folderLabel(folder),
       audience,
       crumbs,
       trail,
@@ -151,7 +161,7 @@ export function FolderBrowser({ slug, trail, leaf, audience, crumbs }: Props) {
             <View style={styles.cell}>
               {item ? (
                 <CoverFolderTile
-                  name={folderName(item.key, item.name)}
+                  name={folderLabel(item)}
                   imageUrl={item.imageUrl}
                   coverQuery={coverQuery(item)}
                   onPress={() => openFolder(item)}

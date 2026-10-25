@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { ALL_FOLDER, fetchCatalog, fetchHubTypes, fetchNav, subFolderKey } from '@/src/api/catalog';
+import { ALL_FOLDER, catalogStructureQuery, fetchCatalog, fetchHubTypes, fetchNav, subFolderKey } from '@/src/api/catalog';
 import { openCatalogFolder } from '@/src/components/FolderBrowser';
 import { MenuGrid } from '@/src/components/MenuGrid';
 import { ProductCard } from '@/src/components/ProductCard';
@@ -32,7 +32,7 @@ export function CategoryHub({ slug }: { slug: string }) {
   const styles = useStyles();
   const name = categoryName(slug, market === 'eu' ? 'fr' : 'en');
 
-  const nav = useQuery({ queryKey: ['catalog-nav'], queryFn: fetchNav, staleTime: 60_000 });
+  const nav = useQuery({ queryKey: ['catalog-nav'], queryFn: fetchNav, ...catalogStructureQuery });
   const overview = useQuery({
     queryKey: ['hub-overview', slug, RAIL_SIZE],
     queryFn: () => fetchCatalog({ cat: slug, pageSize: RAIL_SIZE }),
@@ -43,7 +43,7 @@ export function CategoryHub({ slug }: { slug: string }) {
     queryKey: ['hub-types', slug],
     queryFn: () => fetchHubTypes(slug),
     enabled: !staticTypes,
-    staleTime: 60_000,
+    ...catalogStructureQuery,
   });
   const athletes = useQueries({
     queries: ATHLETES.map((athlete) => ({

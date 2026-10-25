@@ -1,3 +1,5 @@
+import { canonicalFolderSlug } from './folderSlugs.ts';
+
 export const CATEGORY_NAMES: Record<string, string> = {
   sportswear: 'Sportswear',
   shoes: 'Shoes',
@@ -79,7 +81,9 @@ export function categoryName(slug: string | null | undefined, language: 'en' | '
   if (!slug) return '';
   const names = language === 'fr' ? CATEGORY_NAMES_FR : CATEGORY_NAMES;
   if (names[slug]) return names[slug];
-  return slug
+  const key = canonicalFolderSlug(slug);
+  if (key !== slug && names[key]) return names[key];
+  return key
     .split('-')
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
