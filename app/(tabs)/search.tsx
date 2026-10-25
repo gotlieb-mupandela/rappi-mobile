@@ -3,14 +3,17 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
+import { fetchSearch } from '@/src/api/catalog';
 import { ProductGrid } from '@/src/components/ProductGrid';
 import { Screen } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
+import { legacyUiEnabled } from '@/src/lib/legacyUi';
 import { makeStyles, useTheme } from '@/src/lib/theme';
 import { fonts, radius, space } from '@/src/theme';
 
 export default function SearchScreen() {
   const { t } = useLocale();
+  const parity = !legacyUiEnabled();
   const { colors } = useTheme();
   const styles = useStyles();
   const input = useRef<TextInput>(null);
@@ -53,11 +56,23 @@ export default function SearchScreen() {
         ) : null}
       </View>
       {query ? (
-        <ProductGrid query={{ q: query }} emptyMessage={t('search.noMatches', { query })} />
+        <ProductGrid
+          query={{ q: query }}
+          emptyMessage={t('search.noMatches', { query })}
+          loader={parity ? fetchSearch : undefined}
+          source={parity ? 'search' : undefined}
+          heading={parity ? (total) => t.plural('search.pieces', total) : undefined}
+        />
       ) : (
         <View style={styles.prompt}>
-          <Text style={styles.promptTitle}>{t('search.promptTitle')}</Text>
-          <Text style={styles.promptBody}>{t('search.promptBody')}</Text>
+          {parity ? (
+            <Text style={styles.promptBody}>{t('search.descriptionEmpty')}</Text>
+          ) : (
+            <>
+              <Text style={styles.promptTitle}>{t('search.promptTitle')}</Text>
+              <Text style={styles.promptBody}>{t('search.promptBody')}</Text>
+            </>
+          )}
         </View>
       )}
     </Screen>

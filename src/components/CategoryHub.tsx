@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { ALL_FOLDER, fetchCatalog, fetchHubTypes, fetchNav, subFolderKey } from '@/src/api/catalog';
+import { useStorefront } from '@/src/api/storefront';
 import { openCatalogFolder } from '@/src/components/FolderBrowser';
 import { MenuGrid } from '@/src/components/MenuGrid';
 import { ProductCard } from '@/src/components/ProductCard';
@@ -30,6 +31,7 @@ export function CategoryHub({ slug }: { slug: string }) {
   const { folderName, market, t } = useLocale();
   const { colors } = useTheme();
   const styles = useStyles();
+  const storefront = useStorefront();
   const name = categoryName(slug, market === 'eu' ? 'fr' : 'en');
 
   const nav = useQuery({ queryKey: ['catalog-nav'], queryFn: fetchNav, staleTime: 60_000 });
@@ -59,7 +61,8 @@ export function CategoryHub({ slug }: { slug: string }) {
     (folders.data ?? []).map((folder) => ({ key: folder.key, name: folderName(folder.key, folder.name), image: folder.imageUrl, folder: folder.key }));
   const subs = nav.data?.taxonomy?.[slug] ?? [];
   const products = overview.data?.products ?? [];
-  const heroImage = hubImage(slug) ?? sizedImage(products[0]?.imageUrl, IMAGE_WIDTH.full);
+  const hubCover = storefront.data?.hubCovers[slug];
+  const heroImage = (hubCover ? sizedImage(hubCover, IMAGE_WIDTH.full) : undefined) ?? hubImage(slug) ?? sizedImage(products[0]?.imageUrl, IMAGE_WIDTH.full);
   const shopAll = () => openCatalogFolder({ cat: slug, folder: ALL_FOLDER, name: 'Shop all', crumbs, leaf: true });
   const openAthlete = (audience: string, label: string) => {
     if (slug === 'shoes') {
@@ -158,7 +161,11 @@ export function CategoryHub({ slug }: { slug: string }) {
             <SectionHeader title="Shop by athlete" />
             <View style={[styles.athletes, styles.padded]}>
               {athleteCards.map((athlete) => {
-                const image = menuImage(AUDIENCE_IMAGES[athlete.slug]) ?? sizedImage(athlete.data?.products[0]?.imageUrl, IMAGE_WIDTH.card);
+                const audienceCover = storefront.data?.hubCovers[athlete.slug];
+                const image =
+                  (audienceCover ? sizedImage(audienceCover, IMAGE_WIDTH.card) : undefined) ??
+                  menuImage(AUDIENCE_IMAGES[athlete.slug]) ??
+                  sizedImage(athlete.data?.products[0]?.imageUrl, IMAGE_WIDTH.card);
                 return (
                   <View key={athlete.slug} style={styles.athlete}>
                     <PressableScale

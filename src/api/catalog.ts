@@ -1,4 +1,4 @@
-import { apiFetch, isRouteMissing } from '@/src/api/client';
+import { ApiError, apiFetch, isRouteMissing } from '@/src/api/client';
 import type { CatalogPage, CatalogQuery, Folder, FoldersResponse, NavResponse, Product } from '@/src/api/types';
 
 export function visibleProduct(product: Product): boolean {
@@ -30,6 +30,21 @@ export async function fetchCatalog(params: CatalogQuery): Promise<CatalogPage> {
   return {
     ...page,
     products: (page.products ?? []).filter(visibleProduct),
+  };
+}
+
+/** Website search: `/api/search` wraps a catalog page in `listing`. */
+export async function fetchSearch(params: CatalogQuery): Promise<CatalogPage> {
+  const payload = await apiFetch<{ listing?: CatalogPage }>(`/api/search?${queryString(params)}`, {
+    fallbackMessage: "Can't load the shop",
+  });
+  const page = payload.listing;
+  if (!page || !Array.isArray(page.products)) {
+    throw new ApiError("Can't load the shop", 502);
+  }
+  return {
+    ...page,
+    products: page.products.filter(visibleProduct),
   };
 }
 

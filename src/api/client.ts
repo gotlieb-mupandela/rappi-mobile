@@ -59,11 +59,13 @@ type FetchOptions = {
   fallbackMessage?: string;
   timeoutMs?: number;
   cache?: RequestCache;
+  /** Defaults to JSON. Invoice download asks for a PDF. */
+  accept?: string;
 };
 
 async function rawFetch(path: string, options: FetchOptions, token: string | null): Promise<Response> {
   const headers: Record<string, string> = {
-    Accept: 'application/json',
+    Accept: options.accept ?? 'application/json',
   };
   if (options.body !== undefined) {
     headers['Content-Type'] = 'application/json';
@@ -101,8 +103,7 @@ export function isNetworkError(error: unknown): boolean {
   return error instanceof ApiError && error.status === 0;
 }
 
-export async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
-  const fallback = options.fallbackMessage ?? "Can't load the shop";
+async function fetchResponse(path: string, options: FetchOptions): Promise<Response> {
   let token = options.auth ? await accessToken() : null;
   let response = await rawFetch(path, options, token);
 
@@ -119,6 +120,17 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
       throw new ApiError('Please sign in.', 401);
     }
   }
+  return response;
+}
+
+/** Authenticated store request, without parsing the body. Used for the invoice PDF. */
+export function authorizedResponse(path: string, options: Omit<FetchOptions, 'auth'> = {}): Promise<Response> {
+  return fetchResponse(path, { ...options, auth: true });
+}
+
+export async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
+  const fallback = options.fallbackMessage ?? "Can't load the shop";
+  const response = await fetchResponse(path, options);
 
   const json = await readJson<T & { error?: string }>(response, fallback);
   if (!response.ok) {

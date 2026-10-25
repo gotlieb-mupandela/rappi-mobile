@@ -21,11 +21,11 @@ export function openSitePage(page: SitePage): void {
   void WebBrowser.openBrowserAsync(`${shopUrl()}/${page}`, { dismissButtonStyle: 'close' }).catch(() => undefined);
 }
 
-export function openWhatsApp(): void {
-  void Linking.openURL(`https://wa.me/${SUPPORT_WHATSAPP}`).catch(() => undefined);
+export function openWhatsApp(prefill?: string): void {
+  const text = prefill ? `?text=${encodeURIComponent(prefill)}` : '';
+  void Linking.openURL(`https://wa.me/${SUPPORT_WHATSAPP}${text}`).catch(() => undefined);
 }
 
-export function openSupportEmail(): void {
-  const subject = encodeURIComponent('RAPPI Sports Hub enquiry');
-  void Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${subject}`).catch(() => undefined);
+export function openSupportEmail(subject = 'RAPPI Sports Hub enquiry'): void {
+  void Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}`).catch(() => undefined);
 }

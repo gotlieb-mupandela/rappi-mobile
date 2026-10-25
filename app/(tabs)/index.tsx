@@ -2,11 +2,13 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { useStorefront } from '@/src/api/storefront';
 import { WishlistNavButton } from '@/src/components/HeartButton';
 import { Screen } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { categoryName, HOME_TILES } from '@/src/lib/categories';
 import { tapHaptic } from '@/src/lib/haptics';
+import { sizedImage } from '@/src/lib/images';
 import { makeStyles } from '@/src/lib/theme';
 import { fonts, space } from '@/src/theme';
 
@@ -15,6 +17,7 @@ const SCRIM_STEPS = [55, 48, 42, 36, 31, 26, 22, 18, 14, 10] as const;
 export default function HomeScreen() {
   const { market, t } = useLocale();
   const styles = useStyles();
+  const storefront = useStorefront();
   const language = market === 'eu' ? 'fr' : 'en';
   const tileLabel = (key: string, fallback: string) => {
     if (key === 'teamwear') return t('home.teamwear');
@@ -30,6 +33,8 @@ export default function HomeScreen() {
           {HOME_TILES.map((tile) => {
             const light = tile.tone === 'light';
             const label = tileLabel(tile.key, tile.label);
+            const remote = storefront.data?.homeTiles[tile.key];
+            const image = remote ? sizedImage(remote, tile.span === 'full' ? 1080 : 828) ?? tile.image : tile.image;
             return (
               <Pressable
                 key={tile.key}
@@ -45,7 +50,7 @@ export default function HomeScreen() {
                   light && styles.tileLight,
                   pressed && styles.tilePressed,
                 ]}>
-                <Image source={{ uri: tile.image }} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={250} />
+                <Image source={{ uri: image }} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={250} />
                 {light
                   ? null
                   : SCRIM_STEPS.map((height) => (
