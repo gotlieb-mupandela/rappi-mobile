@@ -10,12 +10,24 @@ import type { ShippingMethod } from '@/src/api/types';
 import { ActionSheet } from '@/src/components/settings';
 import { EmptyState, FormScroll, LabeledField, PrimaryButton, Screen, SecondaryButton } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
+import type { Market } from '@/src/i18n/market';
 import { useAuth } from '@/src/lib/auth';
 import { useBag } from '@/src/lib/bag';
+import { SERVER_QUOTE_CHECKOUT } from '@/src/lib/flags';
 import { vatOn } from '@/src/lib/money';
 import { openLogin } from '@/src/lib/navigation';
 import { fetchProfile } from '@/src/lib/orders';
 import { usePendingPayment } from '@/src/lib/pendingPayment';
+import {
+  formatQuotedAmount,
+  payBlockedForQuote,
+  payableDisplay,
+  plainText,
+  quoteFailureText,
+  type CheckoutQuote,
+  type QuoteFailureCode,
+} from '@/src/lib/serverQuote';
+import { useCheckoutQuote } from '@/src/lib/useServerQuote';
 import { makeStyles, useTheme } from '@/src/lib/theme';
 import { fonts, radius } from '@/src/theme';
 
@@ -77,10 +89,6 @@ export default function CheckoutScreen() {
     setEmail((current) => current || profile.data?.email || session.user.email || '');
   }, [profile.data, profile.isPending, session]);
 
-  const shippingCost = SHIPPING.find((item) => item.id === shipping)?.cost ?? 100;
-  const vatRate = COUNTRIES.find(([name]) => name === country)?.[1] ?? 15;
-  const vat = vatOn(bag.subtotal + shippingCost, vatRate);
-  const total = bag.subtotal + shippingCost + vat;
   const pickup = shipping === 'pickup';
 
   const canPay = useMemo(() => {
@@ -89,7 +97,29 @@ export default function CheckoutScreen() {
     return bag.lines.length > 0;
   }, [address, bag.lines.length, city, email, name, phone, pickup]);
 
+  const quoteLines = useMemo(
+    () => bag.lines.map((line) => ({ code: line.code, size: line.size, qty: line.qty })),
+    [bag.lines],
+  );
+  const quote = useCheckoutQuote({
+    enabled: SERVER_QUOTE_CHECKOUT,
+    lines: quoteLines,
+    shippingMethod: shipping,
+    country,
+    formReady: canPay,
+  });
+  const quoteCurrent = quote.inputKey === quote.requestKey;
+  const payBlocked = payBlockedForQuote({
+    enabled: SERVER_QUOTE_CHECKOUT,
+    formReady: canPay,
+    status: quoteCurrent ? quote.status : 'loading',
+    quoteKey: quoteCurrent ? quote.quoteKey : null,
+    inputKey: quote.requestKey,
+    freshForPay: quoteCurrent && quote.freshForPay,
+  });
+
   const pay = async () => {
+    if (payBlocked) return;
     if (!session) {
       openLogin('/checkout');
       return;
@@ -203,7 +233,7 @@ export default function CheckoutScreen() {
                   <View style={[styles.radio, selected && styles.radioOn]}>{selected ? <View style={styles.radioDot} /> : null}</View>
                   <Text style={styles.shipLabel}>{t(item.labelKey)}</Text>
                 </View>
-                <Text style={styles.shipCost}>{formatMoney(item.cost)}</Text>
+                {SERVER_QUOTE_CHECKOUT ? null : <Text style={styles.shipCost}>{formatMoney(item.cost)}</Text>}
               </Pressable>
             );
           })}
@@ -240,12 +270,17 @@ export default function CheckoutScreen() {
 
         <Text style={[sectionLabel, styles.block]}>{t('checkout.summary').toUpperCase()}</Text>
         <View style={styles.section}>
-          <Row label={t('checkout.merchandise')} value={formatMoney(bag.subtotal)} />
-          <Row label={t('checkout.shipping')} value={formatMoney(shippingCost)} />
-          <Row label={t('checkout.vat', { rate: vatRate })} value={formatMoney(vat)} />
-          <View style={styles.divider} />
-          <Row label={t('checkout.total')} value={formatMoney(total)} bold />
-          <Text style={styles.hint}>{t('checkout.totalsNote')}</Text>
+          {SERVER_QUOTE_CHECKOUT ? (
+            <ServerQuoteSummary
+              status={quoteCurrent ? quote.status : 'loading'}
+              data={quoteCurrent ? quote.data : null}
+              failureCode={quote.failureCode}
+              market={market}
+              onRetry={quote.retry}
+            />
+          ) : (
+            <ClientTotals subtotal={bag.subtotal} shipping={shipping} country={country} />
+          )}
         </View>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {payments.pending && !busy ? (
@@ -261,7 +296,7 @@ export default function CheckoutScreen() {
         ) : null}
         <PrimaryButton
           label={busy ?? (payments.pending ? t('payment.payAgain') : t('checkout.payDpo'))}
-          disabled={!canPay || !!busy || payments.checking}
+          disabled={payBlocked || !!busy || payments.checking}
           onPress={pay}
         />
       </FormScroll>
@@ -276,6 +311,68 @@ export default function CheckoutScreen() {
         }))}
       />
     </Screen>
+  );
+}
+
+function ClientTotals({ subtotal, shipping, country }: { subtotal: number; shipping: ShippingMethod; country: string }) {
+  const { formatMoney, t } = useLocale();
+  const styles = useStyles();
+  const shippingCost = SHIPPING.find((item) => item.id === shipping)?.cost ?? 100;
+  const vatRate = COUNTRIES.find(([name]) => name === country)?.[1] ?? 15;
+  const vat = vatOn(subtotal + shippingCost, vatRate);
+  const total = subtotal + shippingCost + vat;
+  return (
+    <>
+      <Row label={t('checkout.merchandise')} value={formatMoney(subtotal)} />
+      <Row label={t('checkout.shipping')} value={formatMoney(shippingCost)} />
+      <Row label={t('checkout.vat', { rate: vatRate })} value={formatMoney(vat)} />
+      <View style={styles.divider} />
+      <Row label={t('checkout.total')} value={formatMoney(total)} bold />
+      <Text style={styles.hint}>{t('checkout.totalsNote')}</Text>
+    </>
+  );
+}
+
+function ServerQuoteSummary({
+  status,
+  data,
+  failureCode,
+  market,
+  onRetry,
+}: {
+  status: 'idle' | 'loading' | 'ready' | 'error';
+  data: CheckoutQuote | null;
+  failureCode: QuoteFailureCode | null;
+  market: Market;
+  onRetry: () => void;
+}) {
+  const { t } = useLocale();
+  const styles = useStyles();
+  if (status !== 'ready' || !data) {
+    return (
+      <View style={styles.quoteStatus}>
+        {status === 'error' && failureCode ? (
+          <>
+            <Text style={styles.error}>{plainText(quoteFailureText(failureCode))}</Text>
+            <SecondaryButton label={t('common.retry')} onPress={onRetry} />
+          </>
+        ) : (
+          <Text style={styles.hint}>{t('checkout.quoteLoading')}</Text>
+        )}
+      </View>
+    );
+  }
+  const total = payableDisplay(data.total, data.currency, market === 'eu');
+  return (
+    <>
+      <Row label={t('checkout.merchandise')} value={formatQuotedAmount(data.subtotal, data.currency)} />
+      <Row label={t('checkout.shipping')} value={formatQuotedAmount(data.shipping, data.currency)} />
+      <Row label={t('checkout.vat', { rate: String(data.vat.rate) })} value={formatQuotedAmount(data.vat.amount, data.currency)} />
+      <View style={styles.divider} />
+      <Row label={t('checkout.total')} value={total.payable} bold />
+      {total.approx ? <Text style={styles.approx}>{total.approx}</Text> : null}
+      <Text style={styles.hint}>{t('checkout.serverTotalsNote')}</Text>
+    </>
   );
 }
 
@@ -333,6 +430,8 @@ const useStyles = makeStyles(({ colors }) => ({
   rowValue: { fontFamily: fonts.body, fontSize: 15, color: colors.text, fontVariant: ['tabular-nums'] },
   bold: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.text },
   hint: { fontFamily: fonts.body, fontSize: 12, color: colors.muted, marginTop: 4, marginBottom: 6 },
+  approx: { fontFamily: fonts.body, fontSize: 13, color: colors.muted, textAlign: 'right' },
+  quoteStatus: { gap: 10 },
   error: { fontFamily: fonts.body, fontSize: 14, color: colors.danger, marginBottom: 6 },
   pending: { gap: 8, padding: 16, borderRadius: radius.card, backgroundColor: colors.surface, marginBottom: 6 },
   pendingTitle: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.warn },

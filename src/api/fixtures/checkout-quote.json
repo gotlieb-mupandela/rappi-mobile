@@ -1,0 +1,22 @@
+{
+  "items": [
+    {
+      "code": "J.100",
+      "size": "M",
+      "qty": 2,
+      "unitPrice": 150,
+      "lineTotal": 300
+    }
+  ],
+  "subtotal": 300,
+  "shipping": 100,
+  "vat": {
+    "rate": 15,
+    "amount": 60,
+    "label": "ignored"
+  },
+  "total": 460,
+  "currency": "NAD",
+  "debug": "ignored",
+  "price": 1
+}

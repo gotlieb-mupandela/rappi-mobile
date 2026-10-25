@@ -2,6 +2,7 @@ import { createContext, createElement, useCallback, useContext, useEffect, useMe
 import { AppState } from 'react-native';
 
 import { useAuth } from '@/src/lib/auth';
+import { SERVER_QUOTE_CHECKOUT } from '@/src/lib/flags';
 import { linesAfterStockError } from '@/src/lib/bagRules';
 import {
   adoptGuestBag,
@@ -30,10 +31,14 @@ const FOREIGN_KEY_VIOLATION = '23503';
 
 type RemoteProduct = { code?: string; name?: string; display_name?: string | null; image_url?: string | null; price?: number | string | null };
 
+const remoteProductColumns = SERVER_QUOTE_CHECKOUT
+  ? 'code, name, display_name, image_url'
+  : 'code, name, display_name, image_url, price';
+
 async function pullRemote(userId: string): Promise<RemoteBagRow[]> {
   const { data, error } = await supabase
     .from('cart_items')
-    .select('product_id, size, qty, created_at, products(code, name, display_name, image_url, price)')
+    .select(`product_id, size, qty, created_at, products(${remoteProductColumns})`)
     .eq('user_id', userId)
     .order('created_at');
   if (error) throw error;
