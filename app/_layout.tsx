@@ -62,6 +62,7 @@ const crash = StyleSheet.create({
 });
 
 const CACHE_MAX_AGE = 7 * 24 * 60 * 60_000;
+const PERSIST_MAX_AGE = 24 * 60 * 60_000;
 
 /** Public catalog data only; orders, profile and live stock are never written to disk. */
 const PERSISTED_QUERIES = new Set([
@@ -74,6 +75,8 @@ const PERSISTED_QUERIES = new Set([
   'hub-overview',
   'hub-types',
   'hub-athlete',
+  'catalog-folders',
+  'catalog-subs',
 ]);
 
 const persister = createAsyncStoragePersister({ storage: AsyncStorage, key: 'rappi-query-cache', throttleTime: 2_000 });
@@ -188,7 +191,7 @@ export default function RootLayout() {
             client={queryClient}
             persistOptions={{
               persister,
-              maxAge: CACHE_MAX_AGE,
+              maxAge: PERSIST_MAX_AGE,
               buster: Constants.expoConfig?.version ?? '',
               dehydrateOptions: {
                 shouldDehydrateQuery: (query) =>

@@ -6,6 +6,7 @@ import { fetchFolderCatalog } from '@/src/api/catalog';
 import type { CatalogPage, CatalogQuery, Product } from '@/src/api/types';
 import { ProductCard } from '@/src/components/ProductCard';
 import { Chip, EmptyState, ErrorState, SkeletonGrid } from '@/src/components/ui';
+import { canonicalFolderSlug, slugHeading } from '@/src/lib/folderSlugs';
 import { makeStyles } from '@/src/lib/theme';
 import { fonts, space } from '@/src/theme';
 
@@ -35,17 +36,16 @@ export function lineName(item: string | undefined): string {
 export function sectionProducts(products: Product[], facets: CatalogPage['facets'] | undefined, byLine: boolean): Section[] {
   const sections = new Map<string, Section>();
   for (const product of products) {
-    const key = byLine ? lineName(product.item) : product.subcategory || 'general';
-    const title = byLine
-      ? key
-      : key === 'general'
-        ? 'More'
-        : (facets?.subs?.find((sub) => sub.slug === key)?.name ?? titleCase(key.replace(/-/g, ' ')));
+    const key = byLine ? lineName(product.item) : canonicalFolderSlug(product.subcategory || 'general');
+    const facetName = byLine
+      ? undefined
+      : facets?.subs?.find((sub) => canonicalFolderSlug(sub.slug) === key)?.name;
+    const title = byLine ? key : key === 'general' ? 'More' : (facetName ?? slugHeading(key));
     const section = sections.get(key) ?? { key, title, products: [] };
     section.products.push(product);
     sections.set(key, section);
   }
-  const subOrder = (facets?.subs ?? []).map((sub) => sub.slug);
+  const subOrder = (facets?.subs ?? []).map((sub) => canonicalFolderSlug(sub.slug));
   const rank = (section: Section) => {
     if (section.title === 'More') return Number.MAX_SAFE_INTEGER;
     if (byLine) return 0;

@@ -1,4 +1,5 @@
 import { ALL_FOLDER, searchFolderKey, subFolderKey } from '@/src/api/catalog';
+import { FLOW_FOLDER_LABEL } from '@/src/lib/folderSlugs';
 import { sizedImage } from '@/src/lib/images';
 
 const SITE = 'https://www.rappisportshub.com';
@@ -83,7 +84,7 @@ export const SHOE_TYPES: MenuNode[] = [
   tile('Training', 'J:CRTHUW2602_1.jpg', sub('training-shoes')),
   tile('Volleyball', 'J:VBLOKS2502_1.jpg', sub('volleyball-shoes')),
   tile('Confort', 'J:C500LW2302V_1.jpg', sub('comfort-shoes')),
-  tile('Joma flow', 'V:20260805125923.CJFZENS2723.jpg', sub('joma-flow')),
+  tile(FLOW_FOLDER_LABEL, 'V:20260805125923.CJFZENS2723.jpg', sub('flow')),
   tile('Sandals confort', 'J:SCOSTS2503_1.jpg', sub('sandals')),
   tile('Sneakers', 'V:20251022153450.C1448LW2613.jpg', sub('sneakers')),
   tile('Barefoot', 'J:BF1448W2503_1.jpg', sub('barefoot')),

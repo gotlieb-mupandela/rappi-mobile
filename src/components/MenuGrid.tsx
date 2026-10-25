@@ -4,7 +4,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { ALL_FOLDER, fetchFolderCatalog, folderProductQuery, isSearchFolder, isSubFolder } from '@/src/api/catalog';
 import { CoverFolderTile, openCatalogFolder } from '@/src/components/FolderBrowser';
+import { isFlowFolderKey } from '@/src/lib/folderSlugs';
 import { menuImage, type MenuNode } from '@/src/lib/menus';
+import { useFlowFolderLabel } from '@/src/lib/useFlowFolderLabel';
 import { space } from '@/src/theme';
 
 type Context = {
@@ -46,6 +48,11 @@ function leafQueries(node: MenuNode, cat: string, audience?: string): ProductQue
 }
 
 export function MenuGrid({ nodes, variant, ...context }: Context & { nodes: MenuNode[]; variant?: 'folder' | 'card' }) {
+  const flowLabel = useFlowFolderLabel(
+    context.cat,
+    nodes.some((node) => isFlowFolderKey(node.folder)),
+  );
+  const nameFor = (node: MenuNode) => (isFlowFolderKey(node.folder) ? flowLabel : node.name);
   const leaves = nodes.map((node) => leafQueries(node, context.cat, context.audience));
   const counts = useQueries({
     queries: leaves.flat().map((query) => ({
@@ -74,10 +81,10 @@ export function MenuGrid({ nodes, variant, ...context }: Context & { nodes: Menu
             <View key={node ? `${node.key}-${cellIndex}` : 'filler'} style={styles.cell}>
               {node ? (
                 <CoverFolderTile
-                  name={node.name}
+                  name={nameFor(node)}
                   imageUrl={menuImage(node.image)}
                   coverQuery={folderProductQuery(node.cat ?? context.cat, node.folder, node.audience ?? context.audience)}
-                  onPress={() => openMenuNode(node, context)}
+                  onPress={() => openMenuNode({ ...node, name: nameFor(node) }, context)}
                   variant={variant}
                 />
               ) : null}

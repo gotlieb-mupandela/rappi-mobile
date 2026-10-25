@@ -8,6 +8,11 @@ test('uses the Namibia storefront category names', () => {
   assert.equal(categoryName('balls-bags'), 'Balls & bags');
   assert.equal(categoryName('shoes', 'fr'), 'Chaussures');
   assert.equal(categoryName('new-category'), 'New Category');
+  assert.equal(categoryName('joma-flow'), 'Flow');
+  assert.equal(categoryName('joma-kids'), 'Kids');
+  assert.equal(categoryName('flow'), 'Flow');
+  assert.equal(/joma/i.test(categoryName('joma-flow')), false);
+  assert.equal(/joma/i.test(categoryName('joma-kids')), false);
 });
 
 test('keeps netball out of the mobile navigation', () => {
