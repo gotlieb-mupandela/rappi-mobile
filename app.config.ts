@@ -5,6 +5,13 @@ import type { ExpoConfig } from 'expo/config';
 const googleServicesFile =
   process.env.GOOGLE_SERVICES_JSON ?? (existsSync('./google-services.json') ? './google-services.json' : undefined);
 
+// Same on-values as parseFlag in src/lib/flags.ts. Any other value stays off.
+function envFlag(value: string | undefined): boolean {
+  if (typeof value !== 'string') return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized === '1' || normalized === 'true' || normalized === 'on' || normalized === 'yes';
+}
+
 const config: ExpoConfig = {
   name: 'Rappi Sport',
   slug: 'rappi-sport',
@@ -70,6 +77,11 @@ const config: ExpoConfig = {
   extra: {
     eas: {
       projectId: 'e6d1496d-3f53-46d4-8db8-9d837ad45641',
+    },
+    flags: {
+      PARITY_STOREFRONT: envFlag(process.env.EXPO_PUBLIC_PARITY_STOREFRONT),
+      PARITY_CARD_IMAGE: envFlag(process.env.EXPO_PUBLIC_PARITY_CARD_IMAGE),
+      HIDE_EUR_MARKET: envFlag(process.env.EXPO_PUBLIC_HIDE_EUR_MARKET),
     },
   },
 };
