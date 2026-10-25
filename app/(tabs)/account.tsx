@@ -5,13 +5,13 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
-import { deleteAccount, openSitePage, openSupportEmail, openWhatsApp, SUPPORT_EMAIL, SUPPORT_WHATSAPP_LABEL } from '@/src/api/account';
-import { ApiError, isNetworkError, isRouteMissing, NETWORK_MESSAGE } from '@/src/api/client';
+import { openAccountDeletion, openSitePage, openSupportEmail, openWhatsApp, SUPPORT_EMAIL, SUPPORT_WHATSAPP_LABEL } from '@/src/api/account';
 import { usePhotoPicker } from '@/src/components/PhotoPicker';
 import { ActionSheet, Avatar, SettingsGroup, SettingsRow } from '@/src/components/settings';
 import { BrandMark, Field, PrimaryButton, Screen, SecondaryButton, SkeletonList } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { MARKETS } from '@/src/i18n/market';
+import { accountDeletePhraseMatches } from '@/src/lib/accountDelete';
 import { useAuth } from '@/src/lib/auth';
 import { fetchProfile } from '@/src/lib/orders';
 import { profileName, profilePhoto } from '@/src/lib/profile';
@@ -21,7 +21,6 @@ import { useWishlist } from '@/src/lib/wishlist';
 import { fonts, radius, space } from '@/src/theme';
 
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
-const DELETE_PHRASE = 'Delete my Account';
 
 function HelpAndLegal({ onContact }: { onContact: () => void }) {
   return (
@@ -69,7 +68,8 @@ export default function AccountScreen() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deletePhrase, setDeletePhrase] = useState('');
-  const phraseMatches = deletePhrase.trim().toLowerCase() === DELETE_PHRASE.toLowerCase();
+  const expectedPhrase = t('account.confirmPhrase');
+  const phraseMatches = accountDeletePhraseMatches(deletePhrase, expectedPhrase);
   const profile = useQuery({
     queryKey: ['profile', user?.id],
     enabled: !!user?.id,
@@ -100,25 +100,17 @@ export default function AccountScreen() {
   };
 
   const confirmDelete = async () => {
-    if (!phraseMatches) return;
+    if (!phraseMatches || deleting) return;
     setDeleting(true);
     setDeleteError(null);
     try {
-      await deleteAccount();
-    } catch (err) {
+      await openAccountDeletion();
+    } catch {
       setDeleting(false);
-      if (isRouteMissing(err)) {
-        setDeleteError("Account deletion isn't available right now. Contact us through rappisportshub.com.");
-      } else if (isNetworkError(err)) {
-        setDeleteError(NETWORK_MESSAGE);
-      } else {
-        setDeleteError(err instanceof ApiError ? err.message : "Couldn't delete your account. Try again.");
-      }
+      setDeleteError(t('account.openError'));
       return;
     }
-    // The server session is already gone, so only the local session needs clearing.
-    await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
-    clearAccountQueries();
+    // The website visit does not tell us whether the account was deleted.
     setDeleting(false);
     setConfirmingDelete(false);
     setDeletePhrase('');
@@ -236,16 +228,15 @@ export default function AccountScreen() {
 
         {confirmingDelete ? (
           <View style={styles.confirm}>
-            <Text style={styles.confirmTitle}>Delete your account?</Text>
+            <Text style={styles.confirmTitle}>{t('account.confirmTitle')}</Text>
+            <Text style={styles.confirmText}>{t('account.confirmBody')}</Text>
+            <Text style={styles.confirmText}>{t('account.finishOnWeb')}</Text>
             <Text style={styles.confirmText}>
-              This permanently deletes your account and the personal data linked to it. It can't be undone.
-            </Text>
-            <Text style={styles.confirmText}>
-              To confirm, type <Text style={styles.confirmPhrase}>{DELETE_PHRASE}</Text> below.
+              {t('account.confirmTypeLead')} <Text style={styles.confirmPhrase}>{expectedPhrase}</Text> {t('account.confirmTypeTail')}
             </Text>
             <Field
-              accessibilityLabel={`Type ${DELETE_PHRASE} to confirm`}
-              placeholder={DELETE_PHRASE}
+              accessibilityLabel={`${t('account.confirmTypeLead')} ${expectedPhrase}`}
+              placeholder={expectedPhrase}
               autoCapitalize="none"
               autoCorrect={false}
               autoComplete="off"
@@ -256,12 +247,12 @@ export default function AccountScreen() {
             />
             {deleteError ? <Text style={styles.error}>{deleteError}</Text> : null}
             <PrimaryButton
-              label={deleting ? 'Deleting…' : 'Delete permanently'}
+              label={deleting ? t('account.opening') : t('account.confirmAction')}
               disabled={deleting || !phraseMatches}
               onPress={confirmDelete}
             />
             <SecondaryButton
-              label="Cancel"
+              label={t('common.cancel')}
               disabled={deleting}
               onPress={() => {
                 setConfirmingDelete(false);
@@ -274,8 +265,8 @@ export default function AccountScreen() {
           <SettingsGroup>
             <SettingsRow
               icon="trash-outline"
-              label="Delete account"
-              detail="Permanently remove your account and data"
+              label={t('account.delete')}
+              detail={t('account.deleteDetail')}
               danger
               disabled={signingOut}
               onPress={() => setConfirmingDelete(true)}

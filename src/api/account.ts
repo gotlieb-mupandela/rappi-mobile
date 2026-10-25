@@ -1,18 +1,22 @@
 import * as WebBrowser from 'expo-web-browser';
 import { Linking } from 'react-native';
 
-import { apiFetch, shopUrl } from '@/src/api/client';
+import { shopUrl } from '@/src/api/client';
+import { openAccountDeletePage } from '@/src/lib/accountDelete';
 
 export const SUPPORT_EMAIL = 'sales@rappisportshub.com';
 export const SUPPORT_WHATSAPP = '264818141646';
 export const SUPPORT_WHATSAPP_LABEL = '+264 81 814 1646';
 
-export async function deleteAccount(): Promise<void> {
-  await apiFetch('/api/account/delete', {
-    method: 'POST',
-    auth: true,
-    fallbackMessage: "Couldn't delete your account. Try again.",
-  });
+/**
+ * Opens the website delete page. The app does not call a delete API and does not send a token or key.
+ * Coming back does not mean the account was deleted.
+ */
+export function openAccountDeletion(): Promise<void> {
+  return openAccountDeletePage(
+    (url) => WebBrowser.openBrowserAsync(url, { dismissButtonStyle: 'close' }),
+    (url) => Linking.openURL(url),
+  );
 }
 
 export type SitePage = 'privacy' | 'terms' | 'returns';
