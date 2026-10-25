@@ -2,30 +2,90 @@ name: Android build
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
+    inputs:
+      profile:
+        description: EAS build profile
+        required: true
+        type: choice
+        options:
+          - preview
+          - production
+        default: preview
 
+permissions:
+  contents: read
+
+# Separate groups so a preview dispatch cannot cancel a production run
+# that is waiting for approval. Production does not cancel its own in-progress run.
 concurrency:
-  group: android-build
-  cancel-in-progress: true
+  group: ${{ inputs.profile == 'production' && 'android-build-production' || 'android-build-preview' }}
+  cancel-in-progress: ${{ inputs.profile != 'production' }}
 
 jobs:
-  build:
+  guard:
+    name: Check production branch
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Refuse production builds that are not on main
+        if: inputs.profile == 'production' && github.ref != 'refs/heads/main'
+        run: |
+          echo "Production builds only run on the main branch. This run is on ${GITHUB_REF}."
+          echo "Dispatch the production profile from main, or choose preview."
+          exit 1
 
-      - uses: actions/setup-node@v4
+  preview:
+    name: Build Android preview
+    needs: guard
+    if: inputs.profile == 'preview'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
 
-      - uses: expo/expo-github-action@v8
+      - name: Setup EAS
+        uses: expo/expo-github-action@c7b66a9c327a43a8fa7c0158e7f30d6040d2481e # v8 (8.2.1)
         with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+          eas-version: 25.3.0
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Build Play Store bundle on EAS
+      - name: Build Android preview on EAS
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: eas build --platform android --profile preview --non-interactive --no-wait
+
+  production:
+    name: Build Android production
+    needs: guard
+    if: inputs.profile == 'production' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@c7b66a9c327a43a8fa7c0158e7f30d6040d2481e # v8 (8.2.1)
+        with:
+          eas-version: 25.3.0
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Android production on EAS
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: eas build --platform android --profile production --non-interactive --no-wait
