@@ -43,7 +43,7 @@ export type CheckoutQuote = {
   currency: string;
 };
 
-export type QuoteBuildReason = 'too-many-lines' | 'invalid-qty' | 'invalid-line' | 'invalid-shipping' | 'invalid-country';
+export type QuoteBuildReason = 'too-many-lines' | 'invalid-qty' | 'invalid-line' | 'invalid-shipping' | 'invalid-country' | 'qty-cap';
 
 export type BuiltRequest<T> = { ok: true; body: T } | { ok: false; reason: QuoteBuildReason };
 
@@ -58,16 +58,16 @@ export type CheckoutQuoteBody = {
 export type ValidateResult<T> = { ok: true; value: T } | { ok: false; reason: 'invalid-response' };
 
 export class QuoteRequestError extends Error {
-  readonly reason: QuoteBuildReason | 'invalid-response';
+  readonly reason: QuoteBuildReason | 'invalid-response' | 'unexpected-currency';
 
-  constructor(reason: QuoteBuildReason | 'invalid-response') {
+  constructor(reason: QuoteBuildReason | 'invalid-response' | 'unexpected-currency') {
     super('Quote request was rejected.');
     this.name = 'QuoteRequestError';
     this.reason = reason;
   }
 }
 
-export type QuoteFailureCode = 'changed' | 'rate-limit' | 'network' | 'too-many' | 'invalid' | 'failed';
+export type QuoteFailureCode = 'changed' | 'rate-limit' | 'network' | 'too-many' | 'invalid' | 'qty-cap' | 'currency' | 'failed';
 
 export type PayableDisplay = {
   /** Amount charged, in the currency the server returned. */
@@ -78,7 +78,7 @@ export type PayableDisplay = {
 
 /**
  * Positive integer only. Strings, booleans, and fractions are rejected
- * rather than coerced, then the merged total is capped at 99.
+ * rather than coerced.
  */
 function readQty(qty: unknown): number | null {
   if (typeof qty !== 'number') return null;
@@ -100,8 +100,9 @@ function readLine(line: unknown): { ok: true; line: { code: string; size: string
 
 /**
  * One row per code and size. The server checks stock per submitted line,
- * so duplicates are summed here and the quantity is capped at 99.
- * More than 50 lines is refused so the request is never sent.
+ * so duplicates are summed here. A merged quantity over 99 is refused
+ * instead of being reduced. More than 50 lines is refused so the request
+ * is never sent.
  */
 export function mergeQuoteLines(lines: readonly unknown[]): BuiltRequest<QuoteLine[]> {
   if (lines.length < 1) return { ok: false, reason: 'invalid-line' };
@@ -113,14 +114,22 @@ export function mergeQuoteLines(lines: readonly unknown[]): BuiltRequest<QuoteLi
     const key = `${read.line.code}\0${read.line.size}`;
     const existing = merged.get(key);
     if (!existing) {
+      if (read.line.qty > MAX_QUOTE_QTY) return { ok: false, reason: 'qty-cap' };
       order.push(key);
-      merged.set(key, { code: read.line.code, size: read.line.size, qty: Math.min(MAX_QUOTE_QTY, read.line.qty) });
+      merged.set(key, { code: read.line.code, size: read.line.size, qty: read.line.qty });
       continue;
     }
-    existing.qty = Math.min(MAX_QUOTE_QTY, existing.qty + read.line.qty);
+    const qty = existing.qty + read.line.qty;
+    if (qty > MAX_QUOTE_QTY) return { ok: false, reason: 'qty-cap' };
+    existing.qty = qty;
   }
   if (order.length > MAX_QUOTE_LINES) return { ok: false, reason: 'too-many-lines' };
   return { ok: true, body: order.map((key) => merged.get(key) as QuoteLine) };
+}
+
+/** Same objects the quote sends. Payment start must use these lines and no others. */
+export function paymentLinesMatchingQuote(quote: CheckoutQuoteBody): QuoteLine[] {
+  return quote.lines.map((line) => ({ code: line.code, size: line.size, qty: line.qty }));
 }
 
 export function buildCartPricesRequest(lines: readonly unknown[]): BuiltRequest<CartPricesBody> {
@@ -233,31 +242,39 @@ export function pricedItemFor(prices: CartPrices, code: string, size: string): P
   return prices.items.find((item) => item.code === code && item.size === size) ?? null;
 }
 
-function groupedAmount(amount: number): string {
-  const rounded = Math.round(amount * 100) / 100;
-  const whole = Math.abs(rounded - Math.round(rounded)) < 1e-9;
-  return new Intl.NumberFormat('en-NA', {
-    minimumFractionDigits: whole ? 0 : 2,
+/** NAD line prices keep the usual whole-dollar form. Anything else is not shown as a price. */
+export function formatQuotedAmount(amount: number, currency: 'NAD'): string;
+export function formatQuotedAmount(amount: number, currency: string): string | null;
+export function formatQuotedAmount(amount: number, currency: string): string | null {
+  if (currency !== 'NAD') return null;
+  return formatMoney(amount, 'na');
+}
+
+/**
+ * Exact NAD amount charged, including cents. Shared by the checkout total
+ * and the "You are charged" text on the approx line.
+ */
+export function formatChargedNad(amount: number): string {
+  const cents = Math.round(amount * 100);
+  const rounded = cents / 100;
+  const figure = new Intl.NumberFormat('en-NA', {
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(rounded);
+  return `N$${figure}`;
 }
 
-/** NAD uses N$. Any other code is written beside the figure, with no guessed symbol. */
-export function formatQuotedAmount(amount: number, currency: string): string {
-  if (currency === 'NAD') return formatMoney(amount, 'na');
-  return `${groupedAmount(amount)} ${currency}`;
-}
-
-export function payableDisplay(amount: number, currency: string, showEurApprox: boolean): PayableDisplay {
-  const payable = formatQuotedAmount(amount, currency);
-  if (!showEurApprox || currency !== 'NAD') return { payable, approx: null };
+export function payableDisplay(amount: number, currency: string, showEurApprox: boolean): PayableDisplay | null {
+  if (currency !== 'NAD') return null;
+  const payable = formatChargedNad(amount);
+  if (!showEurApprox) return { payable, approx: null };
   const euros = new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(nadToEur(amount));
-  return { payable, approx: `approx. ${euros}` };
+  return { payable, approx: `You are charged ${payable}, approx. ${euros}` };
 }
 
 /**
@@ -269,6 +286,8 @@ export function quoteFailureCode(error: unknown): QuoteFailureCode {
   const record = error as { name?: unknown; reason?: unknown; status?: unknown };
   if (record.name === 'QuoteRequestError') {
     if (record.reason === 'too-many-lines') return 'too-many';
+    if (record.reason === 'qty-cap') return 'qty-cap';
+    if (record.reason === 'unexpected-currency') return 'currency';
     if (
       record.reason === 'invalid-qty' ||
       record.reason === 'invalid-line' ||
@@ -297,6 +316,10 @@ export function quoteFailureText(code: QuoteFailureCode): string {
       return "Can't reach the store. Try again.";
     case 'too-many':
       return 'The bag has too many items to price. Remove some and try again.';
+    case 'qty-cap':
+      return 'One size is over 99 items. Lower the quantity and try again.';
+    case 'currency':
+      return "The store total is not in NAD. Payment can't continue.";
     case 'invalid':
       return "The bag couldn't be priced. Refresh it and try again.";
     case 'failed':
@@ -317,20 +340,81 @@ export type QuotePayView = {
   quoteKey: string | null;
   inputKey: string;
   freshForPay: boolean;
+  /** True while a debounced quote has not been sent yet. */
+  debouncePending?: boolean;
 };
 
 /**
  * Flag off: only the form gates Pay.
- * Flag on: Pay stays off while a quote is loading, failed, for different
- * bag, shipping, or country inputs, or not yet refreshed for this ready form.
+ * Flag on: Pay stays off while a quote is loading, waiting out the debounce,
+ * failed, for different bag, shipping, or country inputs, or not yet refreshed
+ * for this ready form.
  */
 export function payBlockedForQuote(view: QuotePayView): boolean {
   if (!view.formReady) return true;
   if (!view.enabled) return false;
+  if (view.debouncePending) return true;
   if (view.status !== 'ready') return true;
   if (view.quoteKey !== view.inputKey) return true;
   if (!view.freshForPay) return true;
   return false;
+}
+
+export const QUOTE_DEBOUNCE_MS = 400;
+
+export type QuoteRefreshTimer = {
+  readonly pending: boolean;
+  schedule(delayMs: number, run: () => void): void;
+  cancel(): void;
+};
+
+/** Collapses rapid quote changes into one later call. */
+export function createQuoteRefreshTimer(
+  setTimer: (run: () => void, delayMs: number) => ReturnType<typeof setTimeout>,
+  clearTimer: (handle: ReturnType<typeof setTimeout>) => void,
+): QuoteRefreshTimer {
+  let handle: ReturnType<typeof setTimeout> | null = null;
+  let token = 0;
+  return {
+    get pending() {
+      return handle !== null;
+    },
+    schedule(delayMs, run) {
+      token += 1;
+      const current = token;
+      if (handle !== null) clearTimer(handle);
+      handle = setTimer(() => {
+        if (current !== token) return;
+        handle = null;
+        run();
+      }, delayMs);
+    },
+    cancel() {
+      token += 1;
+      if (handle !== null) clearTimer(handle);
+      handle = null;
+    },
+  };
+}
+
+/**
+ * Immediate for the first load, a manual retry, and the refresh just before Pay.
+ * Quantity, shipping, country, and bag focus wait so rapid taps send one request.
+ */
+export function quoteRequestDelay(input: {
+  enabled: boolean;
+  hasLines: boolean;
+  inputChanged: boolean;
+  becameReady: boolean;
+  retrying: boolean;
+  becameEnabled: boolean;
+  focusRefresh: boolean;
+}): number | null {
+  if (!input.enabled || !input.hasLines) return null;
+  if (input.becameEnabled || input.retrying) return 0;
+  if (input.becameReady && !input.inputChanged && !input.focusRefresh) return 0;
+  if (input.inputChanged || input.focusRefresh) return QUOTE_DEBOUNCE_MS;
+  return null;
 }
 
 export function shouldRequestQuote(input: {

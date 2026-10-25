@@ -1,19 +1,24 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import test from 'node:test';
+import { mock, test } from 'node:test';
 
 import { flagFromExtra } from './buildFlags.ts';
 import {
   buildCartPricesRequest,
   buildCheckoutQuoteRequest,
+  createQuoteRefreshTimer,
+  formatChargedNad,
   formatQuotedAmount,
   MAX_QUOTE_LINES,
   payableDisplay,
   payBlockedForQuote,
+  paymentLinesMatchingQuote,
   plainText,
+  QUOTE_DEBOUNCE_MS,
   quoteFailureCode,
   quoteFailureText,
+  quoteRequestDelay,
   QuoteRequestError,
   shouldRequestQuote,
   validateCartPrices,
@@ -138,31 +143,47 @@ test('qty must be a real integer and is never coerced from a string or boolean',
   if (!quote.ok) assert.equal(quote.reason, 'invalid-qty');
 });
 
-test('duplicate code and size rows are merged, summed, and capped at 99', () => {
-  const built = buildCartPricesRequest([
-    { code: 'J.100', size: 'M', qty: 60, price: 12 },
-    { code: 'J.100', size: 'M', qty: 50 },
-    { code: 'J.100', size: 'L', qty: 2 },
-    { code: 'J.100', size: 'M', qty: 100 },
+test('payment start lines equal the merged quote lines', () => {
+  const source = [
+    { code: 'J.100', size: 'M', qty: 2, price: 40 },
+    { code: 'J.100', size: 'M', qty: 3, unitPrice: 40 },
+    { code: 'J.200', size: 'L', qty: 1, lineTotal: 9 },
+  ];
+  const quote = buildCheckoutQuoteRequest(source, 'standard', 'Namibia');
+  assert.equal(quote.ok, true);
+  if (!quote.ok) return;
+  const paymentLines = paymentLinesMatchingQuote(quote.body);
+  assert.deepEqual(paymentLines, quote.body.lines);
+  assert.deepEqual(paymentLines, [
+    { code: 'J.100', size: 'M', qty: 5 },
+    { code: 'J.200', size: 'L', qty: 1 },
   ]);
-  assert.equal(built.ok, true);
-  if (!built.ok) return;
-  assert.deepEqual(built.body.lines, [
-    { code: 'J.100', size: 'M', qty: 99 },
-    { code: 'J.100', size: 'L', qty: 2 },
+  assert.equal(JSON.stringify({ lines: paymentLines }).includes('price'), false);
+
+  const atCap = buildCartPricesRequest([
+    { code: 'J.100', size: 'M', qty: 40 },
+    { code: 'J.100', size: 'M', qty: 59 },
   ]);
-  assert.equal(built.body.lines[0].qty <= 99, true);
+  assert.equal(atCap.ok, true);
+  if (atCap.ok) assert.equal(atCap.body.lines[0].qty, 99);
+});
 
-  const single = buildCartPricesRequest([{ code: 'J.100', size: 'M', qty: 100 }]);
-  assert.equal(single.ok, true);
-  if (single.ok) assert.equal(single.body.lines[0].qty, 99);
-
-  const manyCopies = Array.from({ length: 80 }, () => ({ code: 'J.100', size: 'M', qty: 2 }));
-  const collapsed = buildCheckoutQuoteRequest(manyCopies, 'pickup', 'Namibia');
-  assert.equal(collapsed.ok, true);
-  if (!collapsed.ok) return;
-  assert.deepEqual(collapsed.body.lines, [{ code: 'J.100', size: 'M', qty: 99 }]);
-  assert.equal(collapsed.body.shippingMethod, 'pickup');
+test('a merged quantity over 99 is not sent as a smaller total', () => {
+  const over = buildCheckoutQuoteRequest(
+    [
+      { code: 'J.100', size: 'M', qty: 60, price: 12 },
+      { code: 'J.100', size: 'M', qty: 50 },
+    ],
+    'express',
+    'France',
+  );
+  assert.deepEqual(over, { ok: false, reason: 'qty-cap' });
+  assert.equal(buildCartPricesRequest([{ code: 'J.100', size: 'M', qty: 100 }]).ok, false);
+  assert.equal(quoteFailureCode(new QuoteRequestError('qty-cap')), 'qty-cap');
+  const message = plainText(quoteFailureText('qty-cap'));
+  assert.match(message, /99/);
+  assert.equal(message.includes('<'), false);
+  assert.equal(message.includes('price'), false);
 });
 
 test('more than 50 lines is not sent', () => {
@@ -191,34 +212,56 @@ test('shipping method and country are constrained and prices stay off the body',
   assert.equal(buildCheckoutQuoteRequest([], 'standard', 'Namibia').ok, false);
 });
 
-test('NAD is the payable total and euro is only an approx line under it', () => {
-  const hidden = payableDisplay(304, 'NAD', false);
-  assert.equal(hidden.payable, 'N$304');
-  assert.equal(hidden.approx, null);
-
-  const shown = payableDisplay(304, 'NAD', true);
-  assert.equal(shown.payable, 'N$304');
-  assert.match(shown.approx ?? '', /^approx\. 15,20\s€$/u);
-  assert.equal(shown.payable.includes('€'), false);
-  assert.equal(shown.payable.includes('approx'), false);
-  assert.equal(shown.payable.includes('EUR'), false);
-  assert.notEqual(shown.approx, shown.payable);
-  assert.equal(formatQuotedAmount(304.5, 'NAD'), 'N$304.50');
+test('the charged total and the approx line share one two-decimal NAD format', () => {
+  const cases = [
+    [600, 'N$600.00'],
+    [464.6, 'N$464.60'],
+    [1234.5, 'N$1,234.50'],
+  ] as const;
+  for (const [amount, text] of cases) {
+    assert.equal(formatChargedNad(amount), text);
+    const shown = payableDisplay(amount, 'NAD', true);
+    const hidden = payableDisplay(amount, 'NAD', false);
+    assert.ok(shown);
+    assert.ok(hidden);
+    assert.equal(shown.payable, text);
+    assert.equal(hidden.payable, text);
+    assert.equal(hidden.approx, null);
+    assert.equal(shown.approx?.includes(`You are charged ${text}`), true);
+    assert.match(shown.approx ?? '', /approx\./);
+    assert.match(shown.approx ?? '', /€/u);
+    assert.equal(shown.payable.includes('€'), false);
+    assert.equal(shown.payable.includes('approx'), false);
+    assert.notEqual(shown.approx, shown.payable);
+  }
+  assert.equal(formatQuotedAmount(600, 'NAD'), 'N$600');
+  assert.equal(formatQuotedAmount(464.6, 'NAD'), 'N$464.60');
+  assert.equal(formatQuotedAmount(1234.5, 'NAD'), 'N$1,234.50');
 });
 
-test('euro is never the payable amount, and other currencies keep their code', () => {
-  const nad = payableDisplay(304, 'NAD', true);
-  assert.equal(nad.payable.startsWith('N$'), true);
-  assert.notEqual(nad.payable, nad.approx);
-
-  const eur = payableDisplay(15.2, 'EUR', true);
-  assert.equal(eur.approx, null);
-  assert.equal(eur.payable.includes('€'), false);
-  assert.equal(eur.payable, '15.20 EUR');
-
-  assert.equal(formatQuotedAmount(100, 'ZAR'), '100 ZAR');
-  assert.equal(formatQuotedAmount(1000, 'ZAR'), '1,000 ZAR');
-  assert.equal(formatQuotedAmount(100, 'ZAR').startsWith('R'), false);
+test('a non-NAD total is refused and is not rendered as the payable amount', () => {
+  assert.equal(payableDisplay(600, 'EUR', true), null);
+  assert.equal(payableDisplay(600, 'ZAR', false), null);
+  assert.equal(formatQuotedAmount(600, 'EUR'), null);
+  assert.equal(formatQuotedAmount(1000, 'ZAR'), null);
+  assert.equal(quoteFailureCode(new QuoteRequestError('unexpected-currency')), 'currency');
+  const message = plainText(quoteFailureText('currency'));
+  assert.match(message, /NAD/);
+  assert.equal(message.includes('EUR'), false);
+  assert.equal(message.includes('N$'), false);
+  assert.equal(message.includes('<'), false);
+  assert.equal(message.includes('€'), false);
+  assert.equal(
+    payBlockedForQuote({
+      enabled: true,
+      formReady: true,
+      status: 'error',
+      quoteKey: 'quote',
+      inputKey: 'quote',
+      freshForPay: false,
+    }),
+    true,
+  );
 });
 
 test('quote failures use fixed plain text and do not echo server HTML', () => {
@@ -325,6 +368,73 @@ test('Pay stays disabled for a loading, failed, or stale quote, and ignores quot
     }),
     false,
   );
+  assert.equal(
+    payBlockedForQuote({
+      enabled: true,
+      formReady: true,
+      status: 'ready',
+      quoteKey: current,
+      inputKey: current,
+      freshForPay: true,
+      debouncePending: true,
+    }),
+    true,
+  );
+  assert.equal(
+    payBlockedForQuote({
+      enabled: false,
+      formReady: true,
+      status: 'ready',
+      quoteKey: current,
+      inputKey: current,
+      freshForPay: true,
+      debouncePending: true,
+    }),
+    false,
+  );
+});
+
+test('rapid quantity, shipping, country, and focus changes send one quote after 400ms', () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    const sent: string[] = [];
+    const timer = createQuoteRefreshTimer(
+      (run, delayMs) => setTimeout(run, delayMs),
+      (handle) => clearTimeout(handle),
+    );
+    for (const key of ['qty-2', 'qty-3', 'express', 'France', 'bag-focus']) {
+      timer.schedule(QUOTE_DEBOUNCE_MS, () => sent.push(key));
+      assert.equal(timer.pending, true);
+    }
+    assert.deepEqual(sent, []);
+    mock.timers.tick(QUOTE_DEBOUNCE_MS - 1);
+    assert.deepEqual(sent, []);
+    mock.timers.tick(1);
+    assert.deepEqual(sent, ['bag-focus']);
+    assert.equal(timer.pending, false);
+    assert.equal(QUOTE_DEBOUNCE_MS, 400);
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test('quote delay waits on input and bag focus, and is immediate before Pay', () => {
+  const base = {
+    enabled: true,
+    hasLines: true,
+    inputChanged: false,
+    becameReady: false,
+    retrying: false,
+    becameEnabled: false,
+    focusRefresh: false,
+  };
+  assert.equal(quoteRequestDelay({ ...base, inputChanged: true }), QUOTE_DEBOUNCE_MS);
+  assert.equal(quoteRequestDelay({ ...base, focusRefresh: true }), QUOTE_DEBOUNCE_MS);
+  assert.equal(quoteRequestDelay({ ...base, becameReady: true }), 0);
+  assert.equal(quoteRequestDelay({ ...base, becameEnabled: true, inputChanged: true }), 0);
+  assert.equal(quoteRequestDelay({ ...base, retrying: true }), 0);
+  assert.equal(quoteRequestDelay({ ...base, enabled: false, inputChanged: true, focusRefresh: true }), null);
+  assert.equal(quoteRequestDelay(base), null);
 });
 
 test('a quote is requested when inputs change, when Pay is about to be enabled, and on retry', () => {

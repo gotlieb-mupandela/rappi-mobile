@@ -30,18 +30,28 @@ export default function BagScreen() {
     showServerPrices && lines.length > 0,
   );
   const priced =
-    showServerPrices && serverPrices.status === 'ready' && serverPrices.data && serverPrices.inputKey === serverPrices.requestKey
+    showServerPrices &&
+    serverPrices.status === 'ready' &&
+    serverPrices.data &&
+    serverPrices.inputKey === serverPrices.requestKey &&
+    serverPrices.data.currency === 'NAD'
       ? serverPrices.data
       : null;
+  const foreignCurrency =
+    showServerPrices &&
+    serverPrices.status === 'ready' &&
+    serverPrices.data != null &&
+    serverPrices.inputKey === serverPrices.requestKey &&
+    serverPrices.data.currency !== 'NAD';
   const priceFocus = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
       if (synced) void refresh();
       if (!showServerPrices) return;
-      if (priceFocus.current) serverPrices.retry();
+      if (priceFocus.current) serverPrices.refreshOnFocus();
       priceFocus.current = true;
-    }, [refresh, serverPrices.retry, showServerPrices, synced]),
+    }, [refresh, serverPrices.refreshOnFocus, showServerPrices, synced]),
   );
 
   const checkout = () => {
@@ -68,7 +78,7 @@ export default function BagScreen() {
               const serverItem = priced ? pricedItemFor(priced, line.code, line.size) : null;
               const quotedTotal =
                 showServerPrices
-                  ? serverItem && priced
+                  ? serverItem && priced?.currency === 'NAD'
                     ? formatQuotedAmount(serverItem.lineTotal, priced.currency)
                     : ''
                   : formatMoney(line.price * line.qty);
@@ -105,7 +115,7 @@ export default function BagScreen() {
                       {line.name}
                     </Text>
                     <Text style={styles.meta}>{line.size}</Text>
-                    {serverItem && priced ? (
+                    {serverItem && priced?.currency === 'NAD' ? (
                       <Text style={styles.meta}>{t('bag.each', { price: formatQuotedAmount(serverItem.unitPrice, priced.currency) })}</Text>
                     ) : null}
                     <Text style={styles.total}>{quotedTotal}</Text>
@@ -117,9 +127,12 @@ export default function BagScreen() {
             }}
           />
           <View style={styles.footer}>
-            {showServerPrices && serverPrices.status === 'error' && serverPrices.failureCode && serverPrices.inputKey === serverPrices.requestKey ? (
+            {showServerPrices &&
+            ((serverPrices.status === 'error' && serverPrices.failureCode && serverPrices.inputKey === serverPrices.requestKey) || foreignCurrency) ? (
               <View style={styles.quoteError}>
-                <Text style={styles.error}>{plainText(quoteFailureText(serverPrices.failureCode))}</Text>
+                <Text style={styles.error}>
+                  {plainText(quoteFailureText(foreignCurrency ? 'currency' : (serverPrices.failureCode ?? 'failed')))}
+                </Text>
                 <SecondaryButton label={t('common.retry')} onPress={serverPrices.retry} />
               </View>
             ) : (
@@ -127,7 +140,7 @@ export default function BagScreen() {
                 <Text style={styles.subLabel}>{t('bag.subtotal')}</Text>
                 <Text style={styles.subValue}>
                   {showServerPrices
-                    ? priced
+                    ? priced?.currency === 'NAD'
                       ? formatQuotedAmount(priced.subtotal, priced.currency)
                       : t('bag.pricesLoading')
                     : formatMoney(subtotal)}

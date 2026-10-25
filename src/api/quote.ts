@@ -26,6 +26,7 @@ export async function fetchCartPrices(lines: readonly QuoteLineInput[]): Promise
   const payload = await postQuote('/api/cart/prices', built.body);
   const parsed = validateCartPrices(payload, built.body.lines);
   if (!parsed.ok) throw new QuoteRequestError(parsed.reason);
+  if (parsed.value.currency !== 'NAD') throw new QuoteRequestError('unexpected-currency');
   return parsed.value;
 }
 
@@ -39,5 +40,6 @@ export async function fetchCheckoutQuote(
   const payload = await postQuote('/api/checkout/quote', built.body);
   const parsed = validateCheckoutQuote(payload, built.body.lines);
   if (!parsed.ok) throw new QuoteRequestError(parsed.reason);
+  if (parsed.value.currency !== 'NAD') throw new QuoteRequestError('unexpected-currency');
   return parsed.value;
 }

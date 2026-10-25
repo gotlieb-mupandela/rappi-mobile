@@ -19,9 +19,11 @@ import { openLogin } from '@/src/lib/navigation';
 import { fetchProfile } from '@/src/lib/orders';
 import { usePendingPayment } from '@/src/lib/pendingPayment';
 import {
+  buildCheckoutQuoteRequest,
   formatQuotedAmount,
   payBlockedForQuote,
   payableDisplay,
+  paymentLinesMatchingQuote,
   plainText,
   quoteFailureText,
   type CheckoutQuote,
@@ -116,6 +118,7 @@ export default function CheckoutScreen() {
     quoteKey: quoteCurrent ? quote.quoteKey : null,
     inputKey: quote.requestKey,
     freshForPay: quoteCurrent && quote.freshForPay,
+    debouncePending: quote.debouncePending,
   });
 
   const pay = async () => {
@@ -126,6 +129,17 @@ export default function CheckoutScreen() {
     }
     setBusy(t('checkout.openingDpo'));
     setError(null);
+
+    const paymentLines = SERVER_QUOTE_CHECKOUT
+      ? (() => {
+          const built = buildCheckoutQuoteRequest(bag.lines, shipping, country);
+          return built.ok ? paymentLinesMatchingQuote(built.body) : null;
+        })()
+      : bag.lines.map((line) => ({ code: line.code, size: line.size, qty: line.qty }));
+    if (!paymentLines) {
+      setBusy(null);
+      return;
+    }
 
     let payment: Awaited<ReturnType<typeof createPayment>>;
     try {
@@ -138,7 +152,7 @@ export default function CheckoutScreen() {
         country,
         notes: notes.trim(),
         shippingMethod: shipping,
-        lines: bag.lines.map((line) => ({ code: line.code, size: line.size, qty: line.qty })),
+        lines: paymentLines,
       });
       if (!payment?.paymentUrl) throw new ApiError("Payment couldn't be started. Try again.", 500);
     } catch (err) {
@@ -348,12 +362,15 @@ function ServerQuoteSummary({
 }) {
   const { t } = useLocale();
   const styles = useStyles();
-  if (status !== 'ready' || !data) {
+  if (status !== 'ready' || data == null || data.currency !== 'NAD') {
+    const foreignCurrency = status === 'ready' && data != null && data.currency !== 'NAD';
+    const showError = foreignCurrency || (status === 'error' && failureCode != null);
+    const message = quoteFailureText(foreignCurrency ? 'currency' : (failureCode ?? 'failed'));
     return (
       <View style={styles.quoteStatus}>
-        {status === 'error' && failureCode ? (
+        {showError ? (
           <>
-            <Text style={styles.error}>{plainText(quoteFailureText(failureCode))}</Text>
+            <Text style={styles.error}>{plainText(message)}</Text>
             <SecondaryButton label={t('common.retry')} onPress={onRetry} />
           </>
         ) : (
@@ -363,6 +380,14 @@ function ServerQuoteSummary({
     );
   }
   const total = payableDisplay(data.total, data.currency, market === 'eu');
+  if (total == null) {
+    return (
+      <View style={styles.quoteStatus}>
+        <Text style={styles.error}>{plainText(quoteFailureText('currency'))}</Text>
+        <SecondaryButton label={t('common.retry')} onPress={onRetry} />
+      </View>
+    );
+  }
   return (
     <>
       <Row label={t('checkout.merchandise')} value={formatQuotedAmount(data.subtotal, data.currency)} />

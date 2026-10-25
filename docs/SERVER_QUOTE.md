@@ -16,17 +16,19 @@ Checkout summary (`app/checkout/index.tsx`):
 
 - Calls `POST /api/checkout/quote`.
 - Shows `subtotal`, `shipping`, `vat.rate`, `vat.amount`, and `total` from that response.
-- Quotes again when the bag, shipping method, or country changes, and again right before Pay can be enabled.
-- Pay stays disabled while that quote is loading, failed, or older than the latest bag, shipping method, or country.
+- Quotes again when the bag, shipping method, or country changes, and again right before Pay can be enabled. Quantity, shipping, country, and bag-focus refreshes wait 400 ms so rapid taps send one request.
+- Pay stays disabled while that quote is loading, waiting on the debounce, failed, or older than the latest bag, shipping method, or country.
 - A failed quote shows a fixed plain-text message and Try again. HTTP 400 says an item changed or is out of stock and the bag needs a refresh. Server error text is not shown, and it is never rendered as HTML.
 
-Guest bag prices are unchanged. Catalog prices on product screens are unchanged. The payment start call is unchanged. Payment page host checks and the server-confirmed payment result are unchanged.
+Guest bag prices are unchanged. Catalog prices on product screens are unchanged. With the flag on, payment start sends the same merged lines as the quote. Payment page host checks and the server-confirmed payment result are unchanged.
 
 ## What the app sends
 
 Both routes receive `code`, `size`, and `qty` only. Checkout also sends `shippingMethod` (`standard`, `express`, or `pickup`) and `country`. No price, unit price, or line total is sent.
 
-Before either call, duplicate rows with the same code and size are merged into one line. Quantities are summed and capped at 99. `qty` is sent only as an integer number, never as a string or a boolean. More than 50 lines is not sent. The payable amount is the quote `total` in the returned `currency` (NAD today). NAD is shown as `N$`. If a euro figure is shown, it is labelled `approx.` and sits under the NAD total. It is not the amount to pay. Any other currency is shown with its code beside the figure.
+Before either call, duplicate rows with the same code and size are merged into one line. Quantities are summed. If a merged line would be over 99, the app does not send a smaller quantity: Pay stays off and a fixed message is shown. `qty` is sent only as an integer number, never as a string or a boolean. More than 50 lines is not sent. The same merged lines are sent to the quote and to payment start.
+
+The payable amount is the quote `total` when `currency` is `NAD`. The checkout total, and the "You are charged" text on the smaller approx line, use `N$` with a thousands comma and two decimals (`N$600.00`). Subtotal, shipping, VAT, and bag prices keep the usual `N$` form (`N$600`, or `N$600.50` when there are cents). If a euro figure is shown, it is labelled `approx.` under the NAD total and is not the amount to pay. Any other currency is refused with a fixed message, and Pay stays off.
 
 ## Deploy the website first
 
