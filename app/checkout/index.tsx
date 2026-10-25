@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError, isNetworkError, NETWORK_MESSAGE } from '@/src/api/client';
-import { createPayment, openPaymentPage, waitForPaidPayment } from '@/src/api/checkout';
+import { createPayment, openPaymentPage } from '@/src/api/checkout';
+import { PaymentUrlError } from '@/src/api/paymentUrl';
 import type { ShippingMethod } from '@/src/api/types';
 import { ActionSheet } from '@/src/components/settings';
 import { EmptyState, FormScroll, LabeledField, PrimaryButton, Screen, SecondaryButton } from '@/src/components/ui';
@@ -13,7 +14,7 @@ import { useAuth } from '@/src/lib/auth';
 import { useBag } from '@/src/lib/bag';
 import { vatOn } from '@/src/lib/money';
 import { openLogin } from '@/src/lib/navigation';
-import { fetchProfile, latestOrderId, waitForNewOrder } from '@/src/lib/orders';
+import { fetchProfile } from '@/src/lib/orders';
 import { usePendingPayment } from '@/src/lib/pendingPayment';
 import { makeStyles, useTheme } from '@/src/lib/theme';
 import { fonts, radius } from '@/src/theme';
@@ -97,14 +98,7 @@ export default function CheckoutScreen() {
     setError(null);
 
     let payment: Awaited<ReturnType<typeof createPayment>>;
-    let previousOrder: string | null | undefined;
     try {
-      try {
-        previousOrder = await latestOrderId();
-      } catch {
-        // Without a trustworthy baseline, never infer payment success from an existing order.
-        previousOrder = undefined;
-      }
       payment = await createPayment({
         name: name.trim(),
         email: email.trim(),
@@ -134,55 +128,18 @@ export default function CheckoutScreen() {
 
     await payments.start(payment.companyRef);
 
-    let outcome: Awaited<ReturnType<typeof openPaymentPage>>;
     try {
       setBusy(t('checkout.openingDpo'));
-      outcome = await openPaymentPage(payment.paymentUrl);
-    } catch {
+      await openPaymentPage(payment.paymentUrl);
+    } catch (err) {
       payments.finish('settled');
       setBusy(null);
-      setError("Can't open the payment page.");
+      setError(err instanceof PaymentUrlError ? err.message : "Can't open the payment page.");
       return;
     }
 
-    if (outcome === 'cancel') {
-      payments.finish('settled');
-      setBusy(null);
-      router.replace({ pathname: '/checkout/result', params: { status: 'cancel' } });
-      return;
-    }
-
-    setBusy('Checking your order');
-    let paymentStatus: Awaited<ReturnType<typeof waitForPaidPayment>> = null;
-    let fallbackOrderId: string | null = null;
-    try {
-      paymentStatus = await waitForPaidPayment(payment.companyRef);
-      if (!paymentStatus && previousOrder !== undefined) fallbackOrderId = await waitForNewOrder(previousOrder);
-    } catch {
-      // Treated as unconfirmed below; the saved payment is checked again when the app returns to the foreground.
-    }
     setBusy(null);
-    if (paymentStatus?.status === 'cancelled') {
-      payments.finish('settled');
-      router.replace({ pathname: '/checkout/result', params: { status: 'cancel' } });
-      return;
-    }
-    if (paymentStatus?.status === 'failed' || paymentStatus?.status === 'error') {
-      payments.finish('settled');
-      router.replace({ pathname: '/checkout/result', params: { status: 'failed' } });
-      return;
-    }
-    if (paymentStatus?.status === 'paid' || fallbackOrderId) {
-      payments.finish('settled');
-      bag.clear();
-      router.replace({
-        pathname: '/checkout/result',
-        params: { status: 'paid', ref: payment.companyRef ?? '', orderId: paymentStatus?.orderId ?? fallbackOrderId ?? '' },
-      });
-      return;
-    }
-    payments.finish('unknown');
-    router.replace({ pathname: '/checkout/result', params: { status: 'unknown' } });
+    router.replace({ pathname: '/checkout/result' });
   };
 
   if (!session) {

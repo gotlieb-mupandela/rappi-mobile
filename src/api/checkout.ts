@@ -1,7 +1,9 @@
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 
-import { apiFetch } from '@/src/api/client';
+import { ApiError, apiFetch } from '@/src/api/client';
+import { paymentStatusRequest } from '@/src/api/paymentStatus';
+import { isAllowedPaymentUrl, PaymentUrlError } from '@/src/api/paymentUrl';
 import type { CreatePaymentBody, CreatePaymentSuccess } from '@/src/api/types';
 
 export async function createPayment(body: CreatePaymentBody): Promise<CreatePaymentSuccess> {
@@ -19,14 +21,15 @@ export type PaymentStatus = {
 };
 
 export async function fetchPaymentStatus(companyRef: string): Promise<PaymentStatus> {
-  return apiFetch<PaymentStatus>(
-    `/api/payments/dpo/status?companyRef=${encodeURIComponent(companyRef)}`,
-    {
-      auth: true,
-      cache: 'no-store',
-      fallbackMessage: "Payment couldn't be confirmed yet.",
-    },
-  );
+  const request = paymentStatusRequest(companyRef);
+  if (!request) {
+    throw new ApiError("Payment couldn't be confirmed yet.", 0);
+  }
+  return apiFetch<PaymentStatus>(request.path, {
+    auth: request.auth,
+    cache: 'no-store',
+    fallbackMessage: "Payment couldn't be confirmed yet.",
+  });
 }
 
 export async function waitForPaidPayment(
@@ -66,6 +69,9 @@ function outcomeFromUrl(url: string | undefined): BrowserOutcome {
  * iOS avoids the auth-session "wants to sign in" prompt by using a plain Safari view.
  */
 export async function openPaymentPage(paymentUrl: string): Promise<BrowserOutcome> {
+  if (!isAllowedPaymentUrl(paymentUrl)) {
+    throw new PaymentUrlError();
+  }
   if (Platform.OS === 'ios') {
     await WebBrowser.openBrowserAsync(paymentUrl, { dismissButtonStyle: 'close' });
     return 'closed';

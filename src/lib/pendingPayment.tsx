@@ -1,11 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 
 import { fetchPaymentStatus } from '@/src/api/checkout';
 import { useAuth } from '@/src/lib/auth';
-import { useBag } from '@/src/lib/bag';
 import { PENDING_PAYMENT_STORAGE_KEY } from '@/src/lib/localSession';
 
 const KEY = PENDING_PAYMENT_STORAGE_KEY;
@@ -17,6 +16,8 @@ export type PendingPayment = { companyRef: string; userId: string; startedAt: nu
 type PendingPaymentValue = {
   /** A payment this user started that the server hasn't confirmed or rejected yet. */
   pending: PendingPayment | null;
+  /** False until the stored payment record has been read. */
+  loaded: boolean;
   checking: boolean;
   /** Records the payment before the payment page opens, so it survives the app being killed. */
   start: (companyRef: string) => Promise<void>;
@@ -44,11 +45,12 @@ function parse(raw: string | null): PendingPayment | null {
 export function PendingPaymentProvider({ children }: { children: ReactNode }) {
   const { user, ready: authReady } = useAuth();
   const userId = user?.id ?? null;
-  const { clear: clearBag } = useBag();
+  const pathname = usePathname();
   const [stored, setStored] = useState<PendingPayment | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [checking, setChecking] = useState(false);
   const storedRef = useRef<PendingPayment | null>(null);
-  /** The checkout screen is polling this payment itself; a second check would navigate twice. */
+  /** Checkout or the result screen is already handling this payment. */
   const activeRef = useRef(false);
 
   const save = useCallback((next: PendingPayment | null) => {
@@ -65,19 +67,14 @@ export function PendingPaymentProvider({ children }: { children: ReactNode }) {
       const payment = await fetchPaymentStatus(current.companyRef).catch(() => null);
       if (storedRef.current?.companyRef !== current.companyRef || activeRef.current) return;
       if (payment?.status === 'paid') {
-        save(null);
-        clearBag();
-        router.push({
-          pathname: '/checkout/result',
-          params: { status: 'paid', ref: current.companyRef, orderId: payment.orderId ?? '' },
-        });
+        if (pathname !== '/checkout/result') router.push({ pathname: '/checkout/result' });
       } else if (payment?.status === 'cancelled' || payment?.status === 'failed' || payment?.status === 'error') {
         save(null);
       }
     } finally {
       setChecking(false);
     }
-  }, [clearBag, save, userId]);
+  }, [pathname, save, userId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -89,7 +86,10 @@ export function PendingPaymentProvider({ children }: { children: ReactNode }) {
         setStored(value);
         if (!value) void AsyncStorage.removeItem(KEY).catch(() => undefined);
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setLoaded(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -133,8 +133,8 @@ export function PendingPaymentProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<PendingPaymentValue>(
-    () => ({ pending: stored && stored.userId === userId ? stored : null, checking, start, finish, recheck }),
-    [checking, finish, recheck, start, stored, userId],
+    () => ({ pending: stored && stored.userId === userId ? stored : null, loaded, checking, start, finish, recheck }),
+    [checking, finish, loaded, recheck, start, stored, userId],
   );
   return <PendingPaymentContext.Provider value={value}>{children}</PendingPaymentContext.Provider>;
 }
