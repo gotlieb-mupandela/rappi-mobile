@@ -82,6 +82,8 @@ export const supabase = createClient(url, anonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    // Password reset and Google sign-in request a PKCE code. The default is implicit.
+    flowType: 'pkce',
   },
 });
 

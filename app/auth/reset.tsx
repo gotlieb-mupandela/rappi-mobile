@@ -3,16 +3,11 @@ import { useEffect, useState } from 'react';
 import { Text } from 'react-native';
 
 import { BrandMark, Field, FormScroll, PrimaryButton, Screen } from '@/src/components/ui';
+import { AUTH_LINK_REJECTED, readAuthCallback } from '@/src/lib/authCallback';
 import { authErrorMessage, finishAuth } from '@/src/lib/navigation';
 import { supabase } from '@/src/lib/supabase';
 import { makeStyles } from '@/src/lib/theme';
 import { fonts } from '@/src/theme';
-
-function linkParams(url: string): URLSearchParams {
-  const hash = url.split('#')[1] ?? '';
-  const query = url.split('#')[0].split('?')[1] ?? '';
-  return new URLSearchParams(hash || query);
-}
 
 export default function ResetScreen() {
   const url = Linking.useURL();
@@ -25,24 +20,13 @@ export default function ResetScreen() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const params = url ? linkParams(url) : new URLSearchParams();
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-      const code = params.get('code');
-      const linkError = params.get('error_description');
-      if (linkError) {
-        if (active) setError(linkError.replace(/\+/g, ' '));
+      const callback = readAuthCallback(url);
+      if (callback.kind === 'rejected') {
+        if (active) setError(AUTH_LINK_REJECTED);
         return;
       }
-      if (accessToken && refreshToken) {
-        const { error: sessionError } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-        if (!active) return;
-        if (sessionError) setError(authErrorMessage(sessionError));
-        else setReady(true);
-        return;
-      }
-      if (code) {
-        const { error: codeError } = await supabase.auth.exchangeCodeForSession(code);
+      if (callback.kind === 'code') {
+        const { error: codeError } = await supabase.auth.exchangeCodeForSession(callback.code);
         if (!active) return;
         if (codeError) setError(authErrorMessage(codeError));
         else setReady(true);
