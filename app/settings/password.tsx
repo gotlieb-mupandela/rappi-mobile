@@ -5,12 +5,11 @@ import { Text } from 'react-native';
 import { FormScroll, LabeledField, PrimaryButton, Screen } from '@/src/components/ui';
 import { successHaptic } from '@/src/lib/haptics';
 import { authErrorMessage } from '@/src/lib/navigation';
+import { MIN_LENGTH } from '@/src/lib/password';
 import { supabase } from '@/src/lib/supabase';
 import { useToast } from '@/src/lib/toast';
 import { makeStyles } from '@/src/lib/theme';
 import { fonts } from '@/src/theme';
-
-const MIN_LENGTH = 6;
 
 export default function ChangePasswordScreen() {
   const toast = useToast();

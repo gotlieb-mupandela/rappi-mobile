@@ -58,9 +58,12 @@ export const en = {
     pleaseWait: 'Please wait',
     forgotPassword: 'Forgot password',
     confirmEmail: 'Check your email to confirm, then sign in.',
+    passwordShort: 'Use at least {min} characters.',
   },
   payment: {
     title: 'Payment',
+    checkingTitle: 'Checking payment',
+    checkingBody: 'Confirming this payment with the store.',
     paidTitle: 'Payment received',
     paidBody: 'A receipt is emailed to you.',
     cancelTitle: 'Payment cancelled',

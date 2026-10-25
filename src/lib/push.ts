@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 
 import { subscribePush } from '@/src/api/push';
+import { isOrderId } from '@/src/lib/orderId';
 import { supabase } from '@/src/lib/supabase';
 
 const ASKED_KEY = 'pushAsked';
@@ -119,9 +120,8 @@ export function forgetPushRegistration(): Promise<void> {
 
 function openOrderFrom(response: Notifications.NotificationResponse | null): void {
   const orderId = response?.notification.request.content.data?.orderId;
-  if ((typeof orderId === 'string' && orderId) || typeof orderId === 'number') {
-    router.push(`/orders/${orderId}`);
-  }
+  if (!isOrderId(orderId)) return;
+  router.push({ pathname: '/orders/[id]', params: { id: orderId } });
 }
 
 export function listenForPushOpens(): () => void {

@@ -1,3 +1,4 @@
+import { resolveApiBase } from '@/src/api/apiBase';
 import { bearerAuthorization } from '@/src/api/requestAuth';
 import { supabase } from '@/src/lib/supabase';
 
@@ -18,11 +19,11 @@ export function isRouteMissing(error: unknown): boolean {
 }
 
 function apiBase(): string {
-  const url = process.env.EXPO_PUBLIC_API_URL ?? '';
-  if (!url.trim()) {
-    throw new ApiError('Store URL is not configured.', 0);
-  }
-  return url.replace(/\/$/, '');
+  // __DEV__ is true in Metro and dev builds, including localhost and LAN API hosts.
+  // Release builds set it false and refuse any other host.
+  const result = resolveApiBase(process.env.EXPO_PUBLIC_API_URL, !__DEV__);
+  if (!result.ok) throw new ApiError(result.message, 0);
+  return result.base;
 }
 
 function looksLikeHtml(text: string): boolean {
@@ -67,6 +68,7 @@ function timeoutFor(method: FetchOptions['method']): number {
 }
 
 async function rawFetch(path: string, options: FetchOptions, token: string | null): Promise<Response> {
+  const base = apiBase();
   const headers: Record<string, string> = {
     Accept: 'application/json',
   };
@@ -82,7 +84,7 @@ async function rawFetch(path: string, options: FetchOptions, token: string | nul
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? timeoutFor(options.method));
   try {
-    return await fetch(`${apiBase()}${path}`, {
+    return await fetch(`${base}${path}`, {
       method: options.method ?? 'GET',
       headers,
       body: options.body === undefined ? undefined : JSON.stringify(options.body),

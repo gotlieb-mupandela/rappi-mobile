@@ -66,9 +66,12 @@ export const fr = {
     pleaseWait: 'Veuillez patienter',
     forgotPassword: 'Mot de passe oublié',
     confirmEmail: 'Consultez vos e-mails pour confirmer, puis connectez-vous.',
+    passwordShort: 'Utilisez au moins {min} caractères.',
   },
   payment: {
     title: 'Paiement',
+    checkingTitle: 'Vérification du paiement',
+    checkingBody: 'Confirmation de ce paiement auprès de la boutique.',
     paidTitle: 'Paiement reçu',
     paidBody: 'Un reçu vous a été envoyé par e-mail.',
     cancelTitle: 'Paiement annulé',

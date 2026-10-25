@@ -7,6 +7,7 @@ import { GoogleButton, OrDivider } from '@/src/components/GoogleButton';
 import { BrandMark, Field, FormScroll, PrimaryButton, Screen } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { authErrorMessage, finishAuth } from '@/src/lib/navigation';
+import { MIN_LENGTH } from '@/src/lib/password';
 import { supabase } from '@/src/lib/supabase';
 import { makeStyles } from '@/src/lib/theme';
 import { fonts } from '@/src/theme';
@@ -23,10 +24,17 @@ export default function SignupScreen() {
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const tooShort = password.length > 0 && password.length < MIN_LENGTH;
+
   const submit = async () => {
     setBusy(true);
     setError(null);
     setInfo(null);
+    if (password.length < MIN_LENGTH) {
+      setError(t('auth.passwordShort', { min: MIN_LENGTH }));
+      setBusy(false);
+      return;
+    }
     try {
       const { data, error: authError } = await supabase.auth.signUp({
         email: email.trim(),
@@ -76,11 +84,12 @@ export default function SignupScreen() {
           value={password}
           onChangeText={setPassword}
         />
+        {tooShort ? <Text style={styles.error}>{t('auth.passwordShort', { min: MIN_LENGTH })}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {info ? <Text style={styles.info}>{info}</Text> : null}
         <PrimaryButton
           label={busy ? t('auth.pleaseWait') : t('auth.createAccount')}
-          disabled={busy || !email.trim() || !password || !name.trim()}
+          disabled={busy || !email.trim() || !name.trim() || password.length < MIN_LENGTH}
           onPress={submit}
         />
       </FormScroll>
