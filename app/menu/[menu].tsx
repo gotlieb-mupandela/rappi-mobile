@@ -2,12 +2,15 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet } from 'react-native';
 
 import { MenuGrid } from '@/src/components/MenuGrid';
-import { EmptyState, PathTrail, Screen } from '@/src/components/ui';
+import { EmptyState, PathTrail, Screen, TextButton } from '@/src/components/ui';
+import { useLocale } from '@/src/i18n/LocaleProvider';
+import { legacyUiEnabled } from '@/src/lib/legacyUi';
 import { findMenu, parseMenuPath, resolveMenuPath } from '@/src/lib/menus';
 import { goBack } from '@/src/lib/navigation';
 import { space } from '@/src/theme';
 
 export default function MenuScreen() {
+  const { t } = useLocale();
   const params = useLocalSearchParams<{ menu: string; path?: string }>();
   const menu = findMenu(params.menu);
   const path = parseMenuPath(params.path);
@@ -34,6 +37,9 @@ export default function MenuScreen() {
   return (
     <Screen title={last?.node.name ?? menu.title} back>
       <PathTrail parts={parts} />
+      {!legacyUiEnabled() && menu.key === 'teamwear' && path.length === 0 ? (
+        <TextButton label={t('quote.title')} onPress={() => router.push('/teamwear-quote')} />
+      ) : null}
       <ScrollView contentContainerStyle={styles.content}>
         <MenuGrid
           nodes={resolved.nodes}

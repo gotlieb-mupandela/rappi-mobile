@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { useStorefront } from '@/src/api/storefront';
 import { FolderCard, Screen } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { findMenu, menuImage, NAV_MENU_KEYS, type Menu } from '@/src/lib/menus';
@@ -10,6 +11,7 @@ const NAV_MENUS = NAV_MENU_KEYS.map((key) => findMenu(key)).filter((menu): menu 
 
 export default function ShopScreen() {
   const { t } = useLocale();
+  const storefront = useStorefront();
   const menuCells: (Menu | null)[] = NAV_MENUS.length % 2 === 1 ? [...NAV_MENUS, null] : NAV_MENUS;
   const menuRows: (Menu | null)[][] = [];
   for (let index = 0; index < menuCells.length; index += 2) menuRows.push(menuCells.slice(index, index + 2));
@@ -25,7 +27,7 @@ export default function ShopScreen() {
                   {menu ? (
                     <FolderCard
                       name={t(`shop.${menu.key}`)}
-                      imageUrl={menuImage(menu.image)}
+                      imageUrl={storefront.data?.menus[menu.key]?.image ?? menuImage(menu.image)}
                       onPress={() => router.push({ pathname: '/menu/[menu]', params: { menu: menu.key } })}
                     />
                   ) : null}

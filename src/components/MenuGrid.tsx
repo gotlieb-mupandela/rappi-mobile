@@ -3,8 +3,11 @@ import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { ALL_FOLDER, fetchFolderCatalog, folderProductQuery, isSearchFolder, isSubFolder } from '@/src/api/catalog';
+import { useStorefront } from '@/src/api/storefront';
 import { CoverFolderTile, openCatalogFolder } from '@/src/components/FolderBrowser';
+import { legacyUiEnabled } from '@/src/lib/legacyUi';
 import { menuImage, type MenuNode } from '@/src/lib/menus';
+import { withStorefrontNode } from '@/src/lib/storefront';
 import { space } from '@/src/theme';
 
 type Context = {
@@ -46,7 +49,11 @@ function leafQueries(node: MenuNode, cat: string, audience?: string): ProductQue
 }
 
 export function MenuGrid({ nodes, variant, ...context }: Context & { nodes: MenuNode[]; variant?: 'folder' | 'card' }) {
-  const leaves = nodes.map((node) => leafQueries(node, context.cat, context.audience));
+  const storefront = useStorefront();
+  const shown = nodes.map((node) =>
+    withStorefrontNode(context.menu?.key, node, storefront.data?.menus, !legacyUiEnabled()),
+  );
+  const leaves = shown.map((node) => leafQueries(node, context.cat, context.audience));
   const counts = useQueries({
     queries: leaves.flat().map((query) => ({
       queryKey: ['folder-cover', query],
@@ -56,7 +63,7 @@ export function MenuGrid({ nodes, variant, ...context }: Context & { nodes: Menu
   });
   // The website links some folders the store has no products for; hide them rather than open an empty page.
   let offset = 0;
-  const visible = nodes.filter((_, index) => {
+  const visible = shown.filter((_, index) => {
     const results = counts.slice(offset, offset + leaves[index].length);
     offset += leaves[index].length;
     return !results.every((result) => result.data?.total === 0);

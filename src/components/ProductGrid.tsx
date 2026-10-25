@@ -16,6 +16,10 @@ type Props = {
   emptyMessage: string;
   emptyAction?: { label: string; onPress: () => void };
   showFilters?: boolean;
+  /** Website search uses `/api/search`. Defaults to the catalog route. */
+  loader?: typeof fetchCatalog;
+  source?: string;
+  heading?: (total: number) => string;
 };
 
 const AUDIENCES = [
@@ -25,7 +29,7 @@ const AUDIENCES = [
   { slug: 'kids', labelKey: 'common.kids' },
 ] as const;
 
-export function ProductGrid({ query, emptyMessage, emptyAction, showFilters }: Props) {
+export function ProductGrid({ query, emptyMessage, emptyAction, showFilters, loader = fetchCatalog, source = 'catalog', heading }: Props) {
   const { t } = useLocale();
   const { sectionLabel } = useTheme();
   const styles = useStyles();
@@ -35,10 +39,10 @@ export function ProductGrid({ query, emptyMessage, emptyAction, showFilters }: P
   const [sizeOpen, setSizeOpen] = useState(false);
 
   const catalog = useInfiniteQuery({
-    queryKey: ['catalog', query, audience ?? null, size ?? null],
+    queryKey: ['catalog', source, query, audience ?? null, size ?? null],
     initialPageParam: 1,
     queryFn: ({ pageParam }) =>
-      fetchCatalog({ ...query, audience: audience ?? query.audience, size, page: pageParam, pageSize: 24 }),
+      loader({ ...query, audience: audience ?? query.audience, size, page: pageParam, pageSize: 24 }),
     getNextPageParam: (last) => (last.page < last.pageCount ? last.page + 1 : undefined),
     staleTime: 60_000,
   });
@@ -111,7 +115,9 @@ export function ProductGrid({ query, emptyMessage, emptyAction, showFilters }: P
   return (
     <View style={styles.flex}>
       <View style={styles.header}>
-        <Text style={sectionLabel}>PRODUCTS</Text>
+        <Text style={sectionLabel}>
+          {heading && catalog.data?.pages[0] ? heading(catalog.data.pages[0].total) : 'PRODUCTS'}
+        </Text>
       </View>
       {showFilters ? (
         <View>

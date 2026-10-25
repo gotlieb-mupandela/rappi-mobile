@@ -1,10 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { EmptyState, ErrorState, Screen } from '@/src/components/ui';
+import { shareInvoice } from '@/src/api/invoice';
+import { ApiError } from '@/src/api/client';
+import { EmptyState, ErrorState, PrimaryButton, Screen } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useAuth } from '@/src/lib/auth';
+import { legacyUiEnabled } from '@/src/lib/legacyUi';
 import { openLogin } from '@/src/lib/navigation';
 import { fetchOrder, formatOrderDate, orderStatusLabel, shippingLabel, shortOrderId } from '@/src/lib/orders';
 import { makeStyles, useTheme } from '@/src/lib/theme';
@@ -16,6 +20,9 @@ export default function OrderDetailScreen() {
   const styles = useStyles();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, ready } = useAuth();
+  const parity = !legacyUiEnabled();
+  const [downloading, setDownloading] = useState(false);
+  const [invoiceError, setInvoiceError] = useState<string | null>(null);
   const order = useQuery({
     queryKey: ['order', id],
     queryFn: () => fetchOrder(id),
@@ -87,6 +94,24 @@ export default function OrderDetailScreen() {
             {data.phone ? <Text style={styles.dim}>{data.phone}</Text> : null}
             {data.notes ? <Text style={styles.dim}>{data.notes}</Text> : null}
           </View>
+          {parity ? (
+            <View style={styles.invoice}>
+              <PrimaryButton
+                label={downloading ? t('orders.downloadingInvoice') : t('orders.downloadInvoice')}
+                disabled={downloading}
+                onPress={() => {
+                  setDownloading(true);
+                  setInvoiceError(null);
+                  void shareInvoice(data.id)
+                    .catch((err: unknown) => {
+                      setInvoiceError(err instanceof ApiError ? err.message : t('orders.invoiceFailed'));
+                    })
+                    .finally(() => setDownloading(false));
+                }}
+              />
+              {invoiceError ? <Text style={styles.invoiceError}>{invoiceError}</Text> : null}
+            </View>
+          ) : null}
         </ScrollView>
       )}
     </Screen>
@@ -130,4 +155,6 @@ const useStyles = makeStyles(({ colors, shadow }) => ({
   lineLabel: { fontFamily: fonts.body, fontSize: 14, color: colors.muted },
   lineValue: { fontFamily: fonts.body, fontSize: 14, color: colors.text, fontVariant: ['tabular-nums'] },
   bold: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.text },
+  invoice: { marginTop: 16, gap: 8 },
+  invoiceError: { fontFamily: fonts.body, fontSize: 13, color: colors.danger },
 }));

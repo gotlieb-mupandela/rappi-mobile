@@ -40,6 +40,7 @@ const config: ExpoConfig = {
     'expo-router',
     'expo-secure-store',
     'expo-font',
+    'expo-sharing',
     [
       'expo-notifications',
       {

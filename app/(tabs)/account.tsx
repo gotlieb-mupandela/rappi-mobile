@@ -17,6 +17,7 @@ import { fetchProfile } from '@/src/lib/orders';
 import { profileName, profilePhoto } from '@/src/lib/profile';
 import { supabase } from '@/src/lib/supabase';
 import { makeStyles, useTheme } from '@/src/lib/theme';
+import { legacyUiEnabled } from '@/src/lib/legacyUi';
 import { useWishlist } from '@/src/lib/wishlist';
 import { fonts, radius, space } from '@/src/theme';
 
@@ -24,8 +25,18 @@ const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 const DELETE_PHRASE = 'Delete my Account';
 
 function HelpAndLegal({ onContact }: { onContact: () => void }) {
+  const { t } = useLocale();
+  const parity = !legacyUiEnabled();
   return (
     <SettingsGroup title="Help & legal">
+      {parity ? (
+        <>
+          <SettingsRow icon="pricetag-outline" label={t('promotions.row')} onPress={() => router.push('/promotions')} />
+          <SettingsRow icon="storefront-outline" label={t('store.title')} onPress={() => router.push('/store')} />
+          <SettingsRow icon="information-circle-outline" label={t('about.title')} onPress={() => router.push('/about')} />
+          <SettingsRow icon="shirt-outline" label={t('quote.title')} onPress={() => router.push('/teamwear-quote')} />
+        </>
+      ) : null}
       <SettingsRow icon="chatbubbles-outline" label="Contact us" detail="WhatsApp or email our team" onPress={onContact} />
       <SettingsRow icon="return-down-back-outline" label="Returns & refunds" external onPress={() => openSitePage('returns')} />
       <SettingsRow icon="document-text-outline" label="Terms & conditions" external onPress={() => openSitePage('terms')} />
