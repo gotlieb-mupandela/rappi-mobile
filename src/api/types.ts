@@ -8,7 +8,10 @@ export type ProductSize = {
 export type Product = {
   id: string;
   code: string;
-  item: string;
+  /** Clean product-line label. Missing until the website sends it. */
+  line?: string;
+  /** Supplier line text, such as "Aro reversible [7]". Optional once `line` replaces it. */
+  item?: string;
   title: string;
   name: string;
   displayName: string;

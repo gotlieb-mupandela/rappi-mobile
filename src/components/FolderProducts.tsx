@@ -3,57 +3,16 @@ import { useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { fetchFolderCatalog } from '@/src/api/catalog';
-import type { CatalogPage, CatalogQuery, Product } from '@/src/api/types';
+import type { CatalogQuery } from '@/src/api/types';
 import { ProductCard } from '@/src/components/ProductCard';
 import { Chip, EmptyState, ErrorState, SkeletonGrid } from '@/src/components/ui';
+import { lineName, sectionProducts } from '@/src/lib/folderSections';
 import { makeStyles } from '@/src/lib/theme';
 import { fonts, space } from '@/src/theme';
 
+export { lineName, sectionProducts };
+
 const PAGE_SIZE = 24;
-
-type Section = { key: string; title: string; products: Product[] };
-
-function titleCase(text: string): string {
-  return text
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-/** "Aro reversible [7]" → "Aro Reversible". */
-export function lineName(item: string | undefined): string {
-  const name = (item ?? '').replace(/\s*\[\d+\]\s*$/, '').trim();
-  return name ? titleCase(name) : 'More';
-}
-
-/**
- * The website splits each page into sections: by product line when the folder is a single subcategory,
- * otherwise by subcategory in catalog order with "More" last.
- */
-export function sectionProducts(products: Product[], facets: CatalogPage['facets'] | undefined, byLine: boolean): Section[] {
-  const sections = new Map<string, Section>();
-  for (const product of products) {
-    const key = byLine ? lineName(product.item) : product.subcategory || 'general';
-    const title = byLine
-      ? key
-      : key === 'general'
-        ? 'More'
-        : (facets?.subs?.find((sub) => sub.slug === key)?.name ?? titleCase(key.replace(/-/g, ' ')));
-    const section = sections.get(key) ?? { key, title, products: [] };
-    section.products.push(product);
-    sections.set(key, section);
-  }
-  const subOrder = (facets?.subs ?? []).map((sub) => sub.slug);
-  const rank = (section: Section) => {
-    if (section.title === 'More') return Number.MAX_SAFE_INTEGER;
-    if (byLine) return 0;
-    const index = subOrder.indexOf(section.key);
-    return index === -1 ? subOrder.length : index;
-  };
-  return [...sections.values()].sort((a, b) => rank(a) - rank(b) || (byLine ? a.title.localeCompare(b.title) : 0));
-}
 
 type Props = {
   query: Omit<CatalogQuery, 'page' | 'pageSize'>;
