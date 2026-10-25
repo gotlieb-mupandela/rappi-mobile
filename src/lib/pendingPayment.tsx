@@ -6,8 +6,9 @@ import { AppState } from 'react-native';
 import { fetchPaymentStatus } from '@/src/api/checkout';
 import { useAuth } from '@/src/lib/auth';
 import { useBag } from '@/src/lib/bag';
+import { PENDING_PAYMENT_STORAGE_KEY } from '@/src/lib/localSession';
 
-const KEY = 'pendingPayment';
+const KEY = PENDING_PAYMENT_STORAGE_KEY;
 /** DPO payment pages expire long before this; older records are only noise. */
 const MAX_AGE_MS = 24 * 60 * 60_000;
 
@@ -93,6 +94,13 @@ export function PendingPaymentProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!authReady) return;
+    const current = storedRef.current;
+    if (!current) return;
+    if (!userId || current.userId !== userId) save(null);
+  }, [authReady, save, stored, userId]);
 
   const storedCompanyRef = stored?.companyRef;
   useEffect(() => {

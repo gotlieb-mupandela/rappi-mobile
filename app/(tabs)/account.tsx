@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
@@ -13,7 +14,9 @@ import { BrandMark, Field, PrimaryButton, Screen, SecondaryButton, SkeletonList 
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { MARKETS } from '@/src/i18n/market';
 import { useAuth } from '@/src/lib/auth';
+import { clearLocalSession } from '@/src/lib/localSession';
 import { fetchProfile } from '@/src/lib/orders';
+import { queryPersister } from '@/src/lib/queryPersister';
 import { profileName, profilePhoto } from '@/src/lib/profile';
 import { supabase } from '@/src/lib/supabase';
 import { makeStyles, useTheme } from '@/src/lib/theme';
@@ -76,11 +79,12 @@ export default function AccountScreen() {
     queryFn: () => fetchProfile(user!.id),
   });
 
-  const clearAccountQueries = () => {
-    queryClient.removeQueries({ queryKey: ['orders'] });
-    queryClient.removeQueries({ queryKey: ['order'] });
-    queryClient.removeQueries({ queryKey: ['profile'] });
-  };
+  const clearAccountData = () =>
+    clearLocalSession({
+      clearQueries: () => queryClient.clear(),
+      removePersistedQueries: () => queryPersister.removeClient(),
+      removeItems: (keys) => AsyncStorage.multiRemove([...keys]),
+    });
 
   const signOut = async () => {
     setSigningOut(true);
@@ -91,7 +95,7 @@ export default function AccountScreen() {
         setSignOutError("Couldn't sign out. Try again.");
         return;
       }
-      clearAccountQueries();
+      await clearAccountData();
     } catch {
       setSignOutError("Couldn't sign out. Try again.");
     } finally {
@@ -116,12 +120,15 @@ export default function AccountScreen() {
       }
       return;
     }
-    // The server session is already gone, so only the local session needs clearing.
-    await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
-    clearAccountQueries();
+    // The server account is already gone, so only the local session needs clearing.
+    const signedOut = await supabase.auth.signOut({ scope: 'local' });
+    await clearAccountData().catch(() => undefined);
     setDeleting(false);
     setConfirmingDelete(false);
     setDeletePhrase('');
+    if (signedOut.error) {
+      setSignOutError('Your account was deleted. Sign out of this phone if you are still signed in.');
+    }
   };
 
   const wishlistValue = wishlist.count ? `${wishlist.count} saved` : undefined;

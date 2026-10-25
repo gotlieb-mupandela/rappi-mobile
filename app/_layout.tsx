@@ -4,8 +4,6 @@ import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
 import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
 import { Oswald_600SemiBold } from '@expo-google-fonts/oswald/600SemiBold';
 import { Oswald_700Bold } from '@expo-google-fonts/oswald/700Bold';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { focusManager, QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import Constants from 'expo-constants';
@@ -24,6 +22,8 @@ import { LocaleProvider } from '@/src/i18n/LocaleProvider';
 import type { Market } from '@/src/i18n/market';
 
 import { AuthProvider } from '@/src/lib/auth';
+import { catalogCacheBuster, shouldPersistQuery } from '@/src/lib/queryPersistence';
+import { queryPersister } from '@/src/lib/queryPersister';
 import { BagProvider } from '@/src/lib/bag';
 import { OfflineProvider } from '@/src/lib/offline';
 import { PendingPaymentProvider } from '@/src/lib/pendingPayment';
@@ -61,22 +61,8 @@ const crash = StyleSheet.create({
   buttonLabel: { fontSize: 14, fontWeight: '700', letterSpacing: 1, color: colors.onAccent },
 });
 
+/** How long public catalog queries may stay on disk. Account data is not included. */
 const CACHE_MAX_AGE = 7 * 24 * 60 * 60_000;
-
-/** Public catalog data only; orders, profile and live stock are never written to disk. */
-const PERSISTED_QUERIES = new Set([
-  'catalog',
-  'catalog-nav',
-  'product',
-  'folder-products',
-  'site-folders',
-  'folder-cover',
-  'hub-overview',
-  'hub-types',
-  'hub-athlete',
-]);
-
-const persister = createAsyncStoragePersister({ storage: AsyncStorage, key: 'rappi-query-cache', throttleTime: 2_000 });
 
 function AboveTabBar({ children }: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
@@ -187,12 +173,12 @@ export default function RootLayout() {
           <PersistQueryClientProvider
             client={queryClient}
             persistOptions={{
-              persister,
+              persister: queryPersister,
               maxAge: CACHE_MAX_AGE,
-              buster: Constants.expoConfig?.version ?? '',
+              buster: catalogCacheBuster(Constants.expoConfig?.version ?? ''),
               dehydrateOptions: {
-                shouldDehydrateQuery: (query) =>
-                  query.state.status === 'success' && PERSISTED_QUERIES.has(String(query.queryKey[0])),
+                shouldDehydrateMutation: () => false,
+                shouldDehydrateQuery: (query) => query.state.status === 'success' && shouldPersistQuery(query.queryKey),
               },
             }}
           >
