@@ -31,13 +31,11 @@ jobs:
           echo "Dispatch the production profile from main, or choose preview."
           exit 1
 
-  build:
-    name: Build Android
+  preview:
+    name: Build Android preview
     needs: guard
+    if: inputs.profile == 'preview'
     runs-on: ubuntu-latest
-    # Preview leaves the name empty, so this job does not use an environment.
-    # Production uses the production environment so required reviewers can gate it.
-    environment: ${{ inputs.profile == 'production' && 'production' || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -56,8 +54,36 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Android on EAS
+      - name: Build Android preview on EAS
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          EAS_BUILD_PROFILE: ${{ inputs.profile }}
-        run: eas build --platform android --profile "$EAS_BUILD_PROFILE" --non-interactive --no-wait
+        run: eas build --platform android --profile preview --non-interactive --no-wait
+
+  production:
+    name: Build Android production
+    needs: guard
+    if: inputs.profile == 'production' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@c7b66a9c327a43a8fa7c0158e7f30d6040d2481e # v8 (8.2.1)
+        with:
+          eas-version: 25.3.0
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Android production on EAS
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: eas build --platform android --profile production --non-interactive --no-wait
