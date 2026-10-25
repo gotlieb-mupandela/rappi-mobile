@@ -15,9 +15,11 @@ on:
 permissions:
   contents: read
 
+# Separate groups so a preview dispatch cannot cancel a production run
+# that is waiting for approval. Production does not cancel its own in-progress run.
 concurrency:
-  group: android-build
-  cancel-in-progress: true
+  group: ${{ inputs.profile == 'production' && 'android-build-production' || 'android-build-preview' }}
+  cancel-in-progress: ${{ inputs.profile != 'production' }}
 
 jobs:
   guard:
