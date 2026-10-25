@@ -51,7 +51,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "node --no-warnings --experimental-strip-types --test src/lib/money.test.ts src/lib/bagRules.test.ts src/lib/bagSyncRules.test.ts src/lib/categories.test.ts src/lib/wishlistRules.test.ts src/lib/queryPersistence.test.ts src/lib/localSession.test.ts src/lib/authCallback.test.ts src/api/requestAuth.test.ts src/api/paymentUrl.test.ts src/api/apiBase.test.ts src/api/paymentStatus.test.ts src/lib/orderId.test.ts",
+    "test": "node --no-warnings --experimental-strip-types --test src/lib/money.test.ts src/lib/bagRules.test.ts src/lib/bagSyncRules.test.ts src/lib/categories.test.ts src/lib/wishlistRules.test.ts src/lib/queryPersistence.test.ts src/lib/localSession.test.ts src/lib/authCallback.test.ts src/api/requestAuth.test.ts src/api/paymentUrl.test.ts src/api/apiBase.test.ts src/api/paymentStatus.test.ts src/lib/orderId.test.ts src/lib/serverQuote.test.ts",
     "check": "npm run typecheck && npm test",
     "export:android": "expo export --platform android"
   },

@@ -5,6 +5,12 @@ import type { ExpoConfig } from 'expo/config';
 const googleServicesFile =
   process.env.GOOGLE_SERVICES_JSON ?? (existsSync('./google-services.json') ? './google-services.json' : undefined);
 
+/** Build-time only. Anything other than 1 or true leaves the flag off. */
+function enabledBuildFlag(name: string): boolean {
+  const value = process.env[name];
+  return value === '1' || value === 'true';
+}
+
 const config: ExpoConfig = {
   name: 'Rappi Sport',
   slug: 'rappi-sport',
@@ -71,6 +77,9 @@ const config: ExpoConfig = {
   extra: {
     eas: {
       projectId: 'e6d1496d-3f53-46d4-8db8-9d837ad45641',
+    },
+    flags: {
+      SERVER_QUOTE_CHECKOUT: enabledBuildFlag('SERVER_QUOTE_CHECKOUT'),
     },
   },
 };

@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "code": "J.100",
+      "size": "M",
+      "qty": 2,
+      "unitPrice": 150,
+      "lineTotal": 300,
+      "name": "ignored"
+    }
+  ],
+  "subtotal": 300,
+  "currency": "NAD",
+  "note": "ignored"
+}
