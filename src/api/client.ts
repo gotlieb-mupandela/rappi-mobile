@@ -1,3 +1,4 @@
+import { bearerAuthorization } from '@/src/api/requestAuth';
 import { supabase } from '@/src/lib/supabase';
 
 export class ApiError extends Error {
@@ -53,13 +54,17 @@ async function accessToken(): Promise<string | null> {
 }
 
 type FetchOptions = {
-  method?: 'GET' | 'POST';
+  method?: 'GET' | 'POST' | 'DELETE';
   body?: unknown;
   auth?: boolean;
   fallbackMessage?: string;
   timeoutMs?: number;
   cache?: RequestCache;
 };
+
+function timeoutFor(method: FetchOptions['method']): number {
+  return method === 'POST' || method === 'DELETE' ? 45_000 : 25_000;
+}
 
 async function rawFetch(path: string, options: FetchOptions, token: string | null): Promise<Response> {
   const headers: Record<string, string> = {
@@ -72,13 +77,10 @@ async function rawFetch(path: string, options: FetchOptions, token: string | nul
     if (!token) {
       throw new ApiError('Please sign in.', 401);
     }
-    headers.Authorization = `Bearer ${token}`;
+    headers.Authorization = bearerAuthorization(token);
   }
   const controller = new AbortController();
-  const timeout = setTimeout(
-    () => controller.abort(),
-    options.timeoutMs ?? (options.method === 'POST' ? 45_000 : 25_000),
-  );
+  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? timeoutFor(options.method));
   try {
     return await fetch(`${apiBase()}${path}`, {
       method: options.method ?? 'GET',

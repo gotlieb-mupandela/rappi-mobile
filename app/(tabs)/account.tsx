@@ -121,11 +121,14 @@ export default function AccountScreen() {
       return;
     }
     // The server account is already gone, so only the local session needs clearing.
-    await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+    const signedOut = await supabase.auth.signOut({ scope: 'local' });
     await clearAccountData().catch(() => undefined);
     setDeleting(false);
     setConfirmingDelete(false);
     setDeletePhrase('');
+    if (signedOut.error) {
+      setSignOutError('Your account was deleted. Sign out of this phone if you are still signed in.');
+    }
   };
 
   const wishlistValue = wishlist.count ? `${wishlist.count} saved` : undefined;
