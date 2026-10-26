@@ -100,22 +100,27 @@ test('checkout display uses feed shipping, per-country VAT, and drops unknown sh
   assert.equal(formatApproxEur(304, 0.05), 'Approx. EUR 15.20');
 });
 
-test('flag on shipping comes only from the feed and sends nothing when missing', () => {
-  assert.equal(shippingUnavailable(true, 0), true);
-  assert.equal(shippingUnavailable(true, 0, true), false);
-  assert.equal(shippingLoading(true, true, 0), true);
-  assert.equal(shippingLoading(true, true, 2), false);
-  assert.equal(shippingUnavailable(false, 0), false);
-  assert.equal(selectedPaymentMethod(true, [], 'standard'), null);
-  assert.equal(selectedPaymentMethod(true, [{ id: 'express' }], 'standard'), null);
-  assert.equal(selectedPaymentMethod(true, [{ id: 'express' }], 'express'), 'express');
-  assert.equal(selectedPaymentMethod(false, [], 'standard'), 'standard');
+test('shipping comes only from the feed and sends nothing when missing', () => {
+  assert.equal(shippingUnavailable(0), true);
+  assert.equal(shippingUnavailable(0, true), false);
+  assert.equal(shippingLoading(true, 0), true);
+  assert.equal(shippingLoading(true, 2), false);
+  assert.equal(selectedPaymentMethod([], 'standard'), null);
+  assert.equal(selectedPaymentMethod([{ id: 'express' }], 'standard'), null);
+  assert.equal(selectedPaymentMethod([{ id: 'express' }], 'express'), 'express');
   const empty = checkoutDisplay({ ...feed().checkout, shipping: [] }, 'en');
   assert.deepEqual(empty.shipping, []);
-  assert.equal(selectedPaymentMethod(true, empty.shipping, 'standard'), null);
+  assert.equal(empty.shippingUnsupported, false);
+  assert.equal(selectedPaymentMethod(empty.shipping, 'standard'), null);
+  const unknownOnly = checkoutDisplay(
+    { ...feed().checkout, shipping: feed().checkout.shipping.filter((row) => row.key === 'courier-note') },
+    'en',
+  );
+  assert.equal(unknownOnly.shippingUnsupported, true);
+  assert.deepEqual(unknownOnly.shipping, []);
 });
 
-test('flag on totals note is always shown and says when VAT is hidden', () => {
+test('the totals note is always shown and says when VAT is hidden', () => {
   assert.equal(flagOnTotalsNote(true), 'totals');
   assert.equal(flagOnTotalsNote(false), 'totals-and-vat-hidden');
   assert.match(en.checkout.totalsServer, /approximate/i);

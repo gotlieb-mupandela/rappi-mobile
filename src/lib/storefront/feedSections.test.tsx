@@ -8,7 +8,7 @@ import { Image, Pressable, Text } from 'react-native';
 
 import { audienceNodes, categoryHubImage, foldersForCategory, headerMenus, homeTiles, localized, shopTileDestination } from './adapt.ts';
 import { validateMobileStorefront } from './contract.ts';
-import { AthleteCards, HomeFeed, HubCover, HubTypeGrid, MenuUnavailable, ShopFeed, type FeedTileModel } from './feedSections.tsx';
+import { AthleteCards, HomeFeed, HubCover, HubTypeGrid, MenuUnavailable, ShopFeed, StorefrontUnavailable, type FeedTileModel } from './feedSections.tsx';
 import type { MobileStorefront, StorefrontNode } from './types.ts';
 
 function baseFeed(): MobileStorefront {
@@ -181,6 +181,40 @@ test('a null hub cover shows no image and a missing feed shows retry', () => {
   assert.ok(retry);
   retry.props.onPress();
   assert.equal(retried, 1);
+});
+
+test('no feed and no cache shows the can\'t load screen with Retry on home, shop, and the category hub', () => {
+  let homeRetries = 0;
+  let shopRetries = 0;
+  let hubRetries = 0;
+  let tree!: ReactTestRenderer;
+  act(() => {
+    tree = create(
+      <>
+        <HomeFeed status="unavailable" tiles={[]} onRetry={() => { homeRetries += 1; }} onOpen={() => undefined} />
+        <ShopFeed status="unavailable" menus={[]} onRetry={() => { shopRetries += 1; }} onOpen={() => undefined} />
+        <StorefrontUnavailable loading={false} onRetry={() => { hubRetries += 1; }} testID="hub-unavailable" />
+      </>,
+    );
+  });
+  const sections = [
+    tree.root.findByProps({ testID: 'home-unavailable' }),
+    tree.root.findByProps({ testID: 'shop-unavailable' }),
+    tree.root.findByProps({ testID: 'hub-unavailable' }),
+  ];
+  for (const section of sections) {
+    const text = section.findAllByType(Text).map((item) => String(item.props.children)).join('\n');
+    assert.equal(text.includes("Can't load the shop"), true);
+    assert.equal(text.includes('Try again'), true);
+    assert.equal(text.includes('Teamwear'), false);
+    const retry = section.findAllByType(Pressable).find((item) => item.props.accessibilityLabel === 'Try again');
+    assert.ok(retry);
+    retry.props.onPress();
+  }
+  assert.equal(tree.root.findAllByType(Image).length, 0);
+  assert.equal(homeRetries, 1);
+  assert.equal(shopRetries, 1);
+  assert.equal(hubRetries, 1);
 });
 
 test('a shop tile with children opens the menu level and one without opens its target', () => {

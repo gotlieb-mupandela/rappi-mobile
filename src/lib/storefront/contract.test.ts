@@ -35,9 +35,11 @@ test('accepts the fixture feed', () => {
   assert.ok(pack);
   assert.equal(pack.images[0], pack.cardImage);
   assert.equal(pack.line, 'Training cones');
+  assert.equal(pack.packLabel, 'Training cones, Pack of 25');
   assert.equal('item' in pack, false);
   const plain = parsed.value.products.find((product) => product.code === 'PLAIN-1');
   assert.ok(plain);
+  assert.equal(plain.packLabel, null);
   assert.equal(plain.cardImage, null);
   assert.deepEqual(plain.images, ['https://www.rappisportshub.com/catalog-photos/plain-ok.jpg']);
 });

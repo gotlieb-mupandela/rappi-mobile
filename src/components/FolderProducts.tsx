@@ -73,7 +73,7 @@ type Props = {
 export function FolderProducts({ query, byLine, emptyAction }: Props) {
   const styles = useStyles();
   const storefront = useStorefront();
-  const lines = storefront.enabled ? storefront.linesByCode : null;
+  const lines = storefront.linesByCode;
   const [page, setPage] = useState(1);
   const scroll = useRef<ScrollView>(null);
   const sectionY = useRef<Record<string, number>>({});

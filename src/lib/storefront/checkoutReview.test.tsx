@@ -16,6 +16,8 @@ const NOTE = en.checkout.totalsServer;
 const VAT_HIDDEN = en.checkout.vatHidden;
 const LOADING = en.checkout.shippingLoading;
 const UNAVAILABLE = en.checkout.shippingUnavailable;
+const UNSUPPORTED = en.checkout.shippingUnsupported;
+const CHOOSE_SHIPPING = en.checkout.chooseShipping;
 const RETRY = en.common.retry;
 const PAY = en.checkout.payDpo;
 const DEFAULT_COUNTRY = 'Namibia';
@@ -46,19 +48,13 @@ const loadedDisplay = checkoutDisplay(checkout, 'en');
 
 type ViewInput = Parameters<typeof deriveCheckoutView>[0];
 
-function flagOnInput(overrides: Partial<ViewInput> = {}): ViewInput {
+function reviewInput(overrides: Partial<ViewInput> = {}): ViewInput {
   return {
-    enabled: true,
     loading: false,
     display: null,
     feedLoaded: false,
     selectedShipping: DEFAULT_METHOD,
     selectedCountry: DEFAULT_COUNTRY,
-    fallbackRows: [],
-    fallbackCountries: [],
-    fallbackVatPercent: 15,
-    fallbackShippingCost: 100,
-    totalsNote: en.checkout.totalsNote,
     totalsServer: NOTE,
     vatHiddenCopy: VAT_HIDDEN,
     name: 'Jane Doe',
@@ -112,9 +108,12 @@ function CheckoutReviewHarness({
       <CheckoutShippingState
         loading={view.loading}
         unavailable={view.unavailable}
+        unsupported={view.unsupported}
         retrying={retrying}
         loadingText={LOADING}
         unavailableText={UNAVAILABLE}
+        unsupportedText={UNSUPPORTED}
+        chooseText={view.rows.length > 0 && !input.selectedShipping ? CHOOSE_SHIPPING : null}
         retryLabel={RETRY}
         onRetry={onRetry}
         rows={view.rows.map((item) => ({
@@ -168,7 +167,7 @@ function assertNothingSent(sent: { shippingMethod: ShippingMethod; country: stri
 
 test('checkout review shows the approximate totals note and a loading state before the feed arrives', () => {
   const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
-  const input = flagOnInput({ loading: true, display: null, feedLoaded: false });
+  const input = reviewInput({ loading: true, display: null, feedLoaded: false });
   const { tree, view } = renderReview(input, false, (body) => sent.push(body));
   const texts = visibleText(tree);
   assert.equal(view.vatHidden, VAT_HIDDEN);
@@ -184,7 +183,7 @@ test('checkout review shows the approximate totals note and a loading state befo
 
 test('checkout review says VAT is hidden when the loaded country has no feed rate', () => {
   const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
-  const input = flagOnInput({
+  const input = reviewInput({
     display: loadedDisplay,
     feedLoaded: true,
     selectedShipping: 'express',
@@ -201,9 +200,9 @@ test('checkout review says VAT is hidden when the loaded country has no feed rat
   assertNothingSent(sent, view, tree);
 });
 
-test('checkout review says VAT is hidden when the flag is on and there is no feed', () => {
+test('checkout review says VAT is hidden when there is no feed', () => {
   const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
-  const input = flagOnInput({ loading: false, display: null, feedLoaded: false });
+  const input = reviewInput({ loading: false, display: null, feedLoaded: false });
   const { tree, view } = renderReview(input, false, (body) => sent.push(body));
   const texts = visibleText(tree);
   assert.equal(view.vatHidden, VAT_HIDDEN);
@@ -223,7 +222,7 @@ test('checkout review says VAT is hidden when the flag is on and there is no fee
 test('checkout review keeps pay disabled after a load with no shipping rows', () => {
   const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
   const empty: CheckoutDisplay = checkoutDisplay({ ...checkout, shipping: [] }, 'en');
-  const input = flagOnInput({
+  const input = reviewInput({
     display: empty,
     feedLoaded: true,
     selectedShipping: DEFAULT_METHOD,
@@ -238,9 +237,56 @@ test('checkout review keeps pay disabled after a load with no shipping rows', ()
   assertNothingSent(sent, view, tree);
 });
 
+test('checkout review asks to choose shipping and keeps pay disabled until a row and a country are selected', () => {
+  const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
+  const input = reviewInput({
+    display: loadedDisplay,
+    feedLoaded: true,
+    selectedShipping: '',
+    selectedCountry: '',
+  });
+  const { tree, view } = renderReview(input, false, (body) => sent.push(body));
+  const texts = visibleText(tree);
+  assert.equal(view.unsupported, false);
+  assert.equal(view.unavailable, false);
+  assert.equal(texts.includes(CHOOSE_SHIPPING), true);
+  assert.equal(texts.includes(UNAVAILABLE), false);
+  assert.equal(view.canPay, false);
+  assertNothingSent(sent, view, tree);
+});
+
+test('checkout review says shipping is unsupported when every feed row uses an unknown key', () => {
+  const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
+  const onlyUnknown: CheckoutDisplay = checkoutDisplay(
+    {
+      ...checkout,
+      shipping: checkout.shipping.filter((row) => row.key !== 'standard' && row.key !== 'express' && row.key !== 'pickup'),
+    },
+    'en',
+  );
+  assert.equal(onlyUnknown.shipping.length, 0);
+  assert.equal(onlyUnknown.shippingUnsupported, true);
+  const input = reviewInput({
+    display: onlyUnknown,
+    feedLoaded: true,
+    selectedShipping: '',
+    selectedCountry: '',
+  });
+  const { tree, view } = renderReview(input, false, (body) => sent.push(body));
+  const texts = visibleText(tree);
+  assert.equal(view.unsupported, true);
+  assert.equal(view.unavailable, false);
+  assert.equal(texts.includes(UNSUPPORTED), true);
+  assert.equal(texts.includes(UNAVAILABLE), false);
+  assert.equal(texts.includes(RETRY), false);
+  assert.ok(tree.root.findByProps({ testID: 'checkout-shipping-unsupported' }));
+  assert.equal(view.canPay, false);
+  assertNothingSent(sent, view, tree);
+});
+
 test('checkout review enables pay with the selected feed shipping key and country name', () => {
   const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
-  const input = flagOnInput({
+  const input = reviewInput({
     display: loadedDisplay,
     feedLoaded: true,
     selectedShipping: 'express',
@@ -260,7 +306,7 @@ test('checkout review enables pay with the selected feed shipping key and countr
 test('checkout review disables Retry while a reload is in flight', () => {
   const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
   let retries = 0;
-  const input = flagOnInput({ loading: true, display: null, feedLoaded: false });
+  const input = reviewInput({ loading: true, display: null, feedLoaded: false });
   const { tree, view } = renderReview(input, true, (body) => sent.push(body), () => {
     retries += 1;
   });

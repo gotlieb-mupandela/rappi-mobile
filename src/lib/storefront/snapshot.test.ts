@@ -74,7 +74,6 @@ test('a bad feed keeps the last good copy and a missing snapshot stays empty', a
   const store = memoryStore();
   const good = fixture();
   await resolveStorefront({
-    enabled: true,
     production: false,
     apiUrl: host,
     store,
@@ -82,7 +81,6 @@ test('a bad feed keeps the last good copy and a missing snapshot stays empty', a
   });
   let snapshotReads = 0;
   const kept = await resolveStorefront({
-    enabled: true,
     production: true,
     apiUrl: host,
     store,
@@ -98,7 +96,6 @@ test('a bad feed keeps the last good copy and a missing snapshot stays empty', a
   assert.equal(kept?.version, '2026-10-25.1.7');
 
   const offline = await resolveStorefront({
-    enabled: true,
     production: true,
     apiUrl: host,
     store: memoryStore(),
@@ -110,7 +107,6 @@ test('a bad feed keeps the last good copy and a missing snapshot stays empty', a
   assert.equal(offline?.version, '2026-10-25.1.7');
 
   const absent = await resolveStorefront({
-    enabled: true,
     production: true,
     apiUrl: host,
     store: memoryStore(),

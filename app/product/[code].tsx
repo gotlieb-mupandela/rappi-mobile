@@ -16,8 +16,8 @@ import { EmptyState, ErrorState, PrimaryButton, Screen } from '@/src/components/
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useBag } from '@/src/lib/bag';
 import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
-import { useCategoryTitle, usePresentedProduct, useStorefront } from '@/src/lib/storefront/provider';
-import { defaultSize, isAvailable, isOneSize, isPack, isSoldOut, productSizes, stockLine } from '@/src/lib/sizes';
+import { useCategoryTitle, usePresentedProduct } from '@/src/lib/storefront/provider';
+import { defaultSize, isAvailable, isOneSize, isSoldOut, productSizes, stockLine } from '@/src/lib/sizes';
 import { useToast } from '@/src/lib/toast';
 import { makeStyles, useTheme } from '@/src/lib/theme';
 import { useWishlist, useWishlistActions } from '@/src/lib/wishlist';
@@ -27,7 +27,6 @@ export default function ProductScreen() {
   const { formatMoney, t } = useLocale();
   const { colors } = useTheme();
   const styles = useStyles();
-  const storefront = useStorefront();
   const { code: raw } = useLocalSearchParams<{ code: string }>();
   const code = useMemo(() => {
     try {
@@ -117,7 +116,6 @@ export default function ProductScreen() {
   };
 
   const line = stockLine(soldOut ? 0 : stockCount);
-  const pack = !storefront.enabled && product.data ? isPack(product.data) : false;
   const saved = wishlist.has(code);
   const name = product.data ? presented.name : undefined;
 
@@ -178,13 +176,9 @@ export default function ProductScreen() {
               ) : null}
             </View>
             <Text style={styles.eyebrow}>{categoryLabel}</Text>
-            <Text style={styles.title}>
-              {presented.name}
-              {pack ? ' · Pack' : ''}
-            </Text>
+            <Text style={styles.title}>{presented.name}</Text>
+            {presented.packLabel ? <Text style={styles.note}>{presented.packLabel}</Text> : null}
             <Text style={styles.price}>{formatMoney(product.data.price)}</Text>
-            {pack ? <Text style={styles.note}>Sold as a pack. Sizes inside may be mixed.</Text> : null}
-            {!storefront.enabled && product.data.packSize ? <Text style={styles.note}>Pack of {product.data.packSize}</Text> : null}
             {!oneSize && sizes.length > 0 ? (
               <View style={styles.sizeBlock}>
                 <Text style={styles.sizeLabel}>SIZE</Text>

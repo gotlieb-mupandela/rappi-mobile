@@ -1,19 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { ALL_FOLDER, fetchCatalog, fetchHubTypes, fetchNav, subFolderKey } from '@/src/api/catalog';
+import { ALL_FOLDER, fetchCatalog, fetchNav, subFolderKey } from '@/src/api/catalog';
 import { openCatalogFolder } from '@/src/components/FolderBrowser';
-import { MenuGrid } from '@/src/components/MenuGrid';
 import { ProductCard } from '@/src/components/ProductCard';
-import { Chip, ErrorState, PressableScale, Screen, SecondaryButton, SkeletonBlock, SkeletonGrid } from '@/src/components/ui';
+import { Chip, ErrorState, Screen, SecondaryButton, SkeletonBlock } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
-import { hubImage } from '@/src/lib/categories';
-import { pressHaptic, tapHaptic } from '@/src/lib/haptics';
-import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
-import { AUDIENCE_IMAGES, HUB_DESCRIPTIONS, HUB_TYPES, menuImage, type MenuNode } from '@/src/lib/menus';
+import { pressHaptic } from '@/src/lib/haptics';
 import { categoryAudiences, categoryHubImage, categoryNode, foldersForCategory, localized } from '@/src/lib/storefront/adapt';
 import { resolveTarget } from '@/src/lib/storefront/contract';
 import { AthleteCards, HubCover, HubTypeGrid, StorefrontUnavailable } from '@/src/lib/storefront/feedSections';
@@ -23,27 +18,22 @@ import type { StorefrontLanguage } from '@/src/lib/storefront/types';
 import { makeStyles, useTheme } from '@/src/lib/theme';
 import { fonts, radius, space } from '@/src/theme';
 
-const ATHLETES = [
-  { slug: 'men', labelKey: 'common.men' },
-  { slug: 'women', labelKey: 'common.women' },
-  { slug: 'kids', labelKey: 'common.kids' },
-] as const;
-
 const RAIL_SIZE = 10;
 const SHADE = require('@/assets/images/shade.png');
 
 export function CategoryHub({ slug }: { slug: string }) {
-  const { folderName, market, t } = useLocale();
+  const { market } = useLocale();
   const { colors } = useTheme();
   const styles = useStyles();
   const storefront = useStorefront();
   const name = useCategoryTitle(slug);
   const language: StorefrontLanguage = market === 'eu' ? 'fr' : 'en';
-  const feedFolders = storefront.enabled && storefront.feed ? foldersForCategory(storefront.feed, slug) : [];
-  const category = storefront.enabled && storefront.feed ? categoryNode(storefront.feed, slug) : undefined;
+  const feed = storefront.feed;
+  const feedFolders = feed ? foldersForCategory(feed, slug) : [];
+  const category = feed ? categoryNode(feed, slug) : undefined;
   const feedDescription = category ? localized(category.description, language).trim() : '';
-  const feedImage = storefront.enabled && storefront.feed ? categoryHubImage(storefront.feed, slug) : null;
-  const athletesFromFeed = storefront.enabled && storefront.feed ? categoryAudiences(storefront.feed, slug) : [];
+  const feedImage = feed ? categoryHubImage(feed, slug) : null;
+  const athletesFromFeed = feed ? categoryAudiences(feed, slug) : [];
 
   const nav = useQuery({ queryKey: ['catalog-nav'], queryFn: fetchNav, staleTime: 60_000 });
   const overview = useQuery({
@@ -51,41 +41,13 @@ export function CategoryHub({ slug }: { slug: string }) {
     queryFn: () => fetchCatalog({ cat: slug, pageSize: RAIL_SIZE }),
     staleTime: 60_000,
   });
-  const staticTypes = feedFolders.length > 0 ? undefined : HUB_TYPES[slug];
-  const folders = useQuery({
-    queryKey: ['hub-types', slug],
-    queryFn: () => fetchHubTypes(slug),
-    enabled: !staticTypes && feedFolders.length === 0,
-    staleTime: 60_000,
-  });
-  const athletes = useQueries({
-    queries: ATHLETES.map((athlete) => ({
-      queryKey: ['hub-athlete', slug, athlete.slug],
-      queryFn: () => fetchCatalog({ cat: slug, audience: athlete.slug, pageSize: 1 }),
-      staleTime: 60_000,
-    })),
-  });
 
   const crumbs = [name];
-  const types: MenuNode[] =
-    staticTypes ??
-    (folders.data ?? []).map((folder) => ({ key: folder.key, name: folderName(folder.key, folder.name), image: folder.imageUrl, folder: folder.key }));
   const subs = nav.data?.taxonomy?.[slug] ?? [];
   const products = overview.data?.products ?? [];
-  const heroImage = storefront.enabled ? feedImage : hubImage(slug) || sizedImage(products[0]?.imageUrl, IMAGE_WIDTH.full);
   const shopAll = () => openCatalogFolder({ cat: slug, folder: ALL_FOLDER, name: 'Shop all', crumbs, leaf: true });
-  const openAthlete = (audience: string, label: string) => {
-    if (slug === 'shoes') {
-      router.push({ pathname: '/menu/[menu]', params: { menu: 'shoes', path: audience } });
-      return;
-    }
-    openCatalogFolder({ cat: slug, folder: ALL_FOLDER, name: label, audience, crumbs });
-  };
-  const athleteCards = ATHLETES.map((athlete, index) => ({ ...athlete, label: t(athlete.labelKey), data: athletes[index].data })).filter(
-    (athlete) => (athlete.data?.total ?? 0) > 0,
-  );
 
-  if (storefront.enabled && !storefront.feed) {
+  if (!feed) {
     return (
       <Screen title={name} back>
         <StorefrontUnavailable
@@ -109,24 +71,14 @@ export function CategoryHub({ slug }: { slug: string }) {
     <Screen title={name} back>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.hero}>
-          {storefront.enabled ? (
-            <HubCover image={feedImage} />
-          ) : heroImage ? (
-            <Image source={{ uri: heroImage }} style={styles.fill} contentFit="cover" contentPosition="top" cachePolicy="memory-disk" transition={250} />
-          ) : null}
+          <HubCover image={feedImage} />
           <Image source={SHADE} style={styles.heroShade} contentFit="fill" pointerEvents="none" />
           <View style={styles.heroText}>
             <Text style={styles.eyebrow}>Rappi Sports Hub</Text>
             <Text style={styles.heroTitle}>{name}</Text>
-            {storefront.enabled ? (
-              feedDescription ? (
-                <Text style={styles.heroDescription} numberOfLines={2}>
-                  {feedDescription}
-                </Text>
-              ) : null
-            ) : HUB_DESCRIPTIONS[slug] ? (
+            {feedDescription ? (
               <Text style={styles.heroDescription} numberOfLines={2}>
-                {HUB_DESCRIPTIONS[slug]}
+                {feedDescription}
               </Text>
             ) : null}
             <Pressable
@@ -160,11 +112,10 @@ export function CategoryHub({ slug }: { slug: string }) {
           </View>
         ) : null}
 
-        {storefront.enabled && feedFolders.length === 0 ? null : (
-        <View style={styles.section}>
-          <SectionHeader title="Shop by type" />
-          <View style={styles.padded}>
-            {storefront.enabled ? (
+        {feedFolders.length === 0 ? null : (
+          <View style={styles.section}>
+            <SectionHeader title="Shop by type" />
+            <View style={styles.padded}>
               <HubTypeGrid
                 tiles={feedFolders.map((node) => ({
                   key: node.key,
@@ -178,13 +129,8 @@ export function CategoryHub({ slug }: { slug: string }) {
                   openStorefrontRoute(route, label, crumbs);
                 }}
               />
-            ) : !staticTypes && folders.isPending ? (
-              <SkeletonGrid count={4} />
-            ) : (
-              <MenuGrid nodes={types} cat={slug} crumbs={crumbs} variant="card" />
-            )}
+            </View>
           </View>
-        </View>
         )}
 
         {products.length > 0 || overview.isPending ? (
@@ -202,8 +148,7 @@ export function CategoryHub({ slug }: { slug: string }) {
           </View>
         ) : null}
 
-        {storefront.enabled ? (
-          athletesFromFeed.length > 0 ? (
+        {athletesFromFeed.length > 0 ? (
           <View style={styles.section}>
             <SectionHeader title="Shop by athlete" />
             <AthleteCards
@@ -216,36 +161,9 @@ export function CategoryHub({ slug }: { slug: string }) {
                 const row = athletesFromFeed.find((item) => item.id === key);
                 const route = row ? resolveTarget(row.target) : null;
                 if (!route) return;
-                tapHaptic();
                 openStorefrontRoute(route, label, crumbs);
               }}
             />
-          </View>
-          ) : null
-        ) : athleteCards.length > 0 ? (
-          <View style={styles.section}>
-            <SectionHeader title="Shop by athlete" />
-            <View style={[styles.athletes, styles.padded]}>
-              {athleteCards.map((athlete) => {
-                const image = menuImage(AUDIENCE_IMAGES[athlete.slug]) ?? sizedImage(athlete.data?.products[0]?.imageUrl, IMAGE_WIDTH.card);
-                return (
-                  <View key={athlete.slug} style={styles.athlete}>
-                    <PressableScale
-                      accessibilityRole="button"
-                      accessibilityLabel={`Shop ${athlete.label}`}
-                      onPress={() => {
-                        tapHaptic();
-                        openAthlete(athlete.slug, athlete.label);
-                      }}
-                      style={styles.athleteCard}>
-                      {image ? <Image source={{ uri: image }} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={200} /> : null}
-                      <Image source={SHADE} style={styles.athleteShade} contentFit="fill" pointerEvents="none" />
-                      <Text style={styles.athleteName}>{athlete.label}</Text>
-                    </PressableScale>
-                  </View>
-                );
-              })}
-            </View>
           </View>
         ) : null}
 
@@ -275,7 +193,6 @@ function SectionHeader({ title, action, onAction }: { title: string; action?: st
 
 const useStyles = makeStyles(({ colors, displayTitle, sectionLabel }) => ({
   content: { paddingBottom: 48 },
-  fill: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   pressed: { opacity: 0.85 },
   padded: { paddingHorizontal: space.screen },
   hero: { height: 360, backgroundColor: '#121212', justifyContent: 'flex-end', overflow: 'hidden' },
@@ -312,8 +229,6 @@ const useStyles = makeStyles(({ colors, displayTitle, sectionLabel }) => ({
   rail: { paddingHorizontal: space.screen, gap: space.gap },
   railItem: { width: 168 },
   railSkeleton: { width: 168, height: 250, borderRadius: radius.card },
-  feedGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.gap },
-  feedCell: { width: '47.5%', flexGrow: 1 },
   athletes: { flexDirection: 'row', gap: 10 },
   athlete: { flex: 1 },
   athleteCard: { aspectRatio: 0.72, borderRadius: radius.card, overflow: 'hidden', backgroundColor: colors.imageWell, justifyContent: 'flex-end' },

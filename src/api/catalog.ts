@@ -96,58 +96,16 @@ export function folderProductQuery(
   return { ...base, group: key };
 }
 
-/** The website's names for the catalog's base product groups. */
-const BASE_GROUP_NAMES: Record<string, string> = {
-  shirts: 'Shirts',
-  jackets: 'Jackets',
-  shorts: 'Shorts',
-  pants: 'Pants',
-  dresses: 'Dresses',
-  skirts: 'Skirts',
-  bras: 'Sports Bras',
-  shoes: 'Shoes',
-  accessories: 'Accessories',
-  equipment: 'Equipment',
-  swimwear: 'Swimwear',
-};
-
-/** Base groups open their subcategories as folders on the website, e.g. Jackets → Hoodies, Jackets. */
-export function isBaseGroup(key: string | undefined): key is string {
-  return !!key && key in BASE_GROUP_NAMES;
-}
-
-/** Each sport's root also lists its teamwear lines, which live in the Sportswear teamwear tree. */
-const TEAMWEAR_BRANCH: Record<string, string> = {
-  football: 'tw-football',
-  basketball: 'tw-basketball',
-  rugby: 'tw-rugby',
-  cricket: 'tw-cricket',
-  swimming: 'tw-swimming',
-};
-
-/** "Shop by type" on a category hub: the base groups under the website's names, without the "More" bucket. */
+/** Catalog folders for a category. Names come from the catalog response. */
 export async function fetchHubTypes(cat: string): Promise<Folder[]> {
   const folders = await fetchFolders(cat);
-  return folders
-    .filter((folder) => folder.key !== 'general')
-    .map((folder) => (BASE_GROUP_NAMES[folder.key] ? { ...folder, name: BASE_GROUP_NAMES[folder.key] } : folder));
+  return folders.filter((folder) => folder.key !== 'general');
 }
 
-/** Folders shown inside a folder, organised the way the website organises them. */
-export async function fetchSiteFolders(cat: string, key?: string, audience?: string): Promise<Folder[]> {
-  if (!key || key === ALL_FOLDER) {
-    const types = await fetchHubTypes(cat);
-    const branch = TEAMWEAR_BRANCH[cat];
-    if (!branch) return types;
-    const teamwear = await fetchFolders('sportswear', branch);
-    return [...types, ...teamwear.map((folder) => ({ ...folder, cat: 'sportswear' }))];
-  }
-  const folders = await fetchFolders(cat, key);
-  if (folders.length > 0 || !isBaseGroup(key)) return folders;
-  const page = await fetchFolderCatalog({ ...folderProductQuery(cat, key, audience), pageSize: 1 });
-  const subs = (page.facets?.subs ?? []).filter((sub) => sub.count > 0);
-  if (subs.length < 2) return [];
-  return subs.map((sub) => ({ key: subFolderKey(sub.slug, key), name: sub.name, count: sub.count, hasChildren: false }));
+/** Folders shown inside a folder. Names and children come from the catalog response. */
+export async function fetchSiteFolders(cat: string, key?: string, _audience?: string): Promise<Folder[]> {
+  if (!key || key === ALL_FOLDER) return fetchHubTypes(cat);
+  return fetchFolders(cat, key);
 }
 
 export async function fetchFolders(cat: string, group?: string): Promise<Folder[]> {

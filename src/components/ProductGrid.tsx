@@ -21,13 +21,6 @@ type Props = {
   showFilters?: boolean;
 };
 
-const AUDIENCES = [
-  { slug: undefined, labelKey: 'common.all' },
-  { slug: 'men', labelKey: 'common.men' },
-  { slug: 'women', labelKey: 'common.women' },
-  { slug: 'kids', labelKey: 'common.kids' },
-] as const;
-
 export function ProductGrid({ query, emptyMessage, emptyAction, showFilters }: Props) {
   const { market, t } = useLocale();
   const storefront = useStorefront();
@@ -121,32 +114,21 @@ export function ProductGrid({ query, emptyMessage, emptyAction, showFilters }: P
       {showFilters ? (
         <View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-            {query.audience
-              ? null
-              : storefront.enabled
-                ? (
-                  <AudienceChips
-                    tiles={
-                      storefront.feed
-                        ? audienceNodes(storefront.feed).map((node) => ({
-                            key: node.key,
-                            label: localized(node.title, language),
-                          }))
-                        : []
-                    }
-                    allLabel={t('common.all')}
-                    selected={audience}
-                    onSelect={setAudience}
-                  />
-                )
-                : AUDIENCES.map((item) => (
-                  <Chip
-                    key={item.labelKey}
-                    label={t(item.labelKey)}
-                    selected={audience === item.slug}
-                    onPress={() => setAudience(item.slug)}
-                  />
-                ))}
+            {query.audience ? null : (
+              <AudienceChips
+                tiles={
+                  storefront.feed
+                    ? audienceNodes(storefront.feed).map((node) => ({
+                        key: node.key,
+                        label: localized(node.title, language),
+                      }))
+                    : []
+                }
+                allLabel={t('common.all')}
+                selected={audience}
+                onSelect={setAudience}
+              />
+            )}
             {sizeOptions.length > 0 || size ? (
               <Chip label={size ? `${t('common.size')} ${size}` : t('common.size')} selected={!!size} onPress={() => setSizeOpen((open) => !open)} />
             ) : null}

@@ -21,24 +21,8 @@ import { usePendingPayment } from '@/src/lib/pendingPayment';
 import { makeStyles, useTheme } from '@/src/lib/theme';
 import { fonts, radius } from '@/src/theme';
 
-const SHIPPING: { id: ShippingMethod; labelKey: string; cost: number }[] = [
-  { id: 'standard', labelKey: 'checkout.standard', cost: 100 },
-  { id: 'express', labelKey: 'checkout.express', cost: 150 },
-  { id: 'pickup', labelKey: 'checkout.pickup', cost: 0 },
-];
-
-const COUNTRIES = [
-  ['Namibia', 15], ['South Africa', 15], ['Botswana', 14], ['France', 20], ['Belgium', 21],
-  ['Luxembourg', 17], ['Germany', 19], ['Netherlands', 21], ['Spain', 21], ['Italy', 22],
-  ['Portugal', 23], ['Austria', 20], ['Ireland', 23], ['Finland', 25.5], ['Sweden', 25],
-  ['Denmark', 25], ['Greece', 24], ['Poland', 23], ['Czechia', 21], ['Slovakia', 23],
-  ['Slovenia', 22], ['Croatia', 25], ['Hungary', 27], ['Romania', 21], ['Bulgaria', 20],
-  ['Estonia', 24], ['Latvia', 21], ['Lithuania', 21], ['Malta', 18], ['Cyprus', 19],
-  ['United Kingdom', 20], ['Switzerland', 8.1],
-] as const;
-
 export default function CheckoutScreen() {
-  const { market, formatMoney, t } = useLocale();
+  const { market, t } = useLocale();
   const storefront = useStorefront();
   const { session, ready } = useAuth();
   const { sectionLabel } = useTheme();
@@ -56,31 +40,25 @@ export default function CheckoutScreen() {
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [notes, setNotes] = useState('');
-  const [shipping, setShipping] = useState<ShippingMethod>('standard');
-  const [country, setCountry] = useState(market === 'eu' ? 'France' : 'Namibia');
+  const [shipping, setShipping] = useState<ShippingMethod | null>(null);
+  const [country, setCountry] = useState('');
   const [countryOpen, setCountryOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const prefilled = useRef(false);
   const language = market === 'eu' ? 'fr' : 'en';
   const display = useMemo(
-    () => (storefront.enabled && storefront.feed ? checkoutDisplay(storefront.feed.checkout, language) : null),
-    [language, storefront.enabled, storefront.feed],
+    () => (storefront.feed ? checkoutDisplay(storefront.feed.checkout, language) : null),
+    [language, storefront.feed],
   );
   const view = useMemo(
     () =>
       deriveCheckoutView({
-        enabled: storefront.enabled,
         loading: storefront.loading,
         display,
         feedLoaded: storefront.feed !== null,
-        selectedShipping: shipping,
+        selectedShipping: shipping ?? '',
         selectedCountry: country,
-        fallbackRows: SHIPPING.map((item) => ({ id: item.id, label: t(item.labelKey), cost: item.cost })),
-        fallbackCountries: COUNTRIES.map(([name, rate]) => ({ name, vatPercent: rate })),
-        fallbackVatPercent: 15,
-        fallbackShippingCost: 100,
-        totalsNote: t('checkout.totalsNote'),
         totalsServer: t('checkout.totalsServer'),
         vatHiddenCopy: t('checkout.vatHidden'),
         name,
@@ -100,13 +78,12 @@ export default function CheckoutScreen() {
       name,
       phone,
       shipping,
-      storefront.enabled,
       storefront.feed,
       storefront.loading,
       t,
     ],
   );
-  const showMoney = (amount: number) => (storefront.enabled ? formatNad(amount, 'na') : formatMoney(amount));
+  const showMoney = (amount: number) => formatNad(amount, 'na');
 
   useEffect(() => {
     if (ready && !session) {
@@ -122,20 +99,6 @@ export default function CheckoutScreen() {
     setName((current) => current || fullName);
     setEmail((current) => current || profile.data?.email || session.user.email || '');
   }, [profile.data, profile.isPending, session]);
-
-  useEffect(() => {
-    if (!storefront.enabled || !display || display.shipping.length === 0) return;
-    if (display.shipping.some((item) => item.id === shipping)) return;
-    setShipping(display.shipping[0].id);
-  }, [display, shipping, storefront.enabled]);
-
-  useEffect(() => {
-    if (!storefront.enabled || !display || display.countries.length === 0) return;
-    if (display.countries.some((item) => item.name === country)) return;
-    const preferred = market === 'eu' ? 'France' : 'Namibia';
-    const fallback = display.countries.find((item) => item.name === preferred) ?? display.countries[0];
-    if (fallback) setCountry(fallback.name);
-  }, [country, display, market, storefront.enabled]);
 
   const shippingCost = view.shippingCost;
   const vatPercent = view.vatPercent;
@@ -296,9 +259,12 @@ export default function CheckoutScreen() {
           <CheckoutShippingState
             loading={view.loading}
             unavailable={view.unavailable}
+            unsupported={view.unsupported}
             retrying={storefront.ready && storefront.loading}
             loadingText={t('checkout.shippingLoading')}
             unavailableText={t('checkout.shippingUnavailable')}
+            unsupportedText={t('checkout.shippingUnsupported')}
+            chooseText={view.rows.length > 0 && !shipping ? t('checkout.chooseShipping') : null}
             retryLabel={t('common.retry')}
             onRetry={() => storefront.reload()}
             rows={view.rows.map((item) => ({
@@ -337,7 +303,7 @@ export default function CheckoutScreen() {
               onPress={() => setCountryOpen(true)}
               style={({ pressed }) => [styles.country, pressed && styles.pressed]}>
               <Text style={styles.rowLabel}>{t('checkout.country')}</Text>
-              <Text style={styles.rowValue}>{country}</Text>
+              <Text style={country ? styles.rowValue : styles.rowPlaceholder}>{country || t('checkout.chooseCountry')}</Text>
             </Pressable>
           ) : null}
           <LabeledField label={t('checkout.notes')} optional placeholder={t('checkout.notesPlaceholder')} value={notes} onChangeText={setNotes} />
@@ -437,6 +403,7 @@ const useStyles = makeStyles(({ colors }) => ({
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: 2 },
   rowLabel: { fontFamily: fonts.body, fontSize: 15, color: colors.muted },
   rowValue: { fontFamily: fonts.body, fontSize: 15, color: colors.text, fontVariant: ['tabular-nums'] },
+  rowPlaceholder: { fontFamily: fonts.body, fontSize: 15, color: colors.muted },
   bold: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.text },
   hint: { fontFamily: fonts.body, fontSize: 12, color: colors.muted, marginTop: 4, marginBottom: 6 },
   error: { fontFamily: fonts.body, fontSize: 14, color: colors.danger, marginBottom: 6 },
