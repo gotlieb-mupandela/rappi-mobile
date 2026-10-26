@@ -102,6 +102,9 @@ export const en = {
     vatHidden: 'VAT is not shown for this country.',
     shippingLoading: 'Loading shipping options',
     shippingUnavailable: "Can't load shipping options, try again",
+    chooseCountry: 'Choose a country',
+    chooseShipping: 'Choose a shipping method',
+    shippingUnsupported: 'Shipping options are not supported in this app version, please update',
   },
   orders: {
     title: 'Orders',

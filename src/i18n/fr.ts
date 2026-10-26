@@ -110,6 +110,9 @@ export const fr = {
     vatHidden: "La TVA n'est pas affichée pour ce pays.",
     shippingLoading: 'Chargement des options de livraison',
     shippingUnavailable: 'Impossible de charger les options de livraison, réessayez',
+    chooseCountry: 'Choisissez un pays',
+    chooseShipping: 'Choisissez un mode de livraison',
+    shippingUnsupported: "Les options de livraison ne sont pas prises en charge dans cette version de l'application, veuillez mettre à jour",
   },
   orders: {
     title: 'Commandes',

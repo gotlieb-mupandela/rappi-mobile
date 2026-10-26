@@ -22,6 +22,8 @@ export type CheckoutDisplay = {
   /** Fresh map from the validated country name to its percent. Missing name means no estimate. */
   vatByName: ReadonlyMap<string, number>;
   eurPerNad: number;
+  /** The feed sent shipping rows, and none of them is a method this app can pay with. */
+  shippingUnsupported: boolean;
 };
 
 export function vatPercentFromFraction(vatRate: number): number {
@@ -30,7 +32,9 @@ export function vatPercentFromFraction(vatRate: number): number {
 
 export function checkoutDisplay(checkout: StorefrontCheckout, language: StorefrontLanguage): CheckoutDisplay {
   const shipping: CheckoutShippingRow[] = [];
+  let rawShipping = 0;
   for (const row of checkout.shipping) {
+    rawShipping += 1;
     if (!SHIPPING_METHODS.has(row.key)) continue;
     shipping.push({
       id: row.key as ShippingMethod,
@@ -45,7 +49,13 @@ export function checkoutDisplay(checkout: StorefrontCheckout, language: Storefro
     countries.push({ code: row.code, name: row.name, vatPercent });
     if (!vatByName.has(row.name)) vatByName.set(row.name, vatPercent);
   }
-  return { shipping, countries, vatByName, eurPerNad: checkout.eurPerNad };
+  return {
+    shipping,
+    countries,
+    vatByName,
+    eurPerNad: checkout.eurPerNad,
+    shippingUnsupported: rawShipping > 0 && shipping.length === 0,
+  };
 }
 
 /** Undefined when this country has no feed rate. Callers must not substitute a hardcoded rate. */
@@ -100,6 +110,8 @@ export function checkoutPaymentFields(
 export type CheckoutView = {
   loading: boolean;
   unavailable: boolean;
+  /** Feed rows arrived, but none is standard, express, or pickup. Pay stays off. */
+  unsupported: boolean;
   rows: CheckoutShippingRow[];
   countryRows: { name: string; vatPercent: number }[];
   vatPercent: number | undefined;
@@ -133,7 +145,8 @@ export function deriveCheckoutView(input: {
   const rows = [...(input.display?.shipping ?? [])];
   const method = selectedPaymentMethod(rows, input.selectedShipping);
   const loading = shippingLoading(input.loading, rows.length);
-  const unavailable = shippingUnavailable(rows.length, input.loading);
+  const unsupported = Boolean(input.display?.shippingUnsupported) && !input.loading;
+  const unavailable = !unsupported && shippingUnavailable(rows.length, input.loading);
   const countryRows = input.display?.countries.map((row) => ({ name: row.name, vatPercent: row.vatPercent })) ?? [];
   const vatPercent = input.display ? vatPercentForCountry(input.display, input.selectedCountry) : undefined;
   const vatHidden: string | null = vatPercent === undefined ? input.vatHiddenCopy : null;
@@ -159,6 +172,7 @@ export function deriveCheckoutView(input: {
   return {
     loading,
     unavailable,
+    unsupported,
     rows,
     countryRows,
     vatPercent,

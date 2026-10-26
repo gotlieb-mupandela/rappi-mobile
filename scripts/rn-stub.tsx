@@ -25,4 +25,9 @@ export const StyleSheet = {
   },
   hairlineWidth: 1,
 };
-export const Platform = { OS: 'ios' as const };
+export const Platform = {
+  OS: 'ios' as const,
+  select<T>(options: { ios?: T; android?: T; default?: T }): T | undefined {
+    return options.ios ?? options.default;
+  },
+};

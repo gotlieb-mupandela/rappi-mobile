@@ -52,9 +52,12 @@ function RetryButton({
 export function CheckoutShippingState({
   loading,
   unavailable,
+  unsupported = false,
   retrying = false,
   loadingText,
   unavailableText,
+  unsupportedText = '',
+  chooseText = null,
   retryLabel,
   onRetry,
   rows,
@@ -63,10 +66,15 @@ export function CheckoutShippingState({
 }: {
   loading: boolean;
   unavailable: boolean;
+  /** Feed returned shipping rows this app version cannot pay with. */
+  unsupported?: boolean;
   /** True while Retry has already been shown and a reload is in flight. */
   retrying?: boolean;
   loadingText: string;
   unavailableText: string;
+  unsupportedText?: string;
+  /** Shown when rows exist and none is selected. */
+  chooseText?: string | null;
   retryLabel: string;
   onRetry: () => void;
   rows: CheckoutShippingRowView[];
@@ -82,6 +90,13 @@ export function CheckoutShippingState({
       </View>
     );
   }
+  if (unsupported) {
+    return (
+      <View style={styles.pending} testID="checkout-shipping-unsupported">
+        <Text style={styles.pendingBody}>{unsupportedText}</Text>
+      </View>
+    );
+  }
   if (unavailable) {
     return (
       <View style={styles.pending} testID="checkout-shipping-unavailable">
@@ -92,6 +107,11 @@ export function CheckoutShippingState({
   }
   return (
     <>
+      {chooseText ? (
+        <Text style={styles.pendingBody} testID="checkout-choose-shipping">
+          {chooseText}
+        </Text>
+      ) : null}
       {rows.map((item) => (
         <Pressable
           key={item.id}

@@ -177,6 +177,7 @@ export default function ProductScreen() {
             </View>
             <Text style={styles.eyebrow}>{categoryLabel}</Text>
             <Text style={styles.title}>{presented.name}</Text>
+            {presented.packLabel ? <Text style={styles.note}>{presented.packLabel}</Text> : null}
             <Text style={styles.price}>{formatMoney(product.data.price)}</Text>
             {!oneSize && sizes.length > 0 ? (
               <View style={styles.sizeBlock}>

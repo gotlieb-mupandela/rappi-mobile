@@ -259,9 +259,12 @@ export default function CheckoutScreen() {
           <CheckoutShippingState
             loading={view.loading}
             unavailable={view.unavailable}
+            unsupported={view.unsupported}
             retrying={storefront.ready && storefront.loading}
             loadingText={t('checkout.shippingLoading')}
             unavailableText={t('checkout.shippingUnavailable')}
+            unsupportedText={t('checkout.shippingUnsupported')}
+            chooseText={view.rows.length > 0 && !shipping ? t('checkout.chooseShipping') : null}
             retryLabel={t('common.retry')}
             onRetry={() => storefront.reload()}
             rows={view.rows.map((item) => ({
@@ -300,7 +303,7 @@ export default function CheckoutScreen() {
               onPress={() => setCountryOpen(true)}
               style={({ pressed }) => [styles.country, pressed && styles.pressed]}>
               <Text style={styles.rowLabel}>{t('checkout.country')}</Text>
-              <Text style={styles.rowValue}>{country}</Text>
+              <Text style={country ? styles.rowValue : styles.rowPlaceholder}>{country || t('checkout.chooseCountry')}</Text>
             </Pressable>
           ) : null}
           <LabeledField label={t('checkout.notes')} optional placeholder={t('checkout.notesPlaceholder')} value={notes} onChangeText={setNotes} />
@@ -400,6 +403,7 @@ const useStyles = makeStyles(({ colors }) => ({
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: 2 },
   rowLabel: { fontFamily: fonts.body, fontSize: 15, color: colors.muted },
   rowValue: { fontFamily: fonts.body, fontSize: 15, color: colors.text, fontVariant: ['tabular-nums'] },
+  rowPlaceholder: { fontFamily: fonts.body, fontSize: 15, color: colors.muted },
   bold: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.text },
   hint: { fontFamily: fonts.body, fontSize: 12, color: colors.muted, marginTop: 4, marginBottom: 6 },
   error: { fontFamily: fonts.body, fontSize: 14, color: colors.danger, marginBottom: 6 },

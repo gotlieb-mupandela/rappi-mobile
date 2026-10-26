@@ -49,6 +49,8 @@ export type StorefrontProduct = {
   labelFr?: string | null;
   isPack: boolean;
   pairCount: number | null;
+  /** Plain pack badge from the feed. Null when the feed omits it. */
+  packLabel: string | null;
   cardImage: string | null;
   images: string[];
   /** Supplier line. The feed field `item` is never read. */

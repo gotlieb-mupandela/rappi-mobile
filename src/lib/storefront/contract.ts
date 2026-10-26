@@ -196,6 +196,12 @@ function readProduct(value: unknown): StorefrontProduct | null {
   if (value.pairCount !== null && (typeof value.pairCount !== 'number' || !Number.isInteger(value.pairCount) || value.pairCount < 0 || value.pairCount > 10000)) {
     return null;
   }
+  let packLabel: string | null = null;
+  if ('packLabel' in value && value.packLabel != null) {
+    if (typeof value.packLabel !== 'string' || !isPlainText(value.packLabel, LIMITS.label)) return null;
+    const trimmed = value.packLabel.trim();
+    packLabel = trimmed === '' ? null : trimmed;
+  }
   if (!Array.isArray(value.images)) return null;
   const line = value.line === undefined ? null : value.line;
   if (line !== null && (typeof line !== 'string' || !isPlainText(line, LIMITS.line))) return null;
@@ -215,6 +221,7 @@ function readProduct(value: unknown): StorefrontProduct | null {
     labelFr,
     isPack: value.isPack,
     pairCount: value.pairCount,
+    packLabel,
     cardImage: feedImageUrl(value.cardImage),
     images,
     line,

@@ -96,7 +96,14 @@ test('shipping comes only from the feed and sends nothing when missing', () => {
   assert.equal(selectedPaymentMethod([{ id: 'express' }], 'express'), 'express');
   const empty = checkoutDisplay({ ...feed().checkout, shipping: [] }, 'en');
   assert.deepEqual(empty.shipping, []);
+  assert.equal(empty.shippingUnsupported, false);
   assert.equal(selectedPaymentMethod(empty.shipping, 'standard'), null);
+  const unknownOnly = checkoutDisplay(
+    { ...feed().checkout, shipping: feed().checkout.shipping.filter((row) => row.key === 'courier-note') },
+    'en',
+  );
+  assert.equal(unknownOnly.shippingUnsupported, true);
+  assert.deepEqual(unknownOnly.shipping, []);
 });
 
 test('the totals note is always shown and says when VAT is hidden', () => {

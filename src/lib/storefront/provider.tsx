@@ -98,11 +98,13 @@ export function usePresentedProduct(product: Product | undefined): {
   name: string;
   imageUrl: string | undefined;
   feedImages: string[] | null;
+  /** Feed pack badge. Null when this code is not in the feed or the feed has no pack label. */
+  packLabel: string | null;
 } {
   const { market } = useLocale();
   const { productsByCode } = useStorefront();
   const language = market === 'eu' ? 'fr' : 'en';
-  if (!product) return { name: '', imageUrl: undefined, feedImages: null };
+  if (!product) return { name: '', imageUrl: undefined, feedImages: null, packLabel: null };
   const catalogName = product.displayName || product.name;
   const overlay = productsByCode.get(product.code);
   const label = overlay ? productLabel(language, overlay) : null;
@@ -110,5 +112,6 @@ export function usePresentedProduct(product: Product | undefined): {
     name: label ?? catalogName,
     imageUrl: overlay?.cardImage || product.imageUrl,
     feedImages: overlay && overlay.images.length > 0 ? overlay.images : null,
+    packLabel: overlay?.packLabel ?? null,
   };
 }

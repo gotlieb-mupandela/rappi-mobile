@@ -16,6 +16,8 @@ const NOTE = en.checkout.totalsServer;
 const VAT_HIDDEN = en.checkout.vatHidden;
 const LOADING = en.checkout.shippingLoading;
 const UNAVAILABLE = en.checkout.shippingUnavailable;
+const UNSUPPORTED = en.checkout.shippingUnsupported;
+const CHOOSE_SHIPPING = en.checkout.chooseShipping;
 const RETRY = en.common.retry;
 const PAY = en.checkout.payDpo;
 const DEFAULT_COUNTRY = 'Namibia';
@@ -106,9 +108,12 @@ function CheckoutReviewHarness({
       <CheckoutShippingState
         loading={view.loading}
         unavailable={view.unavailable}
+        unsupported={view.unsupported}
         retrying={retrying}
         loadingText={LOADING}
         unavailableText={UNAVAILABLE}
+        unsupportedText={UNSUPPORTED}
+        chooseText={view.rows.length > 0 && !input.selectedShipping ? CHOOSE_SHIPPING : null}
         retryLabel={RETRY}
         onRetry={onRetry}
         rows={view.rows.map((item) => ({
@@ -229,6 +234,53 @@ test('checkout review keeps pay disabled after a load with no shipping rows', ()
   assert.equal(texts.includes(RETRY), true);
   assert.equal(texts.includes(LOADING), false);
   assert.equal(view.rows.length, 0);
+  assertNothingSent(sent, view, tree);
+});
+
+test('checkout review asks to choose shipping and keeps pay disabled until a row and a country are selected', () => {
+  const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
+  const input = reviewInput({
+    display: loadedDisplay,
+    feedLoaded: true,
+    selectedShipping: '',
+    selectedCountry: '',
+  });
+  const { tree, view } = renderReview(input, false, (body) => sent.push(body));
+  const texts = visibleText(tree);
+  assert.equal(view.unsupported, false);
+  assert.equal(view.unavailable, false);
+  assert.equal(texts.includes(CHOOSE_SHIPPING), true);
+  assert.equal(texts.includes(UNAVAILABLE), false);
+  assert.equal(view.canPay, false);
+  assertNothingSent(sent, view, tree);
+});
+
+test('checkout review says shipping is unsupported when every feed row uses an unknown key', () => {
+  const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
+  const onlyUnknown: CheckoutDisplay = checkoutDisplay(
+    {
+      ...checkout,
+      shipping: checkout.shipping.filter((row) => row.key !== 'standard' && row.key !== 'express' && row.key !== 'pickup'),
+    },
+    'en',
+  );
+  assert.equal(onlyUnknown.shipping.length, 0);
+  assert.equal(onlyUnknown.shippingUnsupported, true);
+  const input = reviewInput({
+    display: onlyUnknown,
+    feedLoaded: true,
+    selectedShipping: '',
+    selectedCountry: '',
+  });
+  const { tree, view } = renderReview(input, false, (body) => sent.push(body));
+  const texts = visibleText(tree);
+  assert.equal(view.unsupported, true);
+  assert.equal(view.unavailable, false);
+  assert.equal(texts.includes(UNSUPPORTED), true);
+  assert.equal(texts.includes(UNAVAILABLE), false);
+  assert.equal(texts.includes(RETRY), false);
+  assert.ok(tree.root.findByProps({ testID: 'checkout-shipping-unsupported' }));
+  assert.equal(view.canPay, false);
   assertNothingSent(sent, view, tree);
 });
 

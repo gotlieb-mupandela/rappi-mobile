@@ -29,6 +29,19 @@ export function hasVisibleChildren(feed: MobileStorefront, key: string): boolean
   return childNodes(feed, key).length > 0;
 }
 
+/** Shop tab: a menu with visible children opens the menu screen. Otherwise the tile target. */
+export function shopTileDestination(
+  feed: MobileStorefront,
+  key: string,
+): { kind: 'menu'; menu: string } | { kind: 'target'; route: NonNullable<ReturnType<typeof resolveTarget>> } | null {
+  const node = headerMenus(feed).find((item) => item.key === key);
+  if (!node) return null;
+  if (hasVisibleChildren(feed, key)) return { kind: 'menu', menu: key };
+  const route = resolveTarget(node.target);
+  if (!route) return null;
+  return { kind: 'target', route };
+}
+
 export function homeTiles(feed: MobileStorefront): StorefrontNode[] {
   return childNodes(feed, 'home');
 }
