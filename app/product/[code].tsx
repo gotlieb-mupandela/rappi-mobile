@@ -16,6 +16,7 @@ import { EmptyState, ErrorState, PrimaryButton, Screen } from '@/src/components/
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useBag } from '@/src/lib/bag';
 import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
+import { productCodeFromRoute } from '@/src/lib/storefront/contract';
 import { useCategoryTitle, usePresentedProduct } from '@/src/lib/storefront/provider';
 import { defaultSize, isAvailable, isOneSize, isSoldOut, productSizes, stockLine } from '@/src/lib/sizes';
 import { useToast } from '@/src/lib/toast';
@@ -27,14 +28,8 @@ export default function ProductScreen() {
   const { formatMoney, t } = useLocale();
   const { colors } = useTheme();
   const styles = useStyles();
-  const { code: raw } = useLocalSearchParams<{ code: string }>();
-  const code = useMemo(() => {
-    try {
-      return decodeURIComponent(raw);
-    } catch {
-      return raw;
-    }
-  }, [raw]);
+  const { code: raw } = useLocalSearchParams<{ code?: string | string[] }>();
+  const code = useMemo(() => productCodeFromRoute(raw), [raw]);
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const toast = useToast();
@@ -47,13 +42,20 @@ export default function ProductScreen() {
 
   const product = useQuery({
     queryKey: ['product', code],
-    queryFn: () => fetchProduct(code),
+    queryFn: () => {
+      if (!code) return Promise.reject(new Error('Missing product code'));
+      return fetchProduct(code);
+    },
+    enabled: code !== null,
     retry: (count, error) => !isUnavailableStatus(error) && count < 1,
   });
 
   const stock = useQuery({
     queryKey: ['stock', code],
-    queryFn: () => fetchStock([code]),
+    queryFn: () => {
+      if (!code) return Promise.reject(new Error('Missing product code'));
+      return fetchStock([code]);
+    },
     staleTime: 0,
     gcTime: 0,
     retry: false,
@@ -63,11 +65,13 @@ export default function ProductScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      if (!code) return;
       void refetchStock();
-    }, [refetchStock]),
+    }, [code, refetchStock]),
   );
 
-  const gone = isUnavailableStatus(product.error) || (product.data != null && !isAvailable(product.data, stock.data));
+  const saved = code !== null && wishlist.has(code);
+  const gone = code === null || isUnavailableStatus(product.error) || (product.data != null && !isAvailable(product.data, stock.data));
   const { learnIds } = wishlist;
   useEffect(() => {
     if (product.data?.id) learnIds({ [product.data.code]: product.data.id });
@@ -116,20 +120,19 @@ export default function ProductScreen() {
   };
 
   const line = stockLine(soldOut ? 0 : stockCount);
-  const saved = wishlist.has(code);
   const name = product.data ? presented.name : undefined;
 
   return (
     <Screen
       title={product.data ? categoryLabel : t('product.product')}
       back
-      right={gone && !saved ? null : <HeartButton code={code} id={product.data?.id} name={name} />}>
+      right={code && !(gone && !saved) ? <HeartButton code={code} id={product.data?.id} name={name} /> : null}>
       {gone ? (
         <EmptyState
           icon={saved ? 'heart-dislike-outline' : 'bag-handle-outline'}
           message={saved ? 'This item from your wishlist is no longer sold.' : 'This product is no longer available.'}
           action={saved ? 'Remove from wishlist' : 'Browse shop'}
-          onPress={saved ? () => removeWithUndo(code) : () => router.navigate('/(tabs)/shop')}
+          onPress={saved && code ? () => removeWithUndo(code) : () => router.navigate('/(tabs)/shop')}
         />
       ) : product.isError ? (
         <ErrorState message="Can't load the shop" onRetry={() => product.refetch()} />

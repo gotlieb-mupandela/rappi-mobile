@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import { productLabel, resolveTarget, validateMobileStorefront } from './contract.ts';
+import { isValidProductCode, PRODUCT_CODE, productLabel, resolveTarget, validateMobileStorefront } from './contract.ts';
 
 function fixture(): unknown {
   return JSON.parse(readFileSync(new URL('./fixture.json', import.meta.url), 'utf8'));
@@ -236,4 +236,55 @@ test('a feed that is not an object is rejected', () => {
   assert.equal(validateMobileStorefront(null).ok, false);
   assert.equal(validateMobileStorefront([]).ok, false);
   assert.equal(validateMobileStorefront({ version: 'x' }).ok, false);
+});
+
+test('product codes use the security pattern once', () => {
+  const source = readFileSync(new URL('./contract.ts', import.meta.url), 'utf8');
+  const pattern = '/^(?!.*\\.\\.)(?!.*\\/\\/)(?!.*\\/\\.)[A-Za-z0-9](?:[A-Za-z0-9._,\\/-]{0,63}[A-Za-z0-9._-])?$/';
+  assert.equal(source.split(pattern).length - 1, 1);
+  assert.equal(PRODUCT_CODE.toString(), pattern);
+  for (const code of ['709/101', '711/101', '946,001', '946,003', 'TEAM/14', 'PACK-25', '100807.400', 'A'.repeat(65)]) {
+    assert.equal(isValidProductCode(code), true, code);
+  }
+  for (const code of [
+    '../etc/passwd',
+    'a/../b',
+    '%2e%2e%2f',
+    '..',
+    '/abs',
+    'a//b',
+    'a/',
+    'a,,',
+    'a\\b',
+    'x?admin=1',
+    'x&y=1',
+    'x#frag',
+    'a"b',
+    'a(b',
+    'x y',
+    'x\n',
+    'A'.repeat(66),
+    '',
+    'a/.b',
+    'a/./b',
+  ]) {
+    assert.equal(isValidProductCode(code), false, code);
+  }
+  assert.equal('A'.repeat(65).length, 65);
+  assert.equal('A'.repeat(66).length, 66);
+});
+
+test('a fixture keeps the five real product codes and skips a bad one', () => {
+  const body = clone();
+  const products = body.products as Array<Record<string, unknown>>;
+  const sample = products[0];
+  const codes = ['709/101', '711/101', '946,001', '946,003', 'TEAM/14'];
+  body.products = [...codes.map((code) => ({ ...sample, code })), { ...sample, code: '../etc/passwd' }, { ...sample, code: 'a//b' }];
+  const parsed = validateMobileStorefront(body);
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+  assert.deepEqual(
+    parsed.value.products.map((product) => product.code),
+    codes,
+  );
 });

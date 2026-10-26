@@ -32,7 +32,28 @@ export type StorefrontValidation =
   | { ok: false; reason: string };
 
 const KEY = /^[A-Za-z0-9][A-Za-z0-9._-]{0,80}$/;
-const CODE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,64}$/;
+/** Security-approved product codes. One copy: the product screen imports isValidProductCode. */
+export const PRODUCT_CODE = /^(?!.*\.\.)(?!.*\/\/)(?!.*\/\.)[A-Za-z0-9](?:[A-Za-z0-9._,\/-]{0,63}[A-Za-z0-9._-])?$/;
+
+export function isValidProductCode(code: string): boolean {
+  return PRODUCT_CODE.test(code);
+}
+
+/**
+ * Decode a product route param exactly once, then validate it.
+ * A throw, or a value that is still not a product code, means do not fetch.
+ */
+export function productCodeFromRoute(raw: string | string[] | undefined | null): string | null {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  if (typeof value !== 'string') return null;
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    return null;
+  }
+  return isValidProductCode(decoded) ? decoded : null;
+}
 const COUNTRY = /^[A-Z]{2}$/;
 const KINDS = new Set<StorefrontNodeKind>(['menu', 'folder', 'category', 'audience', 'tile']);
 const AUDIENCE_SLUGS = new Set(['men', 'women', 'kids']);
@@ -238,7 +259,7 @@ function readOptionalMeta(value: unknown): { ok: true; value: string | null } | 
 
 function readProduct(value: unknown): StorefrontProduct | null {
   if (!isRecord(value)) return null;
-  if (typeof value.code !== 'string' || !CODE.test(value.code)) return null;
+  if (typeof value.code !== 'string' || !isValidProductCode(value.code)) return null;
   if (value.label !== null && typeof value.label !== 'string') return null;
   if (typeof value.label === 'string' && !isPlainText(value.label, LIMITS.label)) return null;
   let labelFr: string | null | undefined;
