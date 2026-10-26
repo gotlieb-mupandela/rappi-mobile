@@ -59,6 +59,7 @@ test('unknown target keys do not resolve to a screen', () => {
   assert.equal(resolveTarget('prototype'), null);
   assert.equal(resolveTarget('men-brama'), null);
   assert.equal(resolveTarget('/shop/shoes?group=flow&extra=1'), null);
+  assert.equal(resolveTarget('/shop/shoes?group=flow'), null);
   assert.deepEqual(resolveTarget('/shop/women?group=fitness-gym-woman'), {
     screen: 'group',
     cat: 'sportswear',
@@ -66,10 +67,10 @@ test('unknown target keys do not resolve to a screen', () => {
     audience: 'women',
     leaf: true,
   });
-  assert.deepEqual(resolveTarget('/shop/shoes?group=flow'), {
+  assert.deepEqual(resolveTarget('/shop/football?group=tw-football'), {
     screen: 'group',
-    cat: 'shoes',
-    group: 'flow',
+    cat: 'football',
+    group: 'tw-football',
     leaf: true,
   });
 });
@@ -226,7 +227,7 @@ test('the fixture omits Flow and records TEAM/14 under balls-bags', () => {
   assert.ok(team);
   assert.equal(team.category, 'balls-bags');
   assert.equal(team.subcategory, 'bags');
-  assert.equal(resolveTarget('/shop/shoes?group=flow')?.screen, 'group');
+  assert.equal(resolveTarget('/shop/shoes?group=flow'), null);
 });
 
 test('a feed that is not an object is rejected', () => {

@@ -1,9 +1,9 @@
 /**
  * Feed contract for GET /api/mobile/v1/storefront.
- * Types and target paths match rappi-webapp PR 98 at ac533ee05c521c0000dc06e408dc6c25aec30d50.
- * span, tone, slug, and audiences match PR 105 at 7700b1d9ce42c15eda95da89e5d73445beea6852.
+ * span, tone, slug, and audiences match rappi-webapp PR 105.
+ * The target table sha is data/web-pin.json. scripts/gen-feed-targets.mjs writes the map.
  * One later web push may adjust how `line` is chosen. This app reads `line` only and never `item`.
- * The target table lives in targets.ts. The released image-map route is GET /api/mobile/storefront.
+ * The released image-map route is GET /api/mobile/storefront.
  */
 import { feedImageUrl } from './images.ts';
 import type {
@@ -25,7 +25,7 @@ export const STOREFRONT_PATH = '/api/mobile/v1/storefront';
 export const STORE_HOST = 'www.rappisportshub.com';
 
 export type { StorefrontRoute } from './types.ts';
-export { HIDDEN_FEED_TARGETS, TARGET_ALIASES, TARGET_ALIAS_KEYS, resolveTarget } from './targets.ts';
+export { HIDDEN_FEED_TARGETS, resolveTarget } from './targets.ts';
 
 export type StorefrontValidation =
   | { ok: true; value: MobileStorefront }
