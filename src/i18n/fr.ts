@@ -125,7 +125,6 @@ export const fr = {
     payDpo: 'Payer avec DPO',
     openingDpo: 'Ouverture de DPO…',
     totalsNote: 'Totaux en € (depuis le NAD). Le paiement se finalise de façon sécurisée sur DPO.',
-    totalsApprox: 'Totaux en N$. Les montants en euros sont approx.',
   },
   orders: {
     title: 'Commandes',

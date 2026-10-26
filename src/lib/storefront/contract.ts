@@ -11,6 +11,7 @@ import type {
   LocalizedText,
   MobileStorefront,
   StorefrontCheckout,
+  StorefrontCountry,
   StorefrontLanguage,
   StorefrontNode,
   StorefrontProduct,
@@ -27,11 +28,9 @@ export type StorefrontRoute =
   | { screen: 'group'; cat: string; group: string; audience?: string; leaf: boolean }
   | { screen: 'kids' };
 
-const TOKEN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,64}$/;
 const KEY = /^[A-Za-z0-9][A-Za-z0-9._-]{0,80}$/;
 const CODE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,64}$/;
 const COUNTRY = /^[A-Z]{2}$/;
-const AUDIENCES = new Set(['men', 'women', 'kids', 'unisex']);
 
 function menu(menuKey: string, path: string[] = []): StorefrontRoute {
   return { screen: 'menu', menu: menuKey, path };
@@ -133,48 +132,13 @@ export const TARGET_ALIASES: Readonly<Record<string, StorefrontRoute>> = {
 
 export const TARGET_ALIAS_KEYS: readonly string[] = Object.keys(TARGET_ALIASES);
 
-/**
- * Grammar, after the alias table:
- * menu:<menu>[:<path>[:<path>]]
- * category:<slug>
- * group:<cat>:<folder>[:<audience>]
- * sub:<cat>:<sub>
- * search:<cat>:<query>
- * audience:<cat>:<men|women|kids|unisex>
- * An unknown key resolves to null. Callers hide that tile and open nothing.
- */
-export function resolveTarget(key: string): StorefrontRoute | null {
-  if (typeof key !== 'string' || key.length === 0 || key.length > 180) return null;
-  if (/[\s\\?#]|:\/\/|\/\//.test(key)) return null;
-  const alias = TARGET_ALIASES[key];
-  if (alias) return alias;
+/** Own keys only. A feed string is never used to build a route. */
+const TARGET_BY_KEY = new Map<string, StorefrontRoute>(Object.entries(TARGET_ALIASES));
 
-  const parts = key.split(':');
-  if (parts.length < 2 || parts.length > 4) return null;
-  if (!parts.every((part) => TOKEN.test(part))) return null;
-  const [kind, a, b, c] = parts;
-  switch (kind) {
-    case 'menu':
-      return menu(a, [b, c].filter((part): part is string => !!part));
-    case 'category':
-      if (!a || b || c) return null;
-      return category(a);
-    case 'group':
-      if (!a || !b) return null;
-      if (c && !AUDIENCES.has(c)) return null;
-      return group(a, b, c);
-    case 'sub':
-      if (!a || !b || c) return null;
-      return group(a, `sub:${b}`);
-    case 'search':
-      if (!a || !b || c) return null;
-      return group(a, `q:${b}`);
-    case 'audience':
-      if (!a || !b || c || !AUDIENCES.has(b)) return null;
-      return group(a, 'all', b);
-    default:
-      return null;
-  }
+/** Unknown keys, including old menu:, category:, and group: shapes, hide the tile. */
+export function resolveTarget(key: string): StorefrontRoute | null {
+  if (typeof key !== 'string') return null;
+  return TARGET_BY_KEY.get(key) ?? null;
 }
 
 export type StorefrontValidation =
@@ -189,6 +153,7 @@ const LIMITS = {
   images: 12,
   shipping: 20,
   countries: 300,
+  countryName: 80,
   title: 200,
   description: 600,
   label: 300,
@@ -269,18 +234,27 @@ function readCheckout(value: unknown): StorefrontCheckout | null {
     seen.add(item.key);
     shipping.push({ key: item.key, title, amountNad });
   }
-  if (!Array.isArray(value.vatCountries) || value.vatCountries.length > LIMITS.countries) return null;
-  const vatCountries: string[] = [];
-  const countries = new Set<string>();
-  for (const code of value.vatCountries) {
-    if (typeof code !== 'string' || !COUNTRY.test(code) || countries.has(code)) return null;
-    countries.add(code);
-    vatCountries.push(code);
+  if (!Array.isArray(value.countries) || value.countries.length > LIMITS.countries) return null;
+  const countries: StorefrontCountry[] = [];
+  const seenCodes = new Set<string>();
+  for (const item of value.countries) {
+    const country = readCountry(item);
+    if (!country || seenCodes.has(country.code)) return null;
+    seenCodes.add(country.code);
+    countries.push(country);
   }
-  const vatRate = saneMoney(value.vatRate, 0, 1);
   const eurPerNad = saneMoney(value.eurPerNad, Number.MIN_VALUE, 100);
-  if (vatRate === null || eurPerNad === null || eurPerNad <= 0) return null;
-  return { shipping, vatCountries, vatRate, eurPerNad };
+  if (eurPerNad === null || eurPerNad <= 0) return null;
+  return { shipping, countries, eurPerNad };
+}
+
+function readCountry(value: unknown): StorefrontCountry | null {
+  if (!isRecord(value)) return null;
+  if (typeof value.code !== 'string' || !COUNTRY.test(value.code)) return null;
+  if (typeof value.name !== 'string' || !isPlainText(value.name, LIMITS.countryName) || value.name.trim() === '') return null;
+  const vatRate = saneMoney(value.vatRate, 0, 1);
+  if (vatRate === null) return null;
+  return { code: value.code, name: value.name.trim(), vatRate };
 }
 
 function readOptionalMeta(value: unknown): { ok: true; value: string | null } | null {

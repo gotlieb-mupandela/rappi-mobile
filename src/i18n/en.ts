@@ -117,7 +117,6 @@ export const en = {
     payDpo: 'Pay with DPO',
     openingDpo: 'Opening DPO…',
     totalsNote: 'Totals in N$. You will complete payment securely on DPO.',
-    totalsApprox: 'Totals in N$. Euro figures are approx.',
   },
   orders: {
     title: 'Orders',

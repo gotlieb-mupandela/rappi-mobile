@@ -12,7 +12,7 @@ import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useAuth } from '@/src/lib/auth';
 import { useBag } from '@/src/lib/bag';
 import { formatMoney as formatNad, vatOn } from '@/src/lib/money';
-import { checkoutDisplay, formatApproxEur } from '@/src/lib/storefront/checkoutDisplay';
+import { checkoutDisplay, formatApproxEur, vatPercentForCountry } from '@/src/lib/storefront/checkoutDisplay';
 import { useStorefront } from '@/src/lib/storefront/provider';
 import { openLogin } from '@/src/lib/navigation';
 import { fetchProfile, latestOrderId, waitForNewOrder } from '@/src/lib/orders';
@@ -71,10 +71,10 @@ export default function CheckoutScreen() {
   const shippingRows = display && display.shipping.length > 0
     ? display.shipping
     : SHIPPING.map((item) => ({ id: item.id, label: t(item.labelKey), cost: item.cost }));
-  const countryRows = display && display.countries.length > 0
-    ? display.countries
+  const countryRows = storefront.enabled
+    ? (display?.countries ?? [])
     : COUNTRIES.map(([name, rate]) => ({ name, vatPercent: rate as number }));
-  const showMoney = (amount: number) => (display ? formatNad(amount, 'na') : formatMoney(amount));
+  const showMoney = (amount: number) => (storefront.enabled ? formatNad(amount, 'na') : formatMoney(amount));
 
   useEffect(() => {
     if (ready && !session) {
@@ -97,15 +97,18 @@ export default function CheckoutScreen() {
   }, [display, shipping]);
 
   useEffect(() => {
-    if (!display || display.countries.length === 0) return;
+    if (!storefront.enabled || !display || display.countries.length === 0) return;
     if (display.countries.some((item) => item.name === country)) return;
-    const fallback = display.countries.find((item) => item.name === (market === 'eu' ? 'France' : 'Namibia')) ?? display.countries[0];
+    const preferred = market === 'eu' ? 'France' : 'Namibia';
+    const fallback = display.countries.find((item) => item.name === preferred) ?? display.countries[0];
     if (fallback) setCountry(fallback.name);
-  }, [country, display, market]);
+  }, [country, display, market, storefront.enabled]);
 
   const shippingCost = shippingRows.find((item) => item.id === shipping)?.cost ?? (display ? 0 : 100);
-  const vatRate = countryRows.find((item) => item.name === country)?.vatPercent ?? (display ? display.vatPercent : 15);
-  const vat = vatOn(bag.subtotal + shippingCost, vatRate);
+  const vatPercent = storefront.enabled
+    ? (display ? vatPercentForCountry(display, country) : undefined)
+    : (COUNTRIES.find(([name]) => name === country)?.[1] ?? 15);
+  const vat = vatPercent === undefined ? 0 : vatOn(bag.subtotal + shippingCost, vatPercent);
   const total = bag.subtotal + shippingCost + vat;
   const pickup = shipping === 'pickup';
 
@@ -297,14 +300,16 @@ export default function CheckoutScreen() {
               />
             </>
           ) : null}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('checkout.country')}
-            onPress={() => setCountryOpen(true)}
-            style={({ pressed }) => [styles.country, pressed && styles.pressed]}>
-            <Text style={styles.rowLabel}>{t('checkout.country')}</Text>
-            <Text style={styles.rowValue}>{country}</Text>
-          </Pressable>
+          {countryRows.length > 0 ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('checkout.country')}
+              onPress={() => setCountryOpen(true)}
+              style={({ pressed }) => [styles.country, pressed && styles.pressed]}>
+              <Text style={styles.rowLabel}>{t('checkout.country')}</Text>
+              <Text style={styles.rowValue}>{country}</Text>
+            </Pressable>
+          ) : null}
           <LabeledField label={t('checkout.notes')} optional placeholder={t('checkout.notesPlaceholder')} value={notes} onChangeText={setNotes} />
         </View>
 
@@ -312,11 +317,11 @@ export default function CheckoutScreen() {
         <View style={styles.section}>
           <Row label={t('checkout.merchandise')} value={showMoney(bag.subtotal)} />
           <Row label={t('checkout.shipping')} value={showMoney(shippingCost)} />
-          <Row label={t('checkout.vat', { rate: vatRate })} value={showMoney(vat)} />
+          {vatPercent !== undefined ? <Row label={t('checkout.vat', { rate: vatPercent })} value={showMoney(vat)} /> : null}
           <View style={styles.divider} />
           <Row label={t('checkout.total')} value={showMoney(total)} bold />
-          {display ? <Text style={styles.hint}>{formatApproxEur(total, display.eurPerNad)}</Text> : null}
-          <Text style={styles.hint}>{display ? t('checkout.totalsApprox') : t('checkout.totalsNote')}</Text>
+          {display && market === 'eu' ? <Text style={styles.hint}>{formatApproxEur(total, display.eurPerNad)}</Text> : null}
+          {storefront.enabled ? null : <Text style={styles.hint}>{t('checkout.totalsNote')}</Text>}
         </View>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {payments.pending && !busy ? (

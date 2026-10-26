@@ -46,6 +46,38 @@ test('a malformed feed keeps the last good copy', async () => {
   assert.equal(thrown?.version, '2026-10-25.1');
 });
 
+test('a bad checkout country keeps the last good copy', async () => {
+  const store = memoryStore();
+  const good = fixture();
+  const first = await resolveStorefront({
+    enabled: true,
+    production: false,
+    apiUrl: host,
+    store,
+    fetchFeed: async () => good,
+  });
+  assert.equal(first?.version, '2026-10-25.1');
+  const bad = structuredClone(good) as { version: string; checkout: { countries: Array<{ vatRate: number }> } };
+  bad.version = 'bad-country';
+  bad.checkout.countries[0].vatRate = 1.5;
+  const second = await resolveStorefront({
+    enabled: true,
+    production: false,
+    apiUrl: host,
+    store,
+    fetchFeed: async () => bad,
+  });
+  assert.equal(second?.version, '2026-10-25.1');
+  const missing = await resolveStorefront({
+    enabled: true,
+    production: false,
+    apiUrl: host,
+    store: memoryStore(),
+    fetchFeed: async () => bad,
+  });
+  assert.equal(missing, null);
+});
+
 test('no cache and a failed fetch returns null so the app can use hardcoded menus', async () => {
   const empty = await resolveStorefront({
     enabled: true,

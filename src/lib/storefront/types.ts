@@ -22,10 +22,17 @@ export type StorefrontShipping = {
   amountNad: number;
 };
 
+export type StorefrontCountry = {
+  code: string;
+  name: string;
+  /** Fraction from 0 to 1. 0.15 is 15 percent. */
+  vatRate: number;
+};
+
 export type StorefrontCheckout = {
   shipping: StorefrontShipping[];
-  vatCountries: string[];
-  vatRate: number;
+  countries: StorefrontCountry[];
+  /** Euros for 1 Namibian dollar. Display only. */
   eurPerNad: number;
 };
 

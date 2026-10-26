@@ -5,7 +5,7 @@
       "key": "men",
       "parent": null,
       "order": 10,
-      "target": "menu:men",
+      "target": "men",
       "image": "https://www.rappisportshub.com/brand/audience-men.png",
       "title": { "en": "Man", "fr": "Homme" },
       "description": { "en": "Men's sport apparel.", "fr": "Vetements de sport homme." },
@@ -99,7 +99,7 @@
       "key": "shoes",
       "parent": null,
       "order": 20,
-      "target": "category:shoes",
+      "target": "footwear",
       "image": "https://www.rappisportshub.com/brand/hub-shoes.png",
       "title": { "en": "Shoes", "fr": "Chaussures" },
       "description": { "en": "Footwear for every surface.", "fr": "Chaussures pour chaque surface." },
@@ -109,7 +109,7 @@
       "key": "sportswear",
       "parent": null,
       "order": 10,
-      "target": "category:sportswear",
+      "target": "sportswear",
       "image": "https://www.rappisportshub.com/brand/hub-sportswear.png",
       "title": { "en": "Sportswear", "fr": "Sportswear" },
       "description": { "en": "Tees, shorts, and training layers.", "fr": "T-shirts, shorts et couches d'entrainement." },
@@ -119,7 +119,7 @@
       "key": "hiking",
       "parent": "sportswear",
       "order": 20,
-      "target": "category:hiking",
+      "target": "men-hiking",
       "image": null,
       "title": { "en": "Hiking", "fr": "Randonnee" },
       "description": { "en": "", "fr": "" },
@@ -129,7 +129,7 @@
       "key": "brama",
       "parent": "sportswear",
       "order": 10,
-      "target": "category:brama",
+      "target": "men-brama",
       "image": null,
       "title": { "en": "Brama", "fr": "Brama" },
       "description": { "en": "", "fr": "" },
@@ -169,8 +169,13 @@
         "amountNad": 40
       }
     ],
-    "vatCountries": ["NA", "ZA", "FR", "XX"],
-    "vatRate": 0.15,
+    "countries": [
+      { "code": "NA", "name": "Namibia", "vatRate": 0.15 },
+      { "code": "ZA", "name": "South Africa", "vatRate": 0.15 },
+      { "code": "FR", "name": "France", "vatRate": 0.2 },
+      { "code": "DE", "name": "Germany", "vatRate": 0.19 },
+      { "code": "FI", "name": "Finland", "vatRate": 0.255 }
+    ],
     "eurPerNad": 0.05
   },
   "products": [

@@ -46,10 +46,11 @@ export function sanitizeImageUrl(value: unknown): string | null {
     return null;
   }
   if (parsed.protocol !== 'https:') return null;
+  if (parsed.port !== '') return null;
   if (parsed.username || parsed.password) return null;
   const hostname = parsed.hostname.toLowerCase();
   if (hostname !== parsed.hostname || hostname.endsWith('.') || hostname.includes('%')) return null;
   const allowed = ALLOWED_IMAGE_HOSTS.some((rule) => imageHostAllows(hostname, parsed.pathname, rule));
   if (!allowed) return null;
-  return trimmed;
+  return parsed.href;
 }

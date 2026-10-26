@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import { foldersForCategory, lineByCode, localized, menuLevel, orderedCategories, visibleNodes } from './adapt.ts';
-import { checkoutDisplay, formatApproxEur } from './checkoutDisplay.ts';
+import { checkoutDisplay, formatApproxEur, vatPercentForCountry } from './checkoutDisplay.ts';
 import { validateMobileStorefront } from './contract.ts';
 import type { MobileStorefront } from './types.ts';
 
@@ -22,7 +22,13 @@ test('orders menus, hides hidden tiles, and hides unknown targets', () => {
   assert.ok(brama);
   brama.target = 'https://evil.example/phish';
   assert.equal(visibleNodes(broken.menus, 'men').some((node) => node.key === 'men-brama'), false);
-  assert.equal(visibleNodes(broken.menus, 'men').some((node) => node.key === 'men-hiking'), true);
+  const hiking = broken.menus.find((node) => node.key === 'men-hiking');
+  assert.ok(hiking);
+  hiking.target = 'category:hiking';
+  assert.equal(visibleNodes(broken.menus, 'men').some((node) => node.key === 'men-hiking'), false);
+  hiking.target = 'group:sportswear:hiking-outdoor:men';
+  assert.equal(visibleNodes(broken.menus, 'men').some((node) => node.key === 'men-hiking'), false);
+  assert.equal(visibleNodes(broken.menus, 'men').some((node) => node.key === 'men-racket'), true);
 });
 
 test('blank french copy falls back to english', () => {
@@ -53,15 +59,27 @@ test('product line is kept as plain text', () => {
   assert.equal(lines?.has('SHOE-1'), false);
 });
 
-test('checkout display uses feed amounts, one VAT fraction, and drops unknown keys', () => {
+test('checkout display uses feed shipping, per-country VAT, and drops unknown shipping keys', () => {
   const display = checkoutDisplay(feed().checkout, 'fr');
   assert.deepEqual(display.shipping.map((row) => [row.id, row.cost, row.label]), [
     ['standard', 100, 'Standard (5-8 jours)'],
     ['express', 150, 'Express (2-3 jours)'],
     ['pickup', 0, 'Retrait au hub'],
   ]);
-  assert.equal(display.vatPercent, 15);
   assert.equal(display.eurPerNad, 0.05);
-  assert.deepEqual(display.countries.map((row) => row.name), ['Namibia', 'South Africa', 'France']);
-  assert.match(formatApproxEur(304, 0.05), /^approx\. 15,20\s€$/u);
+  assert.deepEqual(
+    display.countries.map((row) => [row.code, row.name, row.vatPercent]),
+    [
+      ['NA', 'Namibia', 15],
+      ['ZA', 'South Africa', 15],
+      ['FR', 'France', 20],
+      ['DE', 'Germany', 19],
+      ['FI', 'Finland', 25.5],
+    ],
+  );
+  assert.equal(vatPercentForCountry(display, 'France'), 20);
+  assert.equal(vatPercentForCountry(display, 'Finland'), 25.5);
+  assert.equal(vatPercentForCountry(display, 'Botswana'), undefined);
+  assert.equal(vatPercentForCountry(display, '__proto__'), undefined);
+  assert.equal(formatApproxEur(304, 0.05), 'Approx. EUR 15.20');
 });
