@@ -49,6 +49,10 @@ test('rejects userinfo, lookalike hosts, relative paths, and http', () => {
     null,
   );
   assert.equal(sanitizeImageUrl('https://www.rappisportshub.com.evil.example/a.jpg'), null);
+  assert.equal(sanitizeImageUrl('https://evil.example/www.rappisportshub.com/x'), null);
+  assert.equal(sanitizeImageUrl('/../x'), null);
+  assert.equal(sanitizeImageUrl('/a\\b'), null);
+  assert.equal(sanitizeImageUrl('https://host:8443/x'), null);
   assert.equal(sanitizeImageUrl('https://not.rappisportshub.com/a.jpg'), null);
   assert.equal(sanitizeImageUrl('/catalog-photos/relative.jpg'), null);
   assert.equal(sanitizeImageUrl('catalog-photos/relative.jpg'), null);

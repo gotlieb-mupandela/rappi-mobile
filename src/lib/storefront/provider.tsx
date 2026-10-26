@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { apiFetch } from '@/src/api/client';
 import type { Product } from '@/src/api/types';
@@ -17,6 +17,7 @@ type StorefrontValue = {
   feed: MobileStorefront | null;
   productsByCode: Map<string, StorefrontProduct>;
   linesByCode: Map<string, string> | null;
+  reload: () => void;
 };
 
 const EMPTY_PRODUCTS = new Map<string, StorefrontProduct>();
@@ -27,6 +28,7 @@ const StorefrontContext = createContext<StorefrontValue>({
   feed: null,
   productsByCode: EMPTY_PRODUCTS,
   linesByCode: null,
+  reload: () => undefined,
 });
 
 function productionBuild(): boolean {
@@ -37,6 +39,8 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
   const enabled = dataDrivenStorefrontEnabled();
   const [ready, setReady] = useState(!enabled);
   const [feed, setFeed] = useState<MobileStorefront | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const reload = useCallback(() => setAttempt((current) => current + 1), []);
 
   useEffect(() => {
     if (!enabled) return;
@@ -57,13 +61,13 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
     return () => {
       cancel = true;
     };
-  }, [enabled]);
+  }, [attempt, enabled]);
 
   const productsByCode = useMemo(() => indexProducts(feed), [feed]);
   const linesByCode = useMemo(() => lineByCode(feed), [feed]);
   const value = useMemo<StorefrontValue>(
-    () => ({ enabled, ready, feed, productsByCode, linesByCode }),
-    [enabled, feed, linesByCode, productsByCode, ready],
+    () => ({ enabled, ready, feed, productsByCode, linesByCode, reload }),
+    [enabled, feed, linesByCode, productsByCode, ready, reload],
   );
 
   return <StorefrontContext.Provider value={value}>{children}</StorefrontContext.Provider>;

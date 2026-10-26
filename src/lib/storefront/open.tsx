@@ -6,6 +6,9 @@ import type { StorefrontRoute } from '@/src/lib/storefront/contract';
 /** Opens an app screen from a resolved target. The route value never comes from a feed URL. */
 export function openStorefrontRoute(route: StorefrontRoute, name: string, crumbs: string[]) {
   switch (route.screen) {
+    case 'home':
+      router.push('/');
+      return;
     case 'menu':
       router.push({
         pathname: '/menu/[menu]',
@@ -24,9 +27,6 @@ export function openStorefrontRoute(route: StorefrontRoute, name: string, crumbs
         crumbs,
         leaf: route.leaf,
       });
-      return;
-    case 'kids':
-      router.push('/kids');
       return;
     default:
       return;

@@ -16,8 +16,9 @@ test('accepts the fixture feed', () => {
   const parsed = validateMobileStorefront(fixture());
   assert.equal(parsed.ok, true);
   if (!parsed.ok) return;
-  assert.equal(parsed.value.version, '2026-10-25.1');
-  assert.equal(parsed.value.menus.some((node) => node.key === 'men-brama'), true);
+  assert.equal(parsed.value.version, '2026-10-25.1.7');
+  assert.deepEqual(parsed.value.menus, ['man', 'woman', 'children', 'teams']);
+  assert.equal(parsed.value.nodes.some((node) => node.key === 'fitness-gym-woman'), true);
   assert.equal(parsed.value.checkout.eurPerNad, 0.05);
   assert.deepEqual(
     parsed.value.checkout.countries.map((row) => [row.code, row.name, row.vatRate]),
@@ -27,12 +28,14 @@ test('accepts the fixture feed', () => {
       ['FR', 'France', 0.2],
       ['DE', 'Germany', 0.19],
       ['FI', 'Finland', 0.255],
+      ['XK', 'Kosovo', 0.18],
     ],
   );
   const pack = parsed.value.products.find((product) => product.code === 'PACK-25');
   assert.ok(pack);
-  assert.notEqual(pack.images[0], pack.cardImage);
-  assert.equal(pack.images[0], 'https://www.rappisportshub.com/catalog-photos/pack-25-a.jpg');
+  assert.equal(pack.images[0], pack.cardImage);
+  assert.equal(pack.line, 'Training cones');
+  assert.equal('item' in pack, false);
   const plain = parsed.value.products.find((product) => product.code === 'PLAIN-1');
   assert.ok(plain);
   assert.equal(plain.cardImage, null);
@@ -42,7 +45,7 @@ test('accepts the fixture feed', () => {
 test('unknown target keys do not resolve to a screen', () => {
   assert.equal(resolveTarget('https://evil.example/phish'), null);
   assert.equal(resolveTarget('not-a-real-target'), null);
-  assert.equal(resolveTarget('/shop/men'), null);
+  assert.deepEqual(resolveTarget('/shop/men'), { screen: 'menu', menu: 'man', path: [] });
   assert.equal(resolveTarget('menu:men'), null);
   assert.equal(resolveTarget('menu:../admin'), null);
   assert.equal(resolveTarget('group:sportswear'), null);
@@ -54,27 +57,34 @@ test('unknown target keys do not resolve to a screen', () => {
   assert.equal(resolveTarget('__proto__'), null);
   assert.equal(resolveTarget('constructor'), null);
   assert.equal(resolveTarget('prototype'), null);
-  assert.deepEqual(resolveTarget('men-brama'), {
+  assert.equal(resolveTarget('men-brama'), null);
+  assert.equal(resolveTarget('/shop/shoes?group=flow&extra=1'), null);
+  assert.deepEqual(resolveTarget('/shop/women?group=fitness-gym-woman'), {
     screen: 'group',
     cat: 'sportswear',
-    group: 'underwear-brama',
-    audience: 'men',
+    group: 'fitness-gym-woman',
+    audience: 'women',
     leaf: true,
   });
-  assert.deepEqual(resolveTarget('footwear'), { screen: 'category', slug: 'shoes' });
+  assert.deepEqual(resolveTarget('/shop/shoes?group=flow'), {
+    screen: 'group',
+    cat: 'shoes',
+    group: 'flow',
+    leaf: true,
+  });
 });
 
 test('drops a tile when fr is missing and keeps the rest of the feed', () => {
   const body = clone();
-  const menus = body.menus as Array<Record<string, unknown>>;
-  const men = menus.find((node) => node.key === 'men');
-  assert.ok(men);
-  men.title = { en: 'Man' };
+  const nodes = body.nodes as Array<Record<string, unknown>>;
+  const woman = nodes.find((node) => node.key === 'woman');
+  assert.ok(woman);
+  woman.title = { en: 'Woman' };
   const parsed = validateMobileStorefront(body);
   assert.equal(parsed.ok, true);
   if (!parsed.ok) return;
-  assert.equal(parsed.value.menus.some((node) => node.key === 'men'), false);
-  assert.equal(parsed.value.menus.some((node) => node.key === 'women'), true);
+  assert.equal(parsed.value.nodes.some((node) => node.key === 'woman'), false);
+  assert.equal(parsed.value.nodes.some((node) => node.key === 'man'), true);
 });
 
 test('rejects the whole feed when checkout numbers are not finite or not sane', () => {

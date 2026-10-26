@@ -1,4 +1,4 @@
-import { resolveTarget } from './contract.ts';
+import { resolveTarget } from './targets.ts';
 import type { MobileStorefront, StorefrontLanguage, StorefrontNode, StorefrontProduct } from './types.ts';
 
 export function localized(copy: { en: string; fr: string }, language: StorefrontLanguage): string {
@@ -6,14 +6,42 @@ export function localized(copy: { en: string; fr: string }, language: Storefront
   return copy.en;
 }
 
-export function visibleNodes(nodes: readonly StorefrontNode[], parent: string | null): StorefrontNode[] {
-  return nodes
-    .filter((node) => node.parent === parent && !node.hidden && resolveTarget(node.target) !== null)
-    .sort((a, b) => a.order - b.order || a.key.localeCompare(b.key));
+function byKey(feed: MobileStorefront): Map<string, StorefrontNode> {
+  const map = new Map<string, StorefrontNode>();
+  for (const node of feed.nodes) map.set(node.key, node);
+  return map;
 }
 
-export function hasVisibleChildren(nodes: readonly StorefrontNode[], key: string): boolean {
-  return visibleNodes(nodes, key).length > 0;
+export function childNodes(feed: MobileStorefront, key: string): StorefrontNode[] {
+  const nodes = byKey(feed);
+  const parent = nodes.get(key);
+  if (!parent) return [];
+  const children: StorefrontNode[] = [];
+  for (const childKey of parent.tiles) {
+    const node = nodes.get(childKey);
+    if (!node || node.hidden || resolveTarget(node.target) === null) continue;
+    children.push(node);
+  }
+  return children;
+}
+
+export function hasVisibleChildren(feed: MobileStorefront, key: string): boolean {
+  return childNodes(feed, key).length > 0;
+}
+
+export function homeTiles(feed: MobileStorefront): StorefrontNode[] {
+  return childNodes(feed, 'home');
+}
+
+export function headerMenus(feed: MobileStorefront): StorefrontNode[] {
+  const nodes = byKey(feed);
+  const menus: StorefrontNode[] = [];
+  for (const key of feed.menus) {
+    const node = nodes.get(key);
+    if (!node || node.hidden || resolveTarget(node.target) === null) continue;
+    menus.push(node);
+  }
+  return menus;
 }
 
 export function menuLevel(
@@ -21,38 +49,38 @@ export function menuLevel(
   menuKey: string,
   path: readonly string[],
 ): { trail: StorefrontNode[]; nodes: StorefrontNode[] } | null {
-  const root = feed.menus.find((node) => node.key === menuKey);
+  const nodes = byKey(feed);
+  const root = nodes.get(menuKey);
   if (!root || root.hidden || resolveTarget(root.target) === null) return null;
   const trail = [root];
   let parent = root.key;
   for (const key of path) {
-    const next = visibleNodes(feed.menus, parent).find((node) => node.key === key);
+    const next = childNodes(feed, parent).find((node) => node.key === key);
     if (!next) return null;
     trail.push(next);
     parent = next.key;
   }
-  return { trail, nodes: visibleNodes(feed.menus, parent) };
+  return { trail, nodes: childNodes(feed, parent) };
 }
 
 export function orderedCategories(feed: MobileStorefront): StorefrontNode[] {
-  return visibleNodes(feed.categories, null);
+  const nodes = byKey(feed);
+  const categories: StorefrontNode[] = [];
+  for (const key of feed.categoryOrder) {
+    const node = nodes.get(key);
+    if (!node || node.hidden || resolveTarget(node.target) === null) continue;
+    categories.push(node);
+  }
+  return categories;
 }
 
-/** Category children when the feed nests them. Otherwise menu folders whose target opens this category. */
+/** Shop-by-type tiles listed on a category node. */
 export function foldersForCategory(feed: MobileStorefront, slug: string): StorefrontNode[] {
-  const nested = visibleNodes(feed.categories, slug);
-  if (nested.length > 0) return nested;
-  return feed.menus
-    .filter((node) => {
-      if (node.hidden) return false;
-      const route = resolveTarget(node.target);
-      return route?.screen === 'group' && route.cat === slug;
-    })
-    .sort((a, b) => a.order - b.order || a.key.localeCompare(b.key));
+  return childNodes(feed, slug);
 }
 
 export function categoryNode(feed: MobileStorefront, slug: string): StorefrontNode | undefined {
-  return feed.categories.find((node) => node.key === slug);
+  return feed.nodes.find((node) => node.key === slug);
 }
 
 export function indexProducts(feed: MobileStorefront | null): Map<string, StorefrontProduct> {

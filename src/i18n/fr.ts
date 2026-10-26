@@ -125,6 +125,9 @@ export const fr = {
     payDpo: 'Payer avec DPO',
     openingDpo: 'Ouverture de DPO…',
     totalsNote: 'Totaux en € (depuis le NAD). Le paiement se finalise de façon sécurisée sur DPO.',
+    totalsServer: 'Les totaux sont approximatifs. Le serveur confirme le prix final.',
+    vatHidden: "La TVA n'est pas affichée pour ce pays.",
+    shippingUnavailable: 'Impossible de charger les options de livraison, réessayez',
   },
   orders: {
     title: 'Commandes',

@@ -51,7 +51,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "node --no-warnings --experimental-strip-types --test src/lib/money.test.ts src/lib/bagRules.test.ts src/lib/bagSyncRules.test.ts src/lib/categories.test.ts src/lib/wishlistRules.test.ts src/lib/storefront/flag.test.ts src/lib/storefront/images.test.ts src/lib/storefront/contract.test.ts src/lib/storefront/adapt.test.ts src/lib/storefront/cache.test.ts",
+    "test": "node --no-warnings --experimental-strip-types --test src/lib/money.test.ts src/lib/bagRules.test.ts src/lib/bagSyncRules.test.ts src/lib/categories.test.ts src/lib/wishlistRules.test.ts src/lib/storefront/flag.test.ts src/lib/storefront/images.test.ts src/lib/storefront/contract.test.ts src/lib/storefront/adapt.test.ts src/lib/storefront/cache.test.ts src/lib/storefront/targets.test.ts",
     "check": "npm run typecheck && npm test",
     "export:android": "expo export --platform android"
   },

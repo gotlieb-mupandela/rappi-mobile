@@ -7,7 +7,7 @@ import { Screen } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { categoryName, HOME_TILES } from '@/src/lib/categories';
 import { tapHaptic } from '@/src/lib/haptics';
-import { localized, visibleNodes } from '@/src/lib/storefront/adapt';
+import { homeTiles, localized } from '@/src/lib/storefront/adapt';
 import { resolveTarget } from '@/src/lib/storefront/contract';
 import { openStorefrontRoute } from '@/src/lib/storefront/open';
 import { useStorefront } from '@/src/lib/storefront/provider';
@@ -21,7 +21,7 @@ export default function HomeScreen() {
   const styles = useStyles();
   const storefront = useStorefront();
   const language = market === 'eu' ? 'fr' : 'en';
-  const feedTiles = storefront.enabled && storefront.feed ? visibleNodes(storefront.feed.homeTiles, null) : [];
+  const feedTiles = storefront.enabled && storefront.feed ? homeTiles(storefront.feed) : [];
   if (feedTiles.length > 0) {
     return (
       <Screen wordmark right={<WishlistNavButton />}>

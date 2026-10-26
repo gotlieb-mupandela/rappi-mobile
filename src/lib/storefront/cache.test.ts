@@ -20,7 +20,7 @@ test('a malformed feed keeps the last good copy', async () => {
     store,
     fetchFeed: async () => good,
   });
-  assert.equal(first?.version, '2026-10-25.1');
+  assert.equal(first?.version, '2026-10-25.1.7');
   let calls = 0;
   const second = await resolveStorefront({
     enabled: true,
@@ -33,7 +33,7 @@ test('a malformed feed keeps the last good copy', async () => {
     },
   });
   assert.equal(calls, 1);
-  assert.equal(second?.version, '2026-10-25.1');
+  assert.equal(second?.version, '2026-10-25.1.7');
   const thrown = await resolveStorefront({
     enabled: true,
     production: true,
@@ -43,7 +43,7 @@ test('a malformed feed keeps the last good copy', async () => {
       throw new Error('offline');
     },
   });
-  assert.equal(thrown?.version, '2026-10-25.1');
+  assert.equal(thrown?.version, '2026-10-25.1.7');
 });
 
 test('a bad checkout country keeps the last good copy', async () => {
@@ -56,7 +56,7 @@ test('a bad checkout country keeps the last good copy', async () => {
     store,
     fetchFeed: async () => good,
   });
-  assert.equal(first?.version, '2026-10-25.1');
+  assert.equal(first?.version, '2026-10-25.1.7');
   const bad = structuredClone(good) as { version: string; checkout: { countries: Array<{ vatRate: number }> } };
   bad.version = 'bad-country';
   bad.checkout.countries[0].vatRate = 1.5;
@@ -67,7 +67,7 @@ test('a bad checkout country keeps the last good copy', async () => {
     store,
     fetchFeed: async () => bad,
   });
-  assert.equal(second?.version, '2026-10-25.1');
+  assert.equal(second?.version, '2026-10-25.1.7');
   const missing = await resolveStorefront({
     enabled: true,
     production: false,

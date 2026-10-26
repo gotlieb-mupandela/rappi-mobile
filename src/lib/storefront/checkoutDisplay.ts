@@ -53,6 +53,27 @@ export function vatPercentForCountry(display: CheckoutDisplay, countryName: stri
   return display.vatByName.get(countryName);
 }
 
+const PAYMENT_METHODS = new Set<ShippingMethod>(['standard', 'express', 'pickup']);
+
+/** Flag on: the selected feed row, or null. Never substitutes the app's default method. */
+export function selectedPaymentMethod(
+  enabled: boolean,
+  rows: readonly { id: ShippingMethod }[],
+  selected: string,
+): ShippingMethod | null {
+  if (!enabled) return PAYMENT_METHODS.has(selected as ShippingMethod) ? (selected as ShippingMethod) : null;
+  return rows.find((row) => row.id === selected)?.id ?? null;
+}
+
+export function shippingUnavailable(enabled: boolean, rowCount: number): boolean {
+  return enabled && rowCount === 0;
+}
+
+/** Flag-on totals note. VAT-hidden copy is added only when this country has no feed rate. */
+export function flagOnTotalsNote(vatShown: boolean): 'totals' | 'totals-and-vat-hidden' {
+  return vatShown ? 'totals' : 'totals-and-vat-hidden';
+}
+
 /** EU-market line under the N$ total. `eurPerNad` is euros for 1 N$. */
 export function formatApproxEur(nad: number, eurPerNad: number): string {
   const safeNad = Number.isFinite(nad) ? nad : 0;

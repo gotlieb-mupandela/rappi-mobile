@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { FolderCard, Screen } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { findMenu, menuImage, NAV_MENU_KEYS, type Menu } from '@/src/lib/menus';
-import { hasVisibleChildren, localized, visibleNodes } from '@/src/lib/storefront/adapt';
+import { hasVisibleChildren, headerMenus, localized } from '@/src/lib/storefront/adapt';
 import { resolveTarget } from '@/src/lib/storefront/contract';
 import { openStorefrontRoute } from '@/src/lib/storefront/open';
 import { useStorefront } from '@/src/lib/storefront/provider';
@@ -16,9 +16,9 @@ export default function ShopScreen() {
   const { market, t } = useLocale();
   const storefront = useStorefront();
   const language = market === 'eu' ? 'fr' : 'en';
-  const feedMenus = storefront.enabled && storefront.feed ? visibleNodes(storefront.feed.menus, null) : [];
+  const feedMenus = storefront.enabled && storefront.feed ? headerMenus(storefront.feed) : [];
   if (feedMenus.length > 0 && storefront.feed) {
-    const menus = storefront.feed.menus;
+    const feed = storefront.feed;
     const cells = feedMenus.length % 2 === 1 ? [...feedMenus, null] : feedMenus;
     const rows: typeof cells[] = [];
     for (let index = 0; index < cells.length; index += 2) rows.push(cells.slice(index, index + 2));
@@ -37,7 +37,7 @@ export default function ShopScreen() {
                         name={label}
                         imageUrl={menu.image ?? undefined}
                         onPress={() => {
-                          if (hasVisibleChildren(menus, menu.key)) {
+                          if (hasVisibleChildren(feed, menu.key)) {
                             router.push({ pathname: '/menu/[menu]', params: { menu: menu.key } });
                             return;
                           }

@@ -1,19 +1,19 @@
 /**
- * Feed contract: runtime validator and the fixed target-key table.
- * Edit this file when the web feed's final field names or target keys land.
- *
- * Route path read from rappi-webapp `feat/mobile-feed-1` at d7366760dac9feeb167598e2d8730c02ee6ae084.
- * That commit still serves a different payload (href, no fr). The path is unconfirmed
- * for the agreed MobileStorefront shape. The older image-map type is GET /api/mobile/storefront.
+ * Feed contract for GET /api/mobile/v1/storefront.
+ * Types and target paths match rappi-webapp PR 98 at ac533ee05c521c0000dc06e408dc6c25aec30d50.
+ * One later web push may adjust how `line` is chosen. This app reads `line` only and never `item`.
+ * The target table lives in targets.ts. The released image-map route is GET /api/mobile/storefront.
  */
 import { sanitizeImageUrl } from './images.ts';
 import type {
   LocalizedText,
   MobileStorefront,
   StorefrontCheckout,
+  StorefrontCounts,
   StorefrontCountry,
   StorefrontLanguage,
   StorefrontNode,
+  StorefrontNodeKind,
   StorefrontProduct,
   StorefrontShipping,
 } from './types.ts';
@@ -22,133 +22,23 @@ export const STOREFRONT_PATH = '/api/mobile/v1/storefront';
 
 export const STORE_HOST = 'www.rappisportshub.com';
 
-export type StorefrontRoute =
-  | { screen: 'menu'; menu: string; path: string[] }
-  | { screen: 'category'; slug: string }
-  | { screen: 'group'; cat: string; group: string; audience?: string; leaf: boolean }
-  | { screen: 'kids' };
-
-const KEY = /^[A-Za-z0-9][A-Za-z0-9._-]{0,80}$/;
-const CODE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,64}$/;
-const COUNTRY = /^[A-Z]{2}$/;
-
-function menu(menuKey: string, path: string[] = []): StorefrontRoute {
-  return { screen: 'menu', menu: menuKey, path };
-}
-
-function category(slug: string): StorefrontRoute {
-  return { screen: 'category', slug };
-}
-
-function group(cat: string, folder: string, audience?: string): StorefrontRoute {
-  return { screen: 'group', cat, group: folder, audience, leaf: true };
-}
-
-/**
- * Exact target keys taken from the tile and menu ids on web branch feat/mobile-feed-1.
- * Values are app screens, never the href strings from that branch.
- */
-export const TARGET_ALIASES: Readonly<Record<string, StorefrontRoute>> = {
-  teamwear: menu('teamwear'),
-  sportswear: category('sportswear'),
-  running: category('running-fitness'),
-  lifestyle: category('lifestyle'),
-  footwear: category('shoes'),
-  kids: menu('kids'),
-  men: menu('men'),
-  women: menu('women'),
-  shoes: menu('shoes'),
-  kits: menu('kits'),
-  accessories: menu('accessories'),
-  outlet: menu('outlet'),
-
-  'men-teamwear': group('sportswear', 'teamwear', 'men'),
-  'men-teamwear-pro': group('sportswear', 'teamwear-pro-2026', 'men'),
-  'men-running': group('sportswear', 'running-trail', 'men'),
-  'men-cycling': group('sportswear', 'cycling', 'men'),
-  'men-racket': group('sportswear', 'racket-sports', 'men'),
-  'men-hiking': group('sportswear', 'hiking-outdoor', 'men'),
-  'men-fitness': group('sportswear', 'fitness-gym', 'men'),
-  'men-lifestyle': group('sportswear', 'lifestyle-apparel', 'men'),
-  'men-resort': group('sportswear', 'resort', 'men'),
-  'men-aguila': group('sportswear', 'aguila-line', 'men'),
-  'men-beachwear': group('sportswear', 'beachwear', 'men'),
-  'men-brama': group('sportswear', 'underwear-brama', 'men'),
-  'men-combat': group('sportswear', 'athletes-combat', 'men'),
-  'men-elite': group('sportswear', 'elite-club', 'men'),
-
-  'women-teamwear': group('sportswear', 'teamwear-woman', 'women'),
-  'women-teamwear-pro': group('sportswear', 'w-teamwear-pro-2026', 'women'),
-  'women-running': group('sportswear', 'running-trail-woman', 'women'),
-  'women-cycling': group('sportswear', 'w-cycling', 'women'),
-  'women-racket': group('sportswear', 'racket-sports-woman', 'women'),
-  'women-hiking': group('sportswear', 'w-hiking-outdoor', 'women'),
-  'women-fitness': group('sportswear', 'fitness-gym-woman', 'women'),
-  'women-lifestyle': group('sportswear', 'lifestyle-apparel-woman', 'women'),
-  'women-resort': group('sportswear', 'w-resort', 'women'),
-  'women-aguila': group('sportswear', 'w-aguila-line', 'women'),
-  'women-beachwear': group('sportswear', 'w-beachwear', 'women'),
-  'women-brama': group('sportswear', 'underwear-brama-woman', 'women'),
-  'women-combat': group('sportswear', 'w-athletes-combat', 'women'),
-  'women-elite': group('sportswear', 'w-elite-club', 'women'),
-
-  'kids-1-4': group('sportswear', 'kids-1-4', 'kids'),
-  'kids-6-10': group('sportswear', 'kids-6-10', 'kids'),
-  'kids-12-14-boy': group('sportswear', 'kids-12-14-boy', 'kids'),
-  'kids-12-14-girl': group('sportswear', 'kids-12-14-girl', 'kids'),
-
-  'shoes-men': group('shoes', 'all', 'men'),
-  'shoes-women': group('shoes', 'all', 'women'),
-  'shoes-kids': group('shoes', 'all', 'kids'),
-  'shoes-outlet': group('shoes', 'footwear-outlet'),
-  flow: group('shoes', 'flow'),
-
-  'acc-balls': group('balls-bags', 'acc-balls'),
-  'acc-backpacks': group('balls-bags', 'acc-backpacks'),
-  'acc-socks': group('sportswear', 'acc-socks'),
-
-  'kits-federations': group('sportswear', 'kits-federations'),
-  'kits-special': group('sportswear', 'kits-special'),
-
-  'outlet-promotions': group('sportswear', 'outlet-promotions'),
-  'outlet-footwear': group('shoes', 'outlet-footwear'),
-  'outlet-apparel-byear': group('sportswear', 'outlet-apparel-byear'),
-  'outlet-sweatshirt-jacket': group('sportswear', 'outlet-sweatshirt-jacket'),
-  'outlet-tshirt-top': group('sportswear', 'outlet-tshirt-top'),
-  'outlet-pants-shorts': group('sportswear', 'outlet-pants-shorts'),
-  'outlet-anorak': group('sportswear', 'outlet-anorak'),
-  'outlet-tracksuit': group('sportswear', 'outlet-tracksuit'),
-  'outlet-junior': group('sportswear', 'outlet-junior'),
-  'outlet-price-199-299': group('sportswear', 'outlet-price-199-299'),
-  'outlet-price-299-399': group('sportswear', 'outlet-price-299-399'),
-  'outlet-price-399-499': group('sportswear', 'outlet-price-399-499'),
-  'outlet-price-499-599': group('sportswear', 'outlet-price-499-599'),
-  'outlet-price-599-699': group('sportswear', 'outlet-price-599-699'),
-  'outlet-price-699-799': group('sportswear', 'outlet-price-699-799'),
-  'outlet-price-799-1099': group('sportswear', 'outlet-price-799-1099'),
-  'outlet-price-1099-1599': group('sportswear', 'outlet-price-1099-1599'),
-  'outlet-price-from-1599': group('sportswear', 'outlet-price-from-1599'),
-};
-
-export const TARGET_ALIAS_KEYS: readonly string[] = Object.keys(TARGET_ALIASES);
-
-/** Own keys only. A feed string is never used to build a route. */
-const TARGET_BY_KEY = new Map<string, StorefrontRoute>(Object.entries(TARGET_ALIASES));
-
-/** Unknown keys, including old menu:, category:, and group: shapes, hide the tile. */
-export function resolveTarget(key: string): StorefrontRoute | null {
-  if (typeof key !== 'string') return null;
-  return TARGET_BY_KEY.get(key) ?? null;
-}
+export type { StorefrontRoute } from './types.ts';
+export { HIDDEN_FEED_TARGETS, TARGET_ALIASES, TARGET_ALIAS_KEYS, resolveTarget } from './targets.ts';
 
 export type StorefrontValidation =
   | { ok: true; value: MobileStorefront }
   | { ok: false; reason: string };
 
+const KEY = /^[A-Za-z0-9][A-Za-z0-9._-]{0,80}$/;
+const CODE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,64}$/;
+const COUNTRY = /^[A-Z]{2}$/;
+const KINDS = new Set<StorefrontNodeKind>(['menu', 'folder', 'category', 'audience', 'tile']);
+
 const LIMITS = {
-  menus: 2000,
-  homeTiles: 200,
-  categories: 500,
+  nodes: 5000,
+  menus: 50,
+  categories: 100,
+  tiles: 800,
   products: 20000,
   images: 12,
   shipping: 20,
@@ -177,21 +67,43 @@ function readCopy(value: unknown, max: number, requireEn: boolean): LocalizedTex
   return { en: value.en, fr: value.fr };
 }
 
+function readKeyList(value: unknown, limit: number, duplicates: 'reject' | 'skip'): string[] | null {
+  if (!Array.isArray(value) || value.length > limit) return null;
+  const keys: string[] = [];
+  const seen = new Set<string>();
+  for (const item of value) {
+    if (typeof item !== 'string' || !KEY.test(item)) return null;
+    if (seen.has(item)) {
+      if (duplicates === 'reject') return null;
+      continue;
+    }
+    seen.add(item);
+    keys.push(item);
+  }
+  return keys;
+}
+
 function readNode(value: unknown): StorefrontNode | null {
   if (!isRecord(value)) return null;
   if (typeof value.key !== 'string' || !KEY.test(value.key)) return null;
+  if (typeof value.kind !== 'string' || !KINDS.has(value.kind as StorefrontNodeKind)) return null;
   if (value.parent !== null && (typeof value.parent !== 'string' || !KEY.test(value.parent))) return null;
   if (typeof value.order !== 'number' || !Number.isInteger(value.order) || value.order < -1_000_000 || value.order > 1_000_000) {
     return null;
   }
   if (typeof value.target !== 'string' || value.target.length === 0 || value.target.length > 180) return null;
   if (typeof value.hidden !== 'boolean') return null;
+  if (typeof value.count !== 'number' || !Number.isInteger(value.count) || value.count < 0 || value.count > 1_000_000) return null;
+  if (value.group !== null && (typeof value.group !== 'string' || !KEY.test(value.group))) return null;
+  const tiles = readKeyList(value.tiles, LIMITS.tiles, 'skip');
+  if (!tiles) return null;
   const title = readCopy(value.title, LIMITS.title, true);
   const description = readCopy(value.description, LIMITS.description, false);
   if (!title || !description) return null;
   if (value.image !== null && value.image !== undefined && typeof value.image !== 'string') return null;
   return {
     key: value.key,
+    kind: value.kind as StorefrontNodeKind,
     parent: value.parent,
     order: value.order,
     target: value.target,
@@ -199,6 +111,9 @@ function readNode(value: unknown): StorefrontNode | null {
     title,
     description,
     hidden: value.hidden,
+    count: value.count,
+    group: value.group,
+    tiles,
   };
 }
 
@@ -282,7 +197,8 @@ function readProduct(value: unknown): StorefrontProduct | null {
     return null;
   }
   if (!Array.isArray(value.images)) return null;
-  if (value.line !== null && (typeof value.line !== 'string' || !isPlainText(value.line, LIMITS.line))) return null;
+  const line = value.line === undefined ? null : value.line;
+  if (line !== null && (typeof line !== 'string' || !isPlainText(line, LIMITS.line))) return null;
   const category = readOptionalMeta(value.category);
   const subcategory = readOptionalMeta(value.subcategory);
   const audience = readOptionalMeta(value.audience);
@@ -301,7 +217,7 @@ function readProduct(value: unknown): StorefrontProduct | null {
     pairCount: value.pairCount,
     cardImage: sanitizeImageUrl(value.cardImage),
     images,
-    line: value.line,
+    line,
     category: category.value,
     subcategory: subcategory.value,
     audience: audience.value,
@@ -313,12 +229,14 @@ export function validateMobileStorefront(value: unknown): StorefrontValidation {
   if (typeof value.version !== 'string' || value.version.length < 1 || value.version.length > 128 || /[\s\u0000-\u001F\u007F]/.test(value.version)) {
     return { ok: false, reason: 'Feed version is missing.' };
   }
-  const menus = readNodes(value.menus, LIMITS.menus);
-  const homeTiles = readNodes(value.homeTiles, LIMITS.homeTiles);
-  const categories = readNodes(value.categories, LIMITS.categories);
-  if (!menus || !homeTiles || !categories) return { ok: false, reason: 'Feed navigation is malformed.' };
+  const nodes = readNodes(value.nodes, LIMITS.nodes);
+  const menus = readKeyList(value.menus, LIMITS.menus, 'reject');
+  const categoryOrder = readKeyList(value.categoryOrder, LIMITS.categories, 'reject');
+  if (!nodes || !menus || !categoryOrder) return { ok: false, reason: 'Feed navigation is malformed.' };
   const checkout = readCheckout(value.checkout);
   if (!checkout) return { ok: false, reason: 'Feed checkout display is malformed.' };
+  const counts = readCounts(value.counts);
+  if (!counts) return { ok: false, reason: 'Feed counts are malformed.' };
   if (!Array.isArray(value.products) || value.products.length > LIMITS.products) {
     return { ok: false, reason: 'Feed products are malformed.' };
   }
@@ -331,7 +249,24 @@ export function validateMobileStorefront(value: unknown): StorefrontValidation {
     seen.add(product.code);
     products.push(product);
   }
-  return { ok: true, value: { version: value.version, menus, homeTiles, categories, checkout, products } };
+  return { ok: true, value: { version: value.version, nodes, menus, categoryOrder, products, checkout, counts } };
+}
+
+function readCounts(value: unknown): StorefrontCounts | null {
+  if (!isRecord(value) || !isRecord(value.categories)) return null;
+  if (typeof value.products !== 'number' || !Number.isInteger(value.products) || value.products < 0 || value.products > LIMITS.products) {
+    return null;
+  }
+  const categories: Record<string, number> = Object.create(null);
+  const keys = Object.keys(value.categories);
+  if (keys.length > LIMITS.categories) return null;
+  for (const key of keys) {
+    if (!KEY.test(key)) return null;
+    const count = value.categories[key];
+    if (typeof count !== 'number' || !Number.isInteger(count) || count < 0 || count > LIMITS.products) return null;
+    categories[key] = count;
+  }
+  return { categories, products: value.products };
 }
 
 /** French uses labelFr when it is a non-empty string. Otherwise the English label. Null when no label. */

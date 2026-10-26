@@ -28,7 +28,7 @@ export default function MenuScreen() {
         </Screen>
       );
     }
-    const menus = storefront.feed.menus;
+    const feed = storefront.feed;
     const crumbs = driven.trail.map((node) => localized(node.title, language));
     const current = driven.trail[driven.trail.length - 1];
     const description = localized(current.description, language).trim();
@@ -59,7 +59,7 @@ export default function MenuScreen() {
                         name={label}
                         imageUrl={node.image ?? undefined}
                         onPress={() => {
-                          if (hasVisibleChildren(menus, node.key)) {
+                          if (hasVisibleChildren(feed, node.key)) {
                             router.push({
                               pathname: '/menu/[menu]',
                               params: { menu: params.menu, path: [...path, node.key].join('/') },

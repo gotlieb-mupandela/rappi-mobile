@@ -12,7 +12,14 @@ import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useAuth } from '@/src/lib/auth';
 import { useBag } from '@/src/lib/bag';
 import { formatMoney as formatNad, vatOn } from '@/src/lib/money';
-import { checkoutDisplay, formatApproxEur, vatPercentForCountry } from '@/src/lib/storefront/checkoutDisplay';
+import {
+  checkoutDisplay,
+  flagOnTotalsNote,
+  formatApproxEur,
+  selectedPaymentMethod,
+  shippingUnavailable,
+  vatPercentForCountry,
+} from '@/src/lib/storefront/checkoutDisplay';
 import { useStorefront } from '@/src/lib/storefront/provider';
 import { openLogin } from '@/src/lib/navigation';
 import { fetchProfile, latestOrderId, waitForNewOrder } from '@/src/lib/orders';
@@ -68,9 +75,11 @@ export default function CheckoutScreen() {
     () => (storefront.enabled && storefront.feed ? checkoutDisplay(storefront.feed.checkout, language) : null),
     [language, storefront.enabled, storefront.feed],
   );
-  const shippingRows = display && display.shipping.length > 0
-    ? display.shipping
+  const shippingRows = storefront.enabled
+    ? (display?.shipping ?? [])
     : SHIPPING.map((item) => ({ id: item.id, label: t(item.labelKey), cost: item.cost }));
+  const method = selectedPaymentMethod(storefront.enabled, shippingRows, shipping);
+  const unavailable = shippingUnavailable(storefront.enabled, shippingRows.length);
   const countryRows = storefront.enabled
     ? (display?.countries ?? [])
     : COUNTRIES.map(([name, rate]) => ({ name, vatPercent: rate as number }));
@@ -92,9 +101,10 @@ export default function CheckoutScreen() {
   }, [profile.data, profile.isPending, session]);
 
   useEffect(() => {
-    if (!display || display.shipping.length === 0) return;
-    if (!display.shipping.some((item) => item.id === shipping)) setShipping(display.shipping[0].id);
-  }, [display, shipping]);
+    if (!storefront.enabled || !display || display.shipping.length === 0) return;
+    if (display.shipping.some((item) => item.id === shipping)) return;
+    setShipping(display.shipping[0].id);
+  }, [display, shipping, storefront.enabled]);
 
   useEffect(() => {
     if (!storefront.enabled || !display || display.countries.length === 0) return;
@@ -104,25 +114,29 @@ export default function CheckoutScreen() {
     if (fallback) setCountry(fallback.name);
   }, [country, display, market, storefront.enabled]);
 
-  const shippingCost = shippingRows.find((item) => item.id === shipping)?.cost ?? (display ? 0 : 100);
+  const shippingCost = shippingRows.find((item) => item.id === (storefront.enabled ? method : shipping))?.cost ?? (storefront.enabled ? 0 : 100);
   const vatPercent = storefront.enabled
     ? (display ? vatPercentForCountry(display, country) : undefined)
     : (COUNTRIES.find(([name]) => name === country)?.[1] ?? 15);
   const vat = vatPercent === undefined ? 0 : vatOn(bag.subtotal + shippingCost, vatPercent);
   const total = bag.subtotal + shippingCost + vat;
-  const pickup = shipping === 'pickup';
+  const pickup = (storefront.enabled ? method : shipping) === 'pickup';
 
   const canPay = useMemo(() => {
+    if (storefront.enabled && !method) return false;
     if (!name.trim() || !EMAIL.test(email.trim()) || !phone.trim()) return false;
     if (!pickup && (!address.trim() || !city.trim())) return false;
     return bag.lines.length > 0;
-  }, [address, bag.lines.length, city, email, name, phone, pickup]);
+  }, [address, bag.lines.length, city, email, method, name, phone, pickup, storefront.enabled]);
 
   const pay = async () => {
     if (!session) {
       openLogin('/checkout');
       return;
     }
+    if (storefront.enabled && !method) return;
+    const shippingMethod = storefront.enabled ? method : shipping;
+    if (!shippingMethod) return;
     setBusy(t('checkout.openingDpo'));
     setError(null);
 
@@ -143,7 +157,7 @@ export default function CheckoutScreen() {
         city: pickup ? '—' : city.trim(),
         country,
         notes: notes.trim(),
-        shippingMethod: shipping,
+        shippingMethod,
         lines: bag.lines.map((line) => ({ code: line.code, size: line.size, qty: line.qty })),
       });
       if (!payment?.paymentUrl) throw new ApiError("Payment couldn't be started. Try again.", 500);
@@ -263,7 +277,13 @@ export default function CheckoutScreen() {
 
         <Text style={[sectionLabel, styles.block]}>{t('checkout.delivery').toUpperCase()}</Text>
         <View style={styles.section}>
-          {shippingRows.map((item) => {
+          {unavailable ? (
+            <View style={styles.pending}>
+              <Text style={styles.pendingBody}>{t('checkout.shippingUnavailable')}</Text>
+              <SecondaryButton label={t('common.retry')} onPress={() => storefront.reload()} />
+            </View>
+          ) : null}
+          {unavailable ? null : shippingRows.map((item) => {
             const selected = shipping === item.id;
             return (
               <Pressable
@@ -320,8 +340,16 @@ export default function CheckoutScreen() {
           {vatPercent !== undefined ? <Row label={t('checkout.vat', { rate: vatPercent })} value={showMoney(vat)} /> : null}
           <View style={styles.divider} />
           <Row label={t('checkout.total')} value={showMoney(total)} bold />
+          {storefront.enabled ? (
+            <Text style={styles.hint}>
+              {flagOnTotalsNote(vatPercent !== undefined) === 'totals'
+                ? t('checkout.totalsServer')
+                : `${t('checkout.totalsServer')} ${t('checkout.vatHidden')}`}
+            </Text>
+          ) : (
+            <Text style={styles.hint}>{t('checkout.totalsNote')}</Text>
+          )}
           {display && market === 'eu' ? <Text style={styles.hint}>{formatApproxEur(total, display.eurPerNad)}</Text> : null}
-          {storefront.enabled ? null : <Text style={styles.hint}>{t('checkout.totalsNote')}</Text>}
         </View>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {payments.pending && !busy ? (
