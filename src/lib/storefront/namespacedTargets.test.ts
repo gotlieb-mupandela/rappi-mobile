@@ -3,15 +3,17 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
-  NAMESPACED_GENERATED_PATH,
+  FEED_GENERATED_PATH,
+  FEED_TABLE_PATH,
+  KEPT_ROUTES_PATH,
   NAMESPACED_JSON_PATH,
-  NAMESPACED_SOURCE_SHA,
-  namespacedCheckFailure,
-  renderNamespacedTargets,
-} from '../../../scripts/gen-namespaced-targets.mjs';
+  WEB_PIN_PATH,
+  feedTargetCheckFailure,
+  renderFeedTargets,
+} from '../../../scripts/gen-feed-targets.mjs';
 import { categoryAudiences, foldersForCategory } from './adapt.ts';
 import { validateMobileStorefront } from './contract.ts';
-import { NAMESPACED_TARGETS } from './namespacedTargets.generated.ts';
+import { FEED_TARGETS } from './feedTargets.generated.ts';
 import { resolveTarget } from './targets.ts';
 
 const rows = JSON.parse(readFileSync(NAMESPACED_JSON_PATH, 'utf8')) as Array<{ id: string; href: string }>;
@@ -25,7 +27,7 @@ function shell() {
 
 test('every namespaced feed href resolves from a real feed shape', () => {
   assert.equal(rows.length, 292);
-  assert.equal(NAMESPACED_TARGETS.size, 292);
+  for (const row of rows) assert.equal(FEED_TARGETS.has(row.href), true, row.href);
   const feed = shell();
   const base = feed.nodes[0];
   feed.nodes = rows.map((row, index) => ({
@@ -53,7 +55,7 @@ test('every namespaced feed href resolves from a real feed shape', () => {
   assert.equal(parsed.value.nodes.length, 292);
   for (const row of rows) {
     const route = resolveTarget(row.href);
-    assert.deepEqual(route, NAMESPACED_TARGETS.get(row.href), row.href);
+    assert.deepEqual(route, FEED_TARGETS.get(row.href), row.href);
     assert.equal(parsed.value.nodes.some((node) => node.target === row.href), true, row.href);
   }
   const sample = '/shop/sportswear?audience=men';
@@ -64,7 +66,7 @@ test('every namespaced feed href resolves from a real feed shape', () => {
   assert.equal(resolveTarget('/shop/football?group=tw-medias/'), null);
   assert.equal(resolveTarget('https://www.rappisportshub.com/shop/football?group=tw-medias'), null);
   for (const key of ['__proto__', 'constructor', 'toString']) {
-    assert.equal(NAMESPACED_TARGETS.get(key), undefined);
+    assert.equal(FEED_TARGETS.get(key), undefined);
     assert.equal(resolveTarget(key), null);
   }
 });
@@ -91,11 +93,23 @@ test('the committed fixture shape resolves its type tile, series tile, and audie
 });
 
 test('the generated file matches the generator and the committed list', () => {
-  const committed = readFileSync(NAMESPACED_JSON_PATH, 'utf8');
-  const generated = readFileSync(NAMESPACED_GENERATED_PATH, 'utf8');
-  assert.equal(generated, renderNamespacedTargets(rows));
-  assert.equal(generated.includes(NAMESPACED_SOURCE_SHA), true);
-  assert.equal(namespacedCheckFailure(committed, committed, generated), null);
-  const drifted = committed.replace('sportswear--men', 'sportswear--mann');
-  assert.match(namespacedCheckFailure(drifted, committed, generated) ?? '', /drifted from the committed copy/);
+  const pin = readFileSync(WEB_PIN_PATH, 'utf8');
+  const table = readFileSync(FEED_TABLE_PATH, 'utf8');
+  const namespaced = readFileSync(NAMESPACED_JSON_PATH, 'utf8');
+  const kept = readFileSync(KEPT_ROUTES_PATH, 'utf8');
+  const generated = readFileSync(FEED_GENERATED_PATH, 'utf8');
+  const pinSha = JSON.parse(pin).feedTargets as string;
+  assert.equal(generated, renderFeedTargets(pin, JSON.parse(table), JSON.parse(namespaced), JSON.parse(kept)));
+  assert.equal(generated.includes(pinSha), true);
+  assert.equal(feedTargetCheckFailure(pin, pin, table, table, namespaced, namespaced, kept, kept, generated), null);
+  const drifted = namespaced.replace('sportswear--men', 'sportswear--mann');
+  assert.match(
+    feedTargetCheckFailure(pin, pin, table, table, drifted, namespaced, kept, kept, generated) ?? '',
+    /namespaced-feed-targets.json has drifted/,
+  );
+  const driftedTable = table.replace('teamwear-pro-2026', 'teamwear-pro-2027');
+  assert.match(
+    feedTargetCheckFailure(pin, pin, driftedTable, table, namespaced, namespaced, kept, kept, generated) ?? '',
+    /feed-target-table.json has drifted/,
+  );
 });
