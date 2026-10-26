@@ -1,6 +1,6 @@
 /**
  * Fails when handwritten storefront content is back in src/ or app/.
- * Also fails on quoted Namibia or France defaults, and on a default standard shipping assignment.
+ * Also fails on quoted Namibia, France, Botswana, or South Africa defaults, and on a default standard shipping assignment.
  * Quote characters are ', ", and ` (template literals). A backtick form is the same hit as a quoted form.
  * Tests, src/i18n/market.ts, and the recorded fixture are excluded from those extra checks.
  * An allowlist such as ['standard', 'express', 'pickup'] is not a default assignment.
@@ -40,7 +40,7 @@ const IDENTIFIERS = [
 ];
 const QUOTE = `['"\`]`;
 const REF_PATTERNS = [/'J:/, /"J:/, /`J:/, /'V:/, /"V:/, /`V:/];
-const COUNTRY_DEFAULT = new RegExp(`(${QUOTE})(?:Namibia|France)\\1`);
+const COUNTRY_DEFAULT = new RegExp(`(${QUOTE})(?:Namibia|France|Botswana|South Africa)\\1`);
 const DEFAULT_SKIP = new Set(['src/i18n/market.ts', 'src/lib/storefront/fixture.json']);
 const SHIPPING_ALLOWLIST = new RegExp(`\\[${QUOTE}standard${QUOTE}\\s*,\\s*${QUOTE}express${QUOTE}\\s*,\\s*${QUOTE}pickup${QUOTE}\\]`);
 const SHIPPING_UNION = new RegExp(`${QUOTE}standard${QUOTE}\\s*\\|\\s*${QUOTE}express${QUOTE}`);
@@ -86,6 +86,9 @@ const PATTERN_CASES = [
   ['const x = `V:1`', true],
   ["const country = 'Namibia'", true],
   ['const country = `France`', true],
+  ["const country = 'Botswana'", true],
+  ['const country = "South Africa"', true],
+  ['const country = `South Africa`', true],
   ["const method = 'standard'", true],
   ['const method = `standard`', true],
   ['const method = useState(`standard`)', true],
