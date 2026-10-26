@@ -41,6 +41,14 @@ test('the snapshot generator fetches only the public storefront route and record
       })),
     /host mismatch/,
   );
+  await assert.rejects(
+    () => fetchStorefrontDocument(async () => ({ ok: true, json: async () => body })),
+    /host mismatch/,
+  );
+  await assert.rejects(
+    () => fetchStorefrontDocument(async () => ({ ok: true, url: '', json: async () => body })),
+    /host mismatch/,
+  );
 });
 
 test('a snapshot with a bad host image or a bad shape is rejected like a live feed', () => {

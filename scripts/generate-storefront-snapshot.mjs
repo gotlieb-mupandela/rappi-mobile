@@ -24,11 +24,12 @@ export async function fetchStorefrontDocument(fetchImpl) {
   const fetchFn = fetchImpl ?? globalThis.fetch;
   const response = await fetchFn(SNAPSHOT_URL, { redirect: 'error' });
   if (!response || !response.ok) throw new Error('Storefront fetch failed');
-  if (typeof response.url === 'string' && response.url.length > 0) {
-    const finalUrl = new URL(response.url);
-    if (finalUrl.protocol !== 'https:' || finalUrl.host !== SNAPSHOT_HOST) {
-      throw new Error('Storefront fetch host mismatch');
-    }
+  if (typeof response.url !== 'string' || response.url.length === 0) {
+    throw new Error('Storefront fetch host mismatch');
+  }
+  const finalUrl = new URL(response.url);
+  if (finalUrl.protocol !== 'https:' || finalUrl.host !== SNAPSHOT_HOST) {
+    throw new Error('Storefront fetch host mismatch');
   }
   return response.json();
 }
