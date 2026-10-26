@@ -17,10 +17,10 @@ const host = 'https://www.rappisportshub.com';
 test('the snapshot generator fetches only the public storefront route and records the feed version', async () => {
   const calls: string[] = [];
   const body = fixture();
-  const fetched = await fetchStorefrontDocument(function capture(url: string, ...extra: unknown[]) {
-    assert.deepEqual(extra, []);
+  const fetched = await fetchStorefrontDocument(function capture(url: string, init?: { redirect?: string }) {
+    assert.deepEqual(init, { redirect: 'error' });
     calls.push(url);
-    return Promise.resolve({ ok: true, json: async () => body });
+    return Promise.resolve({ ok: true, url: SNAPSHOT_URL, json: async () => body });
   });
   assert.deepEqual(calls, [SNAPSHOT_URL]);
   const envelope = snapshotEnvelope(fetched, '2026-10-26T03:00:00.000Z');
@@ -31,6 +31,16 @@ test('the snapshot generator fetches only the public storefront route and record
   assert.equal(envelope.sourceVersion, '2026-10-25.1.7');
   const accepted = acceptSnapshot(envelope);
   assert.equal(accepted?.version, '2026-10-25.1.7');
+
+  await assert.rejects(
+    () =>
+      fetchStorefrontDocument(async () => ({
+        ok: true,
+        url: 'https://evil.example/api/mobile/v1/storefront',
+        json: async () => body,
+      })),
+    /host mismatch/,
+  );
 });
 
 test('a snapshot with a bad host image or a bad shape is rejected like a live feed', () => {

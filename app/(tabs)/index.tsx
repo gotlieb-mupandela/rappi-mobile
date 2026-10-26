@@ -17,6 +17,8 @@ export default function HomeScreen() {
         key: tile.key,
         label: localized(tile.title, language),
         image: tile.image,
+        span: tile.span,
+        tone: tile.tone,
       }))
     : [];
   const status = storefront.feed ? 'ready' : storefront.loading || !storefront.ready ? 'loading' : 'unavailable';

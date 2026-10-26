@@ -1,4 +1,5 @@
 import type { StorefrontRoute } from "./types.ts";
+import { NAMESPACED_TARGETS } from "./namespacedTargets.generated.ts";
 
 /**
  * Exact `target` paths from rappi-webapp PR 98 at ac533ee05c521c0000dc06e408dc6c25aec30d50.
@@ -1363,6 +1364,16 @@ export const TARGET_ALIASES: Readonly<Record<string, StorefrontRoute>> = {
 export const TARGET_ALIAS_KEYS: readonly string[] = Object.keys(TARGET_ALIASES);
 
 const TARGET_BY_KEY = new Map<string, StorefrontRoute>(Object.entries(TARGET_ALIASES));
+for (const [key, route] of NAMESPACED_TARGETS) {
+  const existing = TARGET_BY_KEY.get(key);
+  if (existing) {
+    if (JSON.stringify(existing) !== JSON.stringify(route)) {
+      throw new Error(`namespaced target conflicts with a fixed alias: ${key}`);
+    }
+    continue;
+  }
+  TARGET_BY_KEY.set(key, route);
+}
 
 export function resolveTarget(key: string): StorefrontRoute | null {
   if (typeof key !== "string") return null;

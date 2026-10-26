@@ -13,6 +13,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export const SNAPSHOT_URL = 'https://www.rappisportshub.com/api/mobile/v1/storefront';
+export const SNAPSHOT_HOST = 'www.rappisportshub.com';
 export const SNAPSHOT_GENERATED = 'GENERATED, do not edit';
 
 /**
@@ -21,8 +22,14 @@ export const SNAPSHOT_GENERATED = 'GENERATED, do not edit';
  */
 export async function fetchStorefrontDocument(fetchImpl) {
   const fetchFn = fetchImpl ?? globalThis.fetch;
-  const response = await fetchFn(SNAPSHOT_URL);
+  const response = await fetchFn(SNAPSHOT_URL, { redirect: 'error' });
   if (!response || !response.ok) throw new Error('Storefront fetch failed');
+  if (typeof response.url === 'string' && response.url.length > 0) {
+    const finalUrl = new URL(response.url);
+    if (finalUrl.protocol !== 'https:' || finalUrl.host !== SNAPSHOT_HOST) {
+      throw new Error('Storefront fetch host mismatch');
+    }
+  }
   return response.json();
 }
 

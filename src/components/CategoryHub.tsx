@@ -9,7 +9,7 @@ import { ProductCard } from '@/src/components/ProductCard';
 import { Chip, ErrorState, Screen, SecondaryButton, SkeletonBlock } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { pressHaptic } from '@/src/lib/haptics';
-import { audienceNodes, categoryHubImage, categoryNode, foldersForCategory, localized } from '@/src/lib/storefront/adapt';
+import { categoryAudiences, categoryHubImage, categoryNode, foldersForCategory, localized } from '@/src/lib/storefront/adapt';
 import { resolveTarget } from '@/src/lib/storefront/contract';
 import { AthleteCards, HubCover, HubTypeGrid, StorefrontUnavailable } from '@/src/lib/storefront/feedSections';
 import { openStorefrontRoute } from '@/src/lib/storefront/open';
@@ -33,7 +33,7 @@ export function CategoryHub({ slug }: { slug: string }) {
   const category = feed ? categoryNode(feed, slug) : undefined;
   const feedDescription = category ? localized(category.description, language).trim() : '';
   const feedImage = feed ? categoryHubImage(feed, slug) : null;
-  const athletesFromFeed = feed ? audienceNodes(feed) : [];
+  const athletesFromFeed = feed ? categoryAudiences(feed, slug) : [];
 
   const nav = useQuery({ queryKey: ['catalog-nav'], queryFn: fetchNav, staleTime: 60_000 });
   const overview = useQuery({
@@ -152,14 +152,14 @@ export function CategoryHub({ slug }: { slug: string }) {
           <View style={styles.section}>
             <SectionHeader title="Shop by athlete" />
             <AthleteCards
-              tiles={athletesFromFeed.map((node) => ({
-                key: node.key,
-                label: localized(node.title, language),
-                image: node.image,
+              tiles={athletesFromFeed.map((row) => ({
+                key: row.id,
+                label: localized(row.label, language),
+                image: null,
               }))}
               onOpen={(key, label) => {
-                const node = athletesFromFeed.find((item) => item.key === key);
-                const route = node ? resolveTarget(node.target) : null;
+                const row = athletesFromFeed.find((item) => item.id === key);
+                const route = row ? resolveTarget(row.target) : null;
                 if (!route) return;
                 openStorefrontRoute(route, label, crumbs);
               }}

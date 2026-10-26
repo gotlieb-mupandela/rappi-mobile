@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import { childNodes, foldersForCategory, headerMenus, homeTiles, lineByCode, localized, menuLevel, orderedCategories } from './adapt.ts';
+import { categoryAudiences, childNodes, foldersForCategory, headerMenus, homeTiles, lineByCode, localized, menuLevel, orderedCategories } from './adapt.ts';
 import { checkoutDisplay, flagOnTotalsNote, formatApproxEur, selectedPaymentMethod, shippingLoading, shippingUnavailable, vatPercentForCountry } from './checkoutDisplay.ts';
 import { validateMobileStorefront } from './contract.ts';
 import { en } from '../../i18n/en.ts';
@@ -43,7 +43,21 @@ test('blank french copy falls back to english', () => {
 test('category order skips hidden categories and nests children', () => {
   const value = feed();
   assert.deepEqual(orderedCategories(value).map((node) => node.key), ['sportswear', 'shoes']);
-  assert.deepEqual(foldersForCategory(value, 'sportswear').map((node) => node.key), ['beachwear', 'fitness-gym-woman']);
+  assert.deepEqual(foldersForCategory(value, 'sportswear').map((node) => node.key), [
+    'beachwear',
+    'fitness-gym-woman',
+    'sportswear--shirts',
+  ]);
+  assert.deepEqual(foldersForCategory(value, 'football').map((node) => node.key), ['football--tw-medias']);
+  assert.deepEqual(
+    categoryAudiences(value, 'sportswear').map((row) => row.target),
+    ['/shop/sportswear?audience=men'],
+  );
+  const dropped = structuredClone(value);
+  const sport = dropped.nodes.find((node) => node.key === 'sportswear');
+  assert.ok(sport);
+  sport.audiences = [...sport.audiences, { id: 'sportswear--nope', label: { en: 'Nope', fr: 'Nope' }, count: 1, target: '/shop/sportswear?audience=Men' }];
+  assert.equal(categoryAudiences(dropped, 'sportswear').some((row) => row.id === 'sportswear--nope'), false);
 });
 
 test('menu trail follows tile links', () => {
