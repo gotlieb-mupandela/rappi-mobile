@@ -22,7 +22,7 @@ const config: ExpoConfig = {
     },
   },
   android: {
-    package: 'com.rappisporthub.app',
+    package: 'com.rappisportshub.app',
     googleServicesFile,
     adaptiveIcon: {
       backgroundColor: '#121212',
