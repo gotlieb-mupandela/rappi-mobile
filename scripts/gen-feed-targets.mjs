@@ -1,13 +1,14 @@
 /**
- * Writes one target map from the pinned web feed table and the namespaced list.
+ * Writes one target map from the pinned web feed table, the namespaced list, and the sub-link list.
  *
- * data/web-pin.json is the only sha pin. The generated header reads feedTargets from it.
- * data/feed-target-table.json is feedTargetTable() at that sha: { id, href } in map order.
- * data/namespaced-feed-targets.json is namespacedFeedTargets() at the same sha.
- * data/kept-feed-routes.json locks the app route for every path that already had one.
+ * data/web-pin.json is the only sha pin. The generated header and this check read it.
+ * feedTargets is feedTargetTable() and namespacedFeedTargets().
+ * subLinks is data/storefront-sub-links.json.
+ * data/feed-target-table.json is { id, href } in map order at the feedTargets sha.
+ * data/kept-feed-routes.json locks the app route for every static path that already had one.
  *
- * Static hrefs come first. Namespaced hrefs that are already present are kept once
- * when the route matches and rejected when it does not.
+ * Static hrefs come first, then namespaced, then sub-links.
+ * A href that is already present is kept once when the route matches and rejected when it does not.
  * Keys are exact href strings. Nothing here parses a query at runtime.
  *
  * npm run gen:feed-targets
@@ -22,6 +23,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 export const WEB_PIN_PATH = path.join(ROOT, 'data', 'web-pin.json');
 export const FEED_TABLE_PATH = path.join(ROOT, 'data', 'feed-target-table.json');
 export const NAMESPACED_JSON_PATH = path.join(ROOT, 'data', 'namespaced-feed-targets.json');
+export const SUB_LINK_JSON_PATH = path.join(ROOT, 'data', 'storefront-sub-links.json');
 export const KEPT_ROUTES_PATH = path.join(ROOT, 'data', 'kept-feed-routes.json');
 export const FEED_GENERATED_PATH = path.join(ROOT, 'src', 'lib', 'storefront', 'feedTargets.generated.ts');
 
@@ -59,9 +61,14 @@ export function readWebPin(text) {
   const pin = JSON.parse(text);
   if (pin === null || typeof pin !== 'object' || Array.isArray(pin)) throw new Error('web pin must be an object');
   const keys = Object.keys(pin);
-  if (keys.length !== 1 || keys[0] !== 'feedTargets') throw new Error('web pin must contain only feedTargets');
-  if (typeof pin.feedTargets !== 'string' || !SHA.test(pin.feedTargets)) {
-    throw new Error('web pin feedTargets must be a 40 character sha');
+  const allowed = ['feedTargets', 'subLinks'];
+  if (keys.length !== allowed.length || allowed.some((key) => !keys.includes(key))) {
+    throw new Error('web pin must contain feedTargets and subLinks');
+  }
+  for (const key of allowed) {
+    if (typeof pin[key] !== 'string' || !SHA.test(pin[key])) {
+      throw new Error(`web pin ${key} must be a 40 character sha`);
+    }
   }
   return pin;
 }
@@ -198,6 +205,52 @@ export function namespacedTargetEntries(rows) {
   return entries;
 }
 
+const SUB_LINK_SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+const SUB_LINK_REQUIRED = ['hub', 'sub', 'label', 'href', 'count'];
+
+function subLinkFail(index, message) {
+  throw new Error(`sub-link row ${index}: ${message}`);
+}
+
+function subLinkSlug(index, field, value) {
+  if (typeof value !== 'string' || !SUB_LINK_SLUG.test(value)) subLinkFail(index, `${field} must be a lowercase slug`);
+  return value;
+}
+
+/** @param {unknown} rows */
+export function subLinkTargetEntries(rows) {
+  if (!Array.isArray(rows)) throw new Error('storefront sub-links must be a JSON array');
+  const seen = new Set();
+  const entries = [];
+  rows.forEach((row, index) => {
+    if (row === null || typeof row !== 'object' || Array.isArray(row)) subLinkFail(index, 'must be an object');
+    const keys = Object.keys(row);
+    for (const key of keys) {
+      if (key !== 'group' && !SUB_LINK_REQUIRED.includes(key)) subLinkFail(index, `unexpected key ${key}`);
+    }
+    for (const key of SUB_LINK_REQUIRED) {
+      if (!Object.prototype.hasOwnProperty.call(row, key)) subLinkFail(index, `missing ${key}`);
+    }
+    const hub = subLinkSlug(index, 'hub', row.hub);
+    const sub = subLinkSlug(index, 'sub', row.sub);
+    let group;
+    if (Object.prototype.hasOwnProperty.call(row, 'group') && row.group !== null) {
+      group = subLinkSlug(index, 'group', row.group);
+    }
+    if (typeof row.label !== 'string' || row.label.length === 0) subLinkFail(index, 'label must be a non-empty string');
+    if (typeof row.href !== 'string') subLinkFail(index, 'href must be a string');
+    if (!Number.isInteger(row.count) || row.count < 0) subLinkFail(index, 'count must be a non-negative integer');
+    const href = group ? `/shop/${hub}?sub=${sub}&group=${group}` : `/shop/${hub}?sub=${sub}`;
+    if (row.href !== href) subLinkFail(index, `href must be ${href}`);
+    if (seen.has(href)) subLinkFail(index, `duplicate href ${href}`);
+    seen.add(href);
+    const folder = group ? `sub:${sub}@${group}` : `sub:${sub}`;
+    const route = `{ screen: "group", cat: ${JSON.stringify(hub)}, group: ${JSON.stringify(folder)}, leaf: true }`;
+    entries.push({ href, route });
+  });
+  return entries;
+}
+
 /**
  * @param {{ href: string, route: string }[]} entries
  * @param {Map<string, string>} seen
@@ -222,22 +275,25 @@ function appendEntries(entries, seen, lines, source) {
  * @param {unknown} tableRows
  * @param {unknown} namespacedRows
  * @param {unknown} keptRows
+ * @param {unknown} subLinkRows
  */
-export function renderFeedTargets(pinText, tableRows, namespacedRows, keptRows) {
+export function renderFeedTargets(pinText, tableRows, namespacedRows, keptRows, subLinkRows) {
   const pin = readWebPin(pinText);
   assertKeptRoutes(tableRows, keptRows);
   const seen = new Map();
   const lines = [];
   appendEntries(staticTargetEntries(tableRows), seen, lines, 'static');
   appendEntries(namespacedTargetEntries(namespacedRows), seen, lines, 'namespaced');
+  appendEntries(subLinkTargetEntries(subLinkRows), seen, lines, 'sub-link');
   return `/**
  * GENERATED by scripts/gen-feed-targets.mjs. Do not edit by hand.
- * Pin: data/web-pin.json feedTargets ${pin.feedTargets}.
- * Static source: data/feed-target-table.json from feedTargetTable() at that sha.
- * Namespaced source: data/namespaced-feed-targets.json from namespacedFeedTargets() at that sha.
- * One map. Static hrefs come first, in source order, then namespaced hrefs that are not already present.
+ * Pin: data/web-pin.json feedTargets ${pin.feedTargets}, subLinks ${pin.subLinks}.
+ * Static source: data/feed-target-table.json from feedTargetTable() at the feedTargets sha.
+ * Namespaced source: data/namespaced-feed-targets.json from namespacedFeedTargets() at the feedTargets sha.
+ * Sub-link source: data/storefront-sub-links.json at the subLinks sha.
+ * One map. Static hrefs come first, then namespaced hrefs, then sub-link hrefs.
  * A repeated href is kept once when the route matches and rejected when it does not.
- * Keys are exact href strings. Look up with Map.get.
+ * Keys are exact href strings. Look up with Map.get. Labels and counts are not included.
  */
 import type { StorefrontRoute } from "./types.ts";
 
@@ -274,6 +330,8 @@ export function assertKeptRoutes(tableRows, keptRows) {
  * @param {string | null} namespacedCommitted
  * @param {string} keptWorking
  * @param {string | null} keptCommitted
+ * @param {string} subWorking
+ * @param {string | null} subCommitted
  * @param {string} generatedText
  * @returns {string | null}
  */
@@ -286,6 +344,8 @@ export function feedTargetCheckFailure(
   namespacedCommitted,
   keptWorking,
   keptCommitted,
+  subWorking,
+  subCommitted,
   generatedText,
 ) {
   try {
@@ -302,11 +362,15 @@ export function feedTargetCheckFailure(
     if (keptCommitted !== null && keptWorking !== keptCommitted) {
       return 'data/kept-feed-routes.json has drifted from the committed copy.';
     }
+    if (subCommitted !== null && subWorking !== subCommitted) {
+      return `data/storefront-sub-links.json has drifted from the committed copy (rappi-webapp ${pin.subLinks}).`;
+    }
     const rendered = renderFeedTargets(
       pinCommitted ?? pinWorking,
       JSON.parse(tableCommitted ?? tableWorking),
       JSON.parse(namespacedCommitted ?? namespacedWorking),
       JSON.parse(keptCommitted ?? keptWorking),
+      JSON.parse(subCommitted ?? subWorking),
     );
     if (generatedText !== rendered) {
       return 'feedTargets.generated.ts does not match the pinned feed target lists. Run npm run gen:feed-targets.';
@@ -323,6 +387,7 @@ function main() {
   const tableWorking = readFileSync(FEED_TABLE_PATH, 'utf8');
   const namespacedWorking = readFileSync(NAMESPACED_JSON_PATH, 'utf8');
   const keptWorking = readFileSync(KEPT_ROUTES_PATH, 'utf8');
+  const subWorking = readFileSync(SUB_LINK_JSON_PATH, 'utf8');
   if (check) {
     const failure = feedTargetCheckFailure(
       pinWorking,
@@ -333,6 +398,8 @@ function main() {
       committedText('data/namespaced-feed-targets.json'),
       keptWorking,
       committedText('data/kept-feed-routes.json'),
+      subWorking,
+      committedText('data/storefront-sub-links.json'),
       readFileSync(FEED_GENERATED_PATH, 'utf8'),
     );
     if (failure) {
@@ -343,7 +410,13 @@ function main() {
   }
   writeFileSync(
     FEED_GENERATED_PATH,
-    renderFeedTargets(pinWorking, JSON.parse(tableWorking), JSON.parse(namespacedWorking), JSON.parse(keptWorking)),
+    renderFeedTargets(
+      pinWorking,
+      JSON.parse(tableWorking),
+      JSON.parse(namespacedWorking),
+      JSON.parse(keptWorking),
+      JSON.parse(subWorking),
+    ),
   );
 }
 

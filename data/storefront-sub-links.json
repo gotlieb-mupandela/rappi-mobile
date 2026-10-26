@@ -1,0 +1,1114 @@
+[
+  {
+    "hub": "sportswear",
+    "sub": "jerseys",
+    "group": "shirts",
+    "label": "Jerseys",
+    "href": "/shop/sportswear?sub=jerseys&group=shirts",
+    "count": 117
+  },
+  {
+    "hub": "sportswear",
+    "sub": "tees",
+    "group": "shirts",
+    "label": "T-Shirts",
+    "href": "/shop/sportswear?sub=tees&group=shirts",
+    "count": 2174
+  },
+  {
+    "hub": "sportswear",
+    "sub": "tees-kids",
+    "group": "shirts",
+    "label": "Kids tees",
+    "href": "/shop/sportswear?sub=tees-kids&group=shirts",
+    "count": 31
+  },
+  {
+    "hub": "sportswear",
+    "sub": "polos",
+    "group": "shirts",
+    "label": "Polos",
+    "href": "/shop/sportswear?sub=polos&group=shirts",
+    "count": 346
+  },
+  {
+    "hub": "sportswear",
+    "sub": "tops",
+    "group": "shirts",
+    "label": "Tops",
+    "href": "/shop/sportswear?sub=tops&group=shirts",
+    "count": 234
+  },
+  {
+    "hub": "sportswear",
+    "sub": "shorts",
+    "group": null,
+    "label": "Shorts",
+    "href": "/shop/sportswear?sub=shorts",
+    "count": 934
+  },
+  {
+    "hub": "sportswear",
+    "sub": "pants",
+    "group": null,
+    "label": "Pants",
+    "href": "/shop/sportswear?sub=pants",
+    "count": 444
+  },
+  {
+    "hub": "sportswear",
+    "sub": "tracksuits",
+    "group": "pants",
+    "label": "Tracksuits",
+    "href": "/shop/sportswear?sub=tracksuits&group=pants",
+    "count": 222
+  },
+  {
+    "hub": "sportswear",
+    "sub": "leggings",
+    "group": "pants",
+    "label": "Leggings",
+    "href": "/shop/sportswear?sub=leggings&group=pants",
+    "count": 197
+  },
+  {
+    "hub": "sportswear",
+    "sub": "tights",
+    "group": "pants",
+    "label": "Tights",
+    "href": "/shop/sportswear?sub=tights&group=pants",
+    "count": 84
+  },
+  {
+    "hub": "sportswear",
+    "sub": "skins",
+    "group": "pants",
+    "label": "Skins",
+    "href": "/shop/sportswear?sub=skins&group=pants",
+    "count": 51
+  },
+  {
+    "hub": "sportswear",
+    "sub": "jackets",
+    "group": null,
+    "label": "Jackets",
+    "href": "/shop/sportswear?sub=jackets",
+    "count": 931
+  },
+  {
+    "hub": "sportswear",
+    "sub": "hoodies",
+    "group": "jackets",
+    "label": "Hoodies",
+    "href": "/shop/sportswear?sub=hoodies&group=jackets",
+    "count": 797
+  },
+  {
+    "hub": "sportswear",
+    "sub": "dresses",
+    "group": null,
+    "label": "Dresses",
+    "href": "/shop/sportswear?sub=dresses",
+    "count": 62
+  },
+  {
+    "hub": "sportswear",
+    "sub": "skirts",
+    "group": null,
+    "label": "Skirts",
+    "href": "/shop/sportswear?sub=skirts",
+    "count": 86
+  },
+  {
+    "hub": "sportswear",
+    "sub": "bras",
+    "group": null,
+    "label": "Sports Bras",
+    "href": "/shop/sportswear?sub=bras",
+    "count": 57
+  },
+  {
+    "hub": "sportswear",
+    "sub": "football-fg",
+    "group": "shoes",
+    "label": "Terreno semiseco and duro",
+    "href": "/shop/sportswear?sub=football-fg&group=shoes",
+    "count": 3
+  },
+  {
+    "hub": "sportswear",
+    "sub": "football-ag",
+    "group": "shoes",
+    "label": "C\u00e9sped artificial",
+    "href": "/shop/sportswear?sub=football-ag&group=shoes",
+    "count": 1
+  },
+  {
+    "hub": "sportswear",
+    "sub": "football-sg",
+    "group": "shoes",
+    "label": "Terreno blando",
+    "href": "/shop/sportswear?sub=football-sg&group=shoes",
+    "count": 1
+  },
+  {
+    "hub": "sportswear",
+    "sub": "protection",
+    "group": "accessories",
+    "label": "Protection",
+    "href": "/shop/sportswear?sub=protection&group=accessories",
+    "count": 1
+  },
+  {
+    "hub": "sportswear",
+    "sub": "gk-gloves",
+    "group": "accessories",
+    "label": "Goalkeeper Gloves",
+    "href": "/shop/sportswear?sub=gk-gloves&group=accessories",
+    "count": 66
+  },
+  {
+    "hub": "sportswear",
+    "sub": "socks",
+    "group": "accessories",
+    "label": "Socks",
+    "href": "/shop/sportswear?sub=socks&group=accessories",
+    "count": 185
+  },
+  {
+    "hub": "sportswear",
+    "sub": "caps",
+    "group": "accessories",
+    "label": "Caps",
+    "href": "/shop/sportswear?sub=caps&group=accessories",
+    "count": 35
+  },
+  {
+    "hub": "sportswear",
+    "sub": "accessories",
+    "group": null,
+    "label": "Accessories",
+    "href": "/shop/sportswear?sub=accessories",
+    "count": 10
+  },
+  {
+    "hub": "football",
+    "sub": "tees",
+    "group": "shirts",
+    "label": "T-Shirts",
+    "href": "/shop/football?sub=tees&group=shirts",
+    "count": 75
+  },
+  {
+    "hub": "football",
+    "sub": "polos",
+    "group": "shirts",
+    "label": "Polos",
+    "href": "/shop/football?sub=polos&group=shirts",
+    "count": 3
+  },
+  {
+    "hub": "football",
+    "sub": "shorts",
+    "group": null,
+    "label": "Shorts",
+    "href": "/shop/football?sub=shorts",
+    "count": 23
+  },
+  {
+    "hub": "football",
+    "sub": "pants",
+    "group": null,
+    "label": "Pants",
+    "href": "/shop/football?sub=pants",
+    "count": 1
+  },
+  {
+    "hub": "football",
+    "sub": "tracksuits",
+    "group": "pants",
+    "label": "Tracksuits",
+    "href": "/shop/football?sub=tracksuits&group=pants",
+    "count": 3
+  },
+  {
+    "hub": "football",
+    "sub": "jackets",
+    "group": null,
+    "label": "Jackets",
+    "href": "/shop/football?sub=jackets",
+    "count": 1
+  },
+  {
+    "hub": "football",
+    "sub": "hoodies",
+    "group": "jackets",
+    "label": "Hoodies",
+    "href": "/shop/football?sub=hoodies&group=jackets",
+    "count": 2
+  },
+  {
+    "hub": "football",
+    "sub": "football-fg",
+    "group": "shoes",
+    "label": "Terreno semiseco and duro",
+    "href": "/shop/football?sub=football-fg&group=shoes",
+    "count": 152
+  },
+  {
+    "hub": "football",
+    "sub": "football-ag",
+    "group": "shoes",
+    "label": "C\u00e9sped artificial",
+    "href": "/shop/football?sub=football-ag&group=shoes",
+    "count": 98
+  },
+  {
+    "hub": "football",
+    "sub": "football-sg",
+    "group": "shoes",
+    "label": "Terreno blando",
+    "href": "/shop/football?sub=football-sg&group=shoes",
+    "count": 18
+  },
+  {
+    "hub": "football",
+    "sub": "futsal",
+    "group": "shoes",
+    "label": "Futsal",
+    "href": "/shop/football?sub=futsal&group=shoes",
+    "count": 274
+  },
+  {
+    "hub": "football",
+    "sub": "turf",
+    "group": "shoes",
+    "label": "Turf",
+    "href": "/shop/football?sub=turf&group=shoes",
+    "count": 191
+  },
+  {
+    "hub": "football",
+    "sub": "boots",
+    "group": "shoes",
+    "label": "Boots",
+    "href": "/shop/football?sub=boots&group=shoes",
+    "count": 79
+  },
+  {
+    "hub": "football",
+    "sub": "balls",
+    "group": "equipment",
+    "label": "Balls",
+    "href": "/shop/football?sub=balls&group=equipment",
+    "count": 2
+  },
+  {
+    "hub": "football",
+    "sub": "protection",
+    "group": "accessories",
+    "label": "Protection",
+    "href": "/shop/football?sub=protection&group=accessories",
+    "count": 1
+  },
+  {
+    "hub": "football",
+    "sub": "shin-guards",
+    "group": "accessories",
+    "label": "Shin Guards",
+    "href": "/shop/football?sub=shin-guards&group=accessories",
+    "count": 37
+  },
+  {
+    "hub": "football",
+    "sub": "gk-gloves",
+    "group": "accessories",
+    "label": "Goalkeeper Gloves",
+    "href": "/shop/football?sub=gk-gloves&group=accessories",
+    "count": 66
+  },
+  {
+    "hub": "football",
+    "sub": "socks",
+    "group": "accessories",
+    "label": "Socks",
+    "href": "/shop/football?sub=socks&group=accessories",
+    "count": 57
+  },
+  {
+    "hub": "basketball",
+    "sub": "tees",
+    "group": "shirts",
+    "label": "T-Shirts",
+    "href": "/shop/basketball?sub=tees&group=shirts",
+    "count": 8
+  },
+  {
+    "hub": "basketball",
+    "sub": "shorts",
+    "group": null,
+    "label": "Shorts",
+    "href": "/shop/basketball?sub=shorts",
+    "count": 9
+  },
+  {
+    "hub": "basketball",
+    "sub": "pants",
+    "group": null,
+    "label": "Pants",
+    "href": "/shop/basketball?sub=pants",
+    "count": 2
+  },
+  {
+    "hub": "basketball",
+    "sub": "basketball-shoes",
+    "group": "shoes",
+    "label": "Basketball",
+    "href": "/shop/basketball?sub=basketball-shoes&group=shoes",
+    "count": 17
+  },
+  {
+    "hub": "basketball",
+    "sub": "socks",
+    "group": "accessories",
+    "label": "Socks",
+    "href": "/shop/basketball?sub=socks&group=accessories",
+    "count": 1
+  },
+  {
+    "hub": "swimming",
+    "sub": "swimwear",
+    "group": null,
+    "label": "Swimwear",
+    "href": "/shop/swimming?sub=swimwear",
+    "count": 53
+  },
+  {
+    "hub": "swimming",
+    "sub": "shorts",
+    "group": null,
+    "label": "Shorts",
+    "href": "/shop/swimming?sub=shorts",
+    "count": 38
+  },
+  {
+    "hub": "swimming",
+    "sub": "caps",
+    "group": "accessories",
+    "label": "Caps",
+    "href": "/shop/swimming?sub=caps&group=accessories",
+    "count": 4
+  },
+  {
+    "hub": "rugby",
+    "sub": "jerseys",
+    "group": "shirts",
+    "label": "Jerseys",
+    "href": "/shop/rugby?sub=jerseys&group=shirts",
+    "count": 61
+  },
+  {
+    "hub": "rugby",
+    "sub": "shorts",
+    "group": null,
+    "label": "Shorts",
+    "href": "/shop/rugby?sub=shorts",
+    "count": 21
+  },
+  {
+    "hub": "rugby",
+    "sub": "balls",
+    "group": "equipment",
+    "label": "Balls",
+    "href": "/shop/rugby?sub=balls&group=equipment",
+    "count": 5
+  },
+  {
+    "hub": "rugby",
+    "sub": "protection",
+    "group": "accessories",
+    "label": "Protection",
+    "href": "/shop/rugby?sub=protection&group=accessories",
+    "count": 5
+  },
+  {
+    "hub": "cricket",
+    "sub": "jerseys",
+    "group": "shirts",
+    "label": "Jerseys",
+    "href": "/shop/cricket?sub=jerseys&group=shirts",
+    "count": 1
+  },
+  {
+    "hub": "cricket",
+    "sub": "polos",
+    "group": "shirts",
+    "label": "Polos",
+    "href": "/shop/cricket?sub=polos&group=shirts",
+    "count": 2
+  },
+  {
+    "hub": "cricket",
+    "sub": "pants",
+    "group": null,
+    "label": "Pants",
+    "href": "/shop/cricket?sub=pants",
+    "count": 5
+  },
+  {
+    "hub": "cricket",
+    "sub": "hoodies",
+    "group": "jackets",
+    "label": "Hoodies",
+    "href": "/shop/cricket?sub=hoodies&group=jackets",
+    "count": 1
+  },
+  {
+    "hub": "boxing",
+    "sub": "shorts",
+    "group": null,
+    "label": "Shorts",
+    "href": "/shop/boxing?sub=shorts",
+    "count": 13
+  },
+  {
+    "hub": "hockey",
+    "sub": "hockey-shoes",
+    "group": "shoes",
+    "label": "Hockey",
+    "href": "/shop/hockey?sub=hockey-shoes&group=shoes",
+    "count": 4
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "tees",
+    "group": "shirts",
+    "label": "T-Shirts",
+    "href": "/shop/running-fitness?sub=tees&group=shirts",
+    "count": 176
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "polos",
+    "group": "shirts",
+    "label": "Polos",
+    "href": "/shop/running-fitness?sub=polos&group=shirts",
+    "count": 12
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "tops",
+    "group": "shirts",
+    "label": "Tops",
+    "href": "/shop/running-fitness?sub=tops&group=shirts",
+    "count": 24
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "shorts",
+    "group": null,
+    "label": "Shorts",
+    "href": "/shop/running-fitness?sub=shorts",
+    "count": 98
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "pants",
+    "group": null,
+    "label": "Pants",
+    "href": "/shop/running-fitness?sub=pants",
+    "count": 28
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "tracksuits",
+    "group": "pants",
+    "label": "Tracksuits",
+    "href": "/shop/running-fitness?sub=tracksuits&group=pants",
+    "count": 4
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "leggings",
+    "group": "pants",
+    "label": "Leggings",
+    "href": "/shop/running-fitness?sub=leggings&group=pants",
+    "count": 55
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "tights",
+    "group": "pants",
+    "label": "Tights",
+    "href": "/shop/running-fitness?sub=tights&group=pants",
+    "count": 20
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "jackets",
+    "group": null,
+    "label": "Jackets",
+    "href": "/shop/running-fitness?sub=jackets",
+    "count": 71
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "hoodies",
+    "group": "jackets",
+    "label": "Hoodies",
+    "href": "/shop/running-fitness?sub=hoodies&group=jackets",
+    "count": 67
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "skirts",
+    "group": null,
+    "label": "Skirts",
+    "href": "/shop/running-fitness?sub=skirts",
+    "count": 2
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "bras",
+    "group": null,
+    "label": "Sports Bras",
+    "href": "/shop/running-fitness?sub=bras",
+    "count": 20
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "running-shoes",
+    "group": "shoes",
+    "label": "Running",
+    "href": "/shop/running-fitness?sub=running-shoes&group=shoes",
+    "count": 271
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "trail-running",
+    "group": "shoes",
+    "label": "Trail Running",
+    "href": "/shop/running-fitness?sub=trail-running&group=shoes",
+    "count": 95
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "training-shoes",
+    "group": "shoes",
+    "label": "Training",
+    "href": "/shop/running-fitness?sub=training-shoes&group=shoes",
+    "count": 8
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "kids-shoes",
+    "group": "shoes",
+    "label": "Kids shoes",
+    "href": "/shop/running-fitness?sub=kids-shoes&group=shoes",
+    "count": 58
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "socks",
+    "group": "accessories",
+    "label": "Socks",
+    "href": "/shop/running-fitness?sub=socks&group=accessories",
+    "count": 6
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "caps",
+    "group": "accessories",
+    "label": "Caps",
+    "href": "/shop/running-fitness?sub=caps&group=accessories",
+    "count": 7
+  },
+  {
+    "hub": "running-fitness",
+    "sub": "accessories",
+    "group": null,
+    "label": "Accessories",
+    "href": "/shop/running-fitness?sub=accessories",
+    "count": 9
+  },
+  {
+    "hub": "brama",
+    "sub": "shorts",
+    "group": null,
+    "label": "Shorts",
+    "href": "/shop/brama?sub=shorts",
+    "count": 24
+  },
+  {
+    "hub": "brama",
+    "sub": "tights",
+    "group": "pants",
+    "label": "Tights",
+    "href": "/shop/brama?sub=tights&group=pants",
+    "count": 9
+  },
+  {
+    "hub": "brama",
+    "sub": "skins",
+    "group": "pants",
+    "label": "Skins",
+    "href": "/shop/brama?sub=skins&group=pants",
+    "count": 51
+  },
+  {
+    "hub": "padel",
+    "sub": "tees",
+    "group": "shirts",
+    "label": "T-Shirts",
+    "href": "/shop/padel?sub=tees&group=shirts",
+    "count": 8
+  },
+  {
+    "hub": "padel",
+    "sub": "polos",
+    "group": "shirts",
+    "label": "Polos",
+    "href": "/shop/padel?sub=polos&group=shirts",
+    "count": 4
+  },
+  {
+    "hub": "padel",
+    "sub": "shorts",
+    "group": null,
+    "label": "Shorts",
+    "href": "/shop/padel?sub=shorts",
+    "count": 4
+  },
+  {
+    "hub": "padel",
+    "sub": "tracksuits",
+    "group": "pants",
+    "label": "Tracksuits",
+    "href": "/shop/padel?sub=tracksuits&group=pants",
+    "count": 4
+  },
+  {
+    "hub": "padel",
+    "sub": "skirts",
+    "group": null,
+    "label": "Skirts",
+    "href": "/shop/padel?sub=skirts",
+    "count": 3
+  },
+  {
+    "hub": "padel",
+    "sub": "padel-shoes",
+    "group": "shoes",
+    "label": "P\u00e1del",
+    "href": "/shop/padel?sub=padel-shoes&group=shoes",
+    "count": 141
+  },
+  {
+    "hub": "padel",
+    "sub": "bags",
+    "group": "equipment",
+    "label": "Bags",
+    "href": "/shop/padel?sub=bags&group=equipment",
+    "count": 7
+  },
+  {
+    "hub": "padel",
+    "sub": "rackets",
+    "group": "equipment",
+    "label": "Rackets",
+    "href": "/shop/padel?sub=rackets&group=equipment",
+    "count": 6
+  },
+  {
+    "hub": "padel",
+    "sub": "accessories",
+    "group": null,
+    "label": "Accessories",
+    "href": "/shop/padel?sub=accessories",
+    "count": 1
+  },
+  {
+    "hub": "hiking",
+    "sub": "tees",
+    "group": "shirts",
+    "label": "T-Shirts",
+    "href": "/shop/hiking?sub=tees&group=shirts",
+    "count": 2
+  },
+  {
+    "hub": "hiking",
+    "sub": "pants",
+    "group": null,
+    "label": "Pants",
+    "href": "/shop/hiking?sub=pants",
+    "count": 10
+  },
+  {
+    "hub": "hiking",
+    "sub": "jackets",
+    "group": null,
+    "label": "Jackets",
+    "href": "/shop/hiking?sub=jackets",
+    "count": 16
+  },
+  {
+    "hub": "hiking",
+    "sub": "skirts",
+    "group": null,
+    "label": "Skirts",
+    "href": "/shop/hiking?sub=skirts",
+    "count": 2
+  },
+  {
+    "hub": "hiking",
+    "sub": "trail-running",
+    "group": "shoes",
+    "label": "Trail Running",
+    "href": "/shop/hiking?sub=trail-running&group=shoes",
+    "count": 14
+  },
+  {
+    "hub": "hiking",
+    "sub": "outdoor-shoes",
+    "group": "shoes",
+    "label": "Outdoor",
+    "href": "/shop/hiking?sub=outdoor-shoes&group=shoes",
+    "count": 30
+  },
+  {
+    "hub": "resort",
+    "sub": "tees",
+    "group": "shirts",
+    "label": "T-Shirts",
+    "href": "/shop/resort?sub=tees&group=shirts",
+    "count": 20
+  },
+  {
+    "hub": "resort",
+    "sub": "polos",
+    "group": "shirts",
+    "label": "Polos",
+    "href": "/shop/resort?sub=polos&group=shirts",
+    "count": 10
+  },
+  {
+    "hub": "resort",
+    "sub": "tops",
+    "group": "shirts",
+    "label": "Tops",
+    "href": "/shop/resort?sub=tops&group=shirts",
+    "count": 4
+  },
+  {
+    "hub": "resort",
+    "sub": "shorts",
+    "group": null,
+    "label": "Shorts",
+    "href": "/shop/resort?sub=shorts",
+    "count": 7
+  },
+  {
+    "hub": "resort",
+    "sub": "pants",
+    "group": null,
+    "label": "Pants",
+    "href": "/shop/resort?sub=pants",
+    "count": 10
+  },
+  {
+    "hub": "resort",
+    "sub": "leggings",
+    "group": "pants",
+    "label": "Leggings",
+    "href": "/shop/resort?sub=leggings&group=pants",
+    "count": 5
+  },
+  {
+    "hub": "resort",
+    "sub": "jackets",
+    "group": null,
+    "label": "Jackets",
+    "href": "/shop/resort?sub=jackets",
+    "count": 13
+  },
+  {
+    "hub": "resort",
+    "sub": "hoodies",
+    "group": "jackets",
+    "label": "Hoodies",
+    "href": "/shop/resort?sub=hoodies&group=jackets",
+    "count": 14
+  },
+  {
+    "hub": "lifestyle",
+    "sub": "sneakers",
+    "group": "shoes",
+    "label": "Sneakers",
+    "href": "/shop/lifestyle?sub=sneakers&group=shoes",
+    "count": 34
+  },
+  {
+    "hub": "teampro-2026",
+    "sub": "tees",
+    "group": "shirts",
+    "label": "T-Shirts",
+    "href": "/shop/teampro-2026?sub=tees&group=shirts",
+    "count": 20
+  },
+  {
+    "hub": "teampro-2026",
+    "sub": "polos",
+    "group": "shirts",
+    "label": "Polos",
+    "href": "/shop/teampro-2026?sub=polos&group=shirts",
+    "count": 7
+  },
+  {
+    "hub": "teampro-2026",
+    "sub": "shorts",
+    "group": null,
+    "label": "Shorts",
+    "href": "/shop/teampro-2026?sub=shorts",
+    "count": 6
+  },
+  {
+    "hub": "teampro-2026",
+    "sub": "pants",
+    "group": null,
+    "label": "Pants",
+    "href": "/shop/teampro-2026?sub=pants",
+    "count": 6
+  },
+  {
+    "hub": "teampro-2026",
+    "sub": "jackets",
+    "group": null,
+    "label": "Jackets",
+    "href": "/shop/teampro-2026?sub=jackets",
+    "count": 12
+  },
+  {
+    "hub": "shoes",
+    "sub": "football-fg",
+    "group": "shoes",
+    "label": "Terreno semiseco and duro",
+    "href": "/shop/shoes?sub=football-fg&group=shoes",
+    "count": 149
+  },
+  {
+    "hub": "shoes",
+    "sub": "football-ag",
+    "group": "shoes",
+    "label": "C\u00e9sped artificial",
+    "href": "/shop/shoes?sub=football-ag&group=shoes",
+    "count": 97
+  },
+  {
+    "hub": "shoes",
+    "sub": "football-sg",
+    "group": "shoes",
+    "label": "Terreno blando",
+    "href": "/shop/shoes?sub=football-sg&group=shoes",
+    "count": 17
+  },
+  {
+    "hub": "shoes",
+    "sub": "futsal",
+    "group": "shoes",
+    "label": "Futsal",
+    "href": "/shop/shoes?sub=futsal&group=shoes",
+    "count": 282
+  },
+  {
+    "hub": "shoes",
+    "sub": "turf",
+    "group": "shoes",
+    "label": "Turf",
+    "href": "/shop/shoes?sub=turf&group=shoes",
+    "count": 191
+  },
+  {
+    "hub": "shoes",
+    "sub": "boots",
+    "group": "shoes",
+    "label": "Boots",
+    "href": "/shop/shoes?sub=boots&group=shoes",
+    "count": 80
+  },
+  {
+    "hub": "shoes",
+    "sub": "running-shoes",
+    "group": "shoes",
+    "label": "Running",
+    "href": "/shop/shoes?sub=running-shoes&group=shoes",
+    "count": 271
+  },
+  {
+    "hub": "shoes",
+    "sub": "trail-running",
+    "group": "shoes",
+    "label": "Trail Running",
+    "href": "/shop/shoes?sub=trail-running&group=shoes",
+    "count": 112
+  },
+  {
+    "hub": "shoes",
+    "sub": "training-shoes",
+    "group": "shoes",
+    "label": "Training",
+    "href": "/shop/shoes?sub=training-shoes&group=shoes",
+    "count": 6
+  },
+  {
+    "hub": "shoes",
+    "sub": "basketball-shoes",
+    "group": "shoes",
+    "label": "Basketball",
+    "href": "/shop/shoes?sub=basketball-shoes&group=shoes",
+    "count": 17
+  },
+  {
+    "hub": "shoes",
+    "sub": "tennis-shoes",
+    "group": "shoes",
+    "label": "Tennis",
+    "href": "/shop/shoes?sub=tennis-shoes&group=shoes",
+    "count": 155
+  },
+  {
+    "hub": "shoes",
+    "sub": "padel-shoes",
+    "group": "shoes",
+    "label": "P\u00e1del",
+    "href": "/shop/shoes?sub=padel-shoes&group=shoes",
+    "count": 141
+  },
+  {
+    "hub": "shoes",
+    "sub": "pickleball-shoes",
+    "group": "shoes",
+    "label": "Pickleball",
+    "href": "/shop/shoes?sub=pickleball-shoes&group=shoes",
+    "count": 29
+  },
+  {
+    "hub": "shoes",
+    "sub": "handball-shoes",
+    "group": "shoes",
+    "label": "Handball",
+    "href": "/shop/shoes?sub=handball-shoes&group=shoes",
+    "count": 18
+  },
+  {
+    "hub": "shoes",
+    "sub": "volleyball-shoes",
+    "group": "shoes",
+    "label": "Volleyball",
+    "href": "/shop/shoes?sub=volleyball-shoes&group=shoes",
+    "count": 49
+  },
+  {
+    "hub": "shoes",
+    "sub": "hockey-shoes",
+    "group": "shoes",
+    "label": "Hockey",
+    "href": "/shop/shoes?sub=hockey-shoes&group=shoes",
+    "count": 4
+  },
+  {
+    "hub": "shoes",
+    "sub": "outdoor-shoes",
+    "group": "shoes",
+    "label": "Outdoor",
+    "href": "/shop/shoes?sub=outdoor-shoes&group=shoes",
+    "count": 37
+  },
+  {
+    "hub": "shoes",
+    "sub": "sneakers",
+    "group": "shoes",
+    "label": "Sneakers",
+    "href": "/shop/shoes?sub=sneakers&group=shoes",
+    "count": 322
+  },
+  {
+    "hub": "shoes",
+    "sub": "sandals",
+    "group": "shoes",
+    "label": "Sandals confort",
+    "href": "/shop/shoes?sub=sandals&group=shoes",
+    "count": 6
+  },
+  {
+    "hub": "shoes",
+    "sub": "barefoot",
+    "group": "shoes",
+    "label": "Barefoot",
+    "href": "/shop/shoes?sub=barefoot&group=shoes",
+    "count": 78
+  },
+  {
+    "hub": "shoes",
+    "sub": "comfort-shoes",
+    "group": "shoes",
+    "label": "Confort",
+    "href": "/shop/shoes?sub=comfort-shoes&group=shoes",
+    "count": 383
+  },
+  {
+    "hub": "shoes",
+    "sub": "summer-shoes",
+    "group": "shoes",
+    "label": "Summer shoes",
+    "href": "/shop/shoes?sub=summer-shoes&group=shoes",
+    "count": 20
+  },
+  {
+    "hub": "shoes",
+    "sub": "kids-shoes",
+    "group": "shoes",
+    "label": "Kids shoes",
+    "href": "/shop/shoes?sub=kids-shoes&group=shoes",
+    "count": 483
+  },
+  {
+    "hub": "shoes",
+    "sub": "shoes",
+    "group": null,
+    "label": "Shoes",
+    "href": "/shop/shoes?sub=shoes",
+    "count": 8
+  },
+  {
+    "hub": "balls-bags",
+    "sub": "balls",
+    "group": "equipment",
+    "label": "Balls",
+    "href": "/shop/balls-bags?sub=balls&group=equipment",
+    "count": 88
+  },
+  {
+    "hub": "balls-bags",
+    "sub": "bags",
+    "group": "equipment",
+    "label": "Bags",
+    "href": "/shop/balls-bags?sub=bags&group=equipment",
+    "count": 171
+  },
+  {
+    "hub": "balls-bags",
+    "sub": "rackets",
+    "group": "equipment",
+    "label": "Rackets",
+    "href": "/shop/balls-bags?sub=rackets&group=equipment",
+    "count": 13
+  },
+  {
+    "hub": "balls-bags",
+    "sub": "socks",
+    "group": "accessories",
+    "label": "Socks",
+    "href": "/shop/balls-bags?sub=socks&group=accessories",
+    "count": 30
+  }
+]

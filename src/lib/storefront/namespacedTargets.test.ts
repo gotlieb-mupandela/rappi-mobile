@@ -7,6 +7,7 @@ import {
   FEED_TABLE_PATH,
   KEPT_ROUTES_PATH,
   NAMESPACED_JSON_PATH,
+  SUB_LINK_JSON_PATH,
   WEB_PIN_PATH,
   feedTargetCheckFailure,
   renderFeedTargets,
@@ -27,7 +28,7 @@ function shell() {
 
 test('every namespaced feed href resolves from a real feed shape', () => {
   assert.equal(rows.length, 292);
-  for (const row of rows) assert.equal(FEED_TARGETS.has(row.href), true, row.href);
+  assert.equal(rows.filter((row) => FEED_TARGETS.has(row.href)).length, 292);
   const feed = shell();
   const base = feed.nodes[0];
   feed.nodes = rows.map((row, index) => ({
@@ -97,19 +98,39 @@ test('the generated file matches the generator and the committed list', () => {
   const table = readFileSync(FEED_TABLE_PATH, 'utf8');
   const namespaced = readFileSync(NAMESPACED_JSON_PATH, 'utf8');
   const kept = readFileSync(KEPT_ROUTES_PATH, 'utf8');
+  const sub = readFileSync(SUB_LINK_JSON_PATH, 'utf8');
   const generated = readFileSync(FEED_GENERATED_PATH, 'utf8');
-  const pinSha = JSON.parse(pin).feedTargets as string;
-  assert.equal(generated, renderFeedTargets(pin, JSON.parse(table), JSON.parse(namespaced), JSON.parse(kept)));
-  assert.equal(generated.includes(pinSha), true);
-  assert.equal(feedTargetCheckFailure(pin, pin, table, table, namespaced, namespaced, kept, kept, generated), null);
+  const pinJson = JSON.parse(pin) as { feedTargets: string; subLinks: string };
+  const tableRows = JSON.parse(table) as Array<{ href: string }>;
+  const subRows = JSON.parse(sub) as Array<{ href: string }>;
+  const staticHrefs = new Set(tableRows.map((row) => row.href));
+  assert.equal(
+    generated,
+    renderFeedTargets(pin, tableRows, JSON.parse(namespaced), JSON.parse(kept), subRows),
+  );
+  assert.equal(generated.includes(pinJson.feedTargets), true);
+  assert.equal(generated.includes(pinJson.subLinks), true);
+  assert.equal(rows.some((row) => subRows.some((item) => item.href === row.href)), false);
+  assert.equal(subRows.some((item) => staticHrefs.has(item.href)), false);
+  const namespacedOnly = rows.filter((row) => !staticHrefs.has(row.href)).length;
+  assert.equal(FEED_TARGETS.size, staticHrefs.size + namespacedOnly + subRows.length);
+  assert.equal(
+    feedTargetCheckFailure(pin, pin, table, table, namespaced, namespaced, kept, kept, sub, sub, generated),
+    null,
+  );
   const drifted = namespaced.replace('sportswear--men', 'sportswear--mann');
   assert.match(
-    feedTargetCheckFailure(pin, pin, table, table, drifted, namespaced, kept, kept, generated) ?? '',
+    feedTargetCheckFailure(pin, pin, table, table, drifted, namespaced, kept, kept, sub, sub, generated) ?? '',
     /namespaced-feed-targets.json has drifted/,
   );
   const driftedTable = table.replace('teamwear-pro-2026', 'teamwear-pro-2027');
   assert.match(
-    feedTargetCheckFailure(pin, pin, driftedTable, table, namespaced, namespaced, kept, kept, generated) ?? '',
+    feedTargetCheckFailure(pin, pin, driftedTable, table, namespaced, namespaced, kept, kept, sub, sub, generated) ?? '',
     /feed-target-table.json has drifted/,
+  );
+  const driftedSub = sub.replace('"count": 117', '"count": 999');
+  assert.match(
+    feedTargetCheckFailure(pin, pin, table, table, namespaced, namespaced, kept, kept, driftedSub, sub, generated) ?? '',
+    /storefront-sub-links.json has drifted/,
   );
 });
