@@ -119,6 +119,7 @@ export const en = {
     totalsNote: 'Totals in N$. You will complete payment securely on DPO.',
     totalsServer: 'Totals are approximate. The server confirms the final price.',
     vatHidden: 'VAT is not shown for this country.',
+    shippingLoading: 'Loading shipping options',
     shippingUnavailable: "Can't load shipping options, try again",
   },
   orders: {

@@ -14,6 +14,8 @@ import type { MobileStorefront, StorefrontProduct } from '@/src/lib/storefront/t
 type StorefrontValue = {
   enabled: boolean;
   ready: boolean;
+  /** True while a storefront fetch is in flight. */
+  loading: boolean;
   feed: MobileStorefront | null;
   productsByCode: Map<string, StorefrontProduct>;
   linesByCode: Map<string, string> | null;
@@ -25,6 +27,7 @@ const EMPTY_PRODUCTS = new Map<string, StorefrontProduct>();
 const StorefrontContext = createContext<StorefrontValue>({
   enabled: false,
   ready: true,
+  loading: false,
   feed: null,
   productsByCode: EMPTY_PRODUCTS,
   linesByCode: null,
@@ -38,13 +41,19 @@ function productionBuild(): boolean {
 export function StorefrontProvider({ children }: { children: ReactNode }) {
   const enabled = dataDrivenStorefrontEnabled();
   const [ready, setReady] = useState(!enabled);
+  const [loading, setLoading] = useState(enabled);
   const [feed, setFeed] = useState<MobileStorefront | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const reload = useCallback(() => setAttempt((current) => current + 1), []);
+  const reload = useCallback(() => {
+    if (!enabled) return;
+    setLoading(true);
+    setAttempt((current) => current + 1);
+  }, [enabled]);
 
   useEffect(() => {
     if (!enabled) return;
     let cancel = false;
+    setLoading(true);
     resolveStorefront({
       enabled,
       production: productionBuild(),
@@ -56,7 +65,10 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
         if (!cancel) setFeed(next);
       })
       .finally(() => {
-        if (!cancel) setReady(true);
+        if (!cancel) {
+          setLoading(false);
+          setReady(true);
+        }
       });
     return () => {
       cancel = true;
@@ -66,8 +78,8 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
   const productsByCode = useMemo(() => indexProducts(feed), [feed]);
   const linesByCode = useMemo(() => lineByCode(feed), [feed]);
   const value = useMemo<StorefrontValue>(
-    () => ({ enabled, ready, feed, productsByCode, linesByCode, reload }),
-    [enabled, feed, linesByCode, productsByCode, ready, reload],
+    () => ({ enabled, ready, loading, feed, productsByCode, linesByCode, reload }),
+    [enabled, feed, linesByCode, loading, productsByCode, ready, reload],
   );
 
   return <StorefrontContext.Provider value={value}>{children}</StorefrontContext.Provider>;

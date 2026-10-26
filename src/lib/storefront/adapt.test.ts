@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import { childNodes, foldersForCategory, headerMenus, homeTiles, lineByCode, localized, menuLevel, orderedCategories } from './adapt.ts';
-import { checkoutDisplay, flagOnTotalsNote, formatApproxEur, selectedPaymentMethod, shippingUnavailable, vatPercentForCountry } from './checkoutDisplay.ts';
+import { checkoutDisplay, flagOnTotalsNote, formatApproxEur, selectedPaymentMethod, shippingLoading, shippingUnavailable, vatPercentForCountry } from './checkoutDisplay.ts';
 import { validateMobileStorefront } from './contract.ts';
 import { en } from '../../i18n/en.ts';
 import { fr } from '../../i18n/fr.ts';
@@ -88,6 +88,9 @@ test('checkout display uses feed shipping, per-country VAT, and drops unknown sh
 
 test('flag on shipping comes only from the feed and sends nothing when missing', () => {
   assert.equal(shippingUnavailable(true, 0), true);
+  assert.equal(shippingUnavailable(true, 0, true), false);
+  assert.equal(shippingLoading(true, true, 0), true);
+  assert.equal(shippingLoading(true, true, 2), false);
   assert.equal(shippingUnavailable(false, 0), false);
   assert.equal(selectedPaymentMethod(true, [], 'standard'), null);
   assert.equal(selectedPaymentMethod(true, [{ id: 'express' }], 'standard'), null);
