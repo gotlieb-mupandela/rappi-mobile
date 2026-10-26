@@ -31,3 +31,8 @@ export const Platform = {
     return options.ios ?? options.default;
   },
 };
+export const AppState = {
+  addEventListener() {
+    return { remove() {} };
+  },
+};
