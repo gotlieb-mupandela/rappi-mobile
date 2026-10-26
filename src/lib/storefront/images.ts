@@ -1,8 +1,7 @@
 /**
  * Image hosts a storefront photo may use.
  * Rows 1-4 match web `lib/image-hosts.ts` `ALLOWED_IMAGE_HOSTS`
- * at commit c931e1fb27a7b15e06e83a7b694257c1711e01aa
- * (branch feat/api-assortment-labels-1, PR 90).
+ * at the web revision recorded in data/web-pin.json.
  * The fifth row is the canonical site origin, every path, as a fixed app constant.
  * Hosts are never read from the feed.
  */
