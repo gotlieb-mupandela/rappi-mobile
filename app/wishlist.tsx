@@ -321,7 +321,7 @@ function GoneSection({ items, onRemove, onClear }: { items: GoneItem[]; onRemove
         <TextButton label={items.length > 1 ? 'Clear all' : 'Clear'} muted onPress={onClear} />
       </View>
       {items.map(({ entry, product }) => {
-        const overlay = product && storefront.enabled ? storefront.productsByCode.get(product.code) : undefined;
+        const overlay = product ? storefront.productsByCode.get(product.code) : undefined;
         const named = product
           ? ((overlay ? productLabel(language, overlay) : null) ?? (product.displayName || product.name))
           : 'Discontinued item';

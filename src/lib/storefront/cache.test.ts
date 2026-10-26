@@ -14,7 +14,6 @@ test('a malformed feed keeps the last good copy', async () => {
   const store = memoryStore();
   const good = fixture();
   const first = await resolveStorefront({
-    enabled: true,
     production: false,
     apiUrl: host,
     store,
@@ -23,7 +22,6 @@ test('a malformed feed keeps the last good copy', async () => {
   assert.equal(first?.version, '2026-10-25.1.7');
   let calls = 0;
   const second = await resolveStorefront({
-    enabled: true,
     production: true,
     apiUrl: host,
     store,
@@ -35,7 +33,6 @@ test('a malformed feed keeps the last good copy', async () => {
   assert.equal(calls, 1);
   assert.equal(second?.version, '2026-10-25.1.7');
   const thrown = await resolveStorefront({
-    enabled: true,
     production: true,
     apiUrl: host,
     store,
@@ -50,7 +47,6 @@ test('a bad checkout country keeps the last good copy', async () => {
   const store = memoryStore();
   const good = fixture();
   const first = await resolveStorefront({
-    enabled: true,
     production: false,
     apiUrl: host,
     store,
@@ -61,7 +57,6 @@ test('a bad checkout country keeps the last good copy', async () => {
   bad.version = 'bad-country';
   bad.checkout.countries[0].vatRate = 1.5;
   const second = await resolveStorefront({
-    enabled: true,
     production: false,
     apiUrl: host,
     store,
@@ -69,7 +64,6 @@ test('a bad checkout country keeps the last good copy', async () => {
   });
   assert.equal(second?.version, '2026-10-25.1.7');
   const missing = await resolveStorefront({
-    enabled: true,
     production: false,
     apiUrl: host,
     store: memoryStore(),
@@ -78,9 +72,8 @@ test('a bad checkout country keeps the last good copy', async () => {
   assert.equal(missing, null);
 });
 
-test('no cache and a failed fetch returns null so the app can use hardcoded menus', async () => {
+test('no cache and a failed fetch returns null so the screen can show retry', async () => {
   const empty = await resolveStorefront({
-    enabled: true,
     production: false,
     apiUrl: host,
     store: memoryStore(),
@@ -91,26 +84,9 @@ test('no cache and a failed fetch returns null so the app can use hardcoded menu
   assert.equal(empty, null);
 });
 
-test('flag off does not fetch or read a replacement feed', async () => {
-  let called = false;
-  const result = await resolveStorefront({
-    enabled: false,
-    production: false,
-    apiUrl: host,
-    store: memoryStore(JSON.stringify(fixture())),
-    fetchFeed: async () => {
-      called = true;
-      return fixture();
-    },
-  });
-  assert.equal(called, false);
-  assert.equal(result, null);
-});
-
 test('production builds refuse a store host other than www.rappisportshub.com', async () => {
   let called = false;
   const result = await resolveStorefront({
-    enabled: true,
     production: true,
     apiUrl: 'https://preview.example',
     store: memoryStore(),

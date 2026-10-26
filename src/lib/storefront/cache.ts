@@ -56,7 +56,6 @@ async function readCached(store: StorefrontStore): Promise<MobileStorefront | nu
 }
 
 export async function resolveStorefront(options: {
-  enabled: boolean;
   production: boolean;
   apiUrl: string | undefined;
   store: StorefrontStore;
@@ -64,7 +63,6 @@ export async function resolveStorefront(options: {
   /** Last resort when the network fails and there is no cached feed. */
   readSnapshot?: () => Promise<unknown | null>;
 }): Promise<MobileStorefront | null> {
-  if (!options.enabled) return null;
   const cached = await readCached(options.store);
   if (!storeHostAllowed(options.apiUrl, options.production)) return cached;
   try {

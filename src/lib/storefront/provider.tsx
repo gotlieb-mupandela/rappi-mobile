@@ -4,16 +4,13 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { apiFetch } from '@/src/api/client';
 import type { Product } from '@/src/api/types';
 import { useLocale } from '@/src/i18n/LocaleProvider';
-import { categoryName } from '@/src/lib/categories';
 import { categoryNode, indexProducts, lineByCode, localized } from '@/src/lib/storefront/adapt';
 import { keyValueStore, resolveStorefront } from '@/src/lib/storefront/cache';
 import { readApprovedSnapshot } from '@/src/lib/storefront/snapshot';
 import { productLabel, STOREFRONT_PATH } from '@/src/lib/storefront/contract';
-import { dataDrivenStorefrontEnabled } from '@/src/lib/storefront/flag';
 import type { MobileStorefront, StorefrontProduct } from '@/src/lib/storefront/types';
 
 type StorefrontValue = {
-  enabled: boolean;
   ready: boolean;
   /** True while a storefront fetch is in flight. */
   loading: boolean;
@@ -26,7 +23,6 @@ type StorefrontValue = {
 const EMPTY_PRODUCTS = new Map<string, StorefrontProduct>();
 
 const StorefrontContext = createContext<StorefrontValue>({
-  enabled: false,
   ready: true,
   loading: false,
   feed: null,
@@ -40,23 +36,19 @@ function productionBuild(): boolean {
 }
 
 export function StorefrontProvider({ children }: { children: ReactNode }) {
-  const enabled = dataDrivenStorefrontEnabled();
-  const [ready, setReady] = useState(!enabled);
-  const [loading, setLoading] = useState(enabled);
+  const [ready, setReady] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [feed, setFeed] = useState<MobileStorefront | null>(null);
   const [attempt, setAttempt] = useState(0);
   const reload = useCallback(() => {
-    if (!enabled) return;
     setLoading(true);
     setAttempt((current) => current + 1);
-  }, [enabled]);
+  }, []);
 
   useEffect(() => {
-    if (!enabled) return;
     let cancel = false;
     setLoading(true);
     resolveStorefront({
-      enabled,
       production: productionBuild(),
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
       store: keyValueStore(AsyncStorage),
@@ -75,13 +67,13 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
     return () => {
       cancel = true;
     };
-  }, [attempt, enabled]);
+  }, [attempt]);
 
   const productsByCode = useMemo(() => indexProducts(feed), [feed]);
   const linesByCode = useMemo(() => lineByCode(feed), [feed]);
   const value = useMemo<StorefrontValue>(
-    () => ({ enabled, ready, loading, feed, productsByCode, linesByCode, reload }),
-    [enabled, feed, linesByCode, loading, productsByCode, ready, reload],
+    () => ({ ready, loading, feed, productsByCode, linesByCode, reload }),
+    [feed, linesByCode, loading, productsByCode, ready, reload],
   );
 
   return <StorefrontContext.Provider value={value}>{children}</StorefrontContext.Provider>;
@@ -92,14 +84,14 @@ export function useStorefront(): StorefrontValue {
 }
 
 export function useCategoryTitle(slug: string | null | undefined): string {
-  const { market } = useLocale();
-  const { enabled, feed } = useStorefront();
+  const { market, t } = useLocale();
+  const { feed } = useStorefront();
   const language = market === 'eu' ? 'fr' : 'en';
-  if (enabled && feed && slug) {
+  if (feed && slug) {
     const node = categoryNode(feed, slug);
     if (node) return localized(node.title, language);
   }
-  return categoryName(slug, language);
+  return t('tabs.shop');
 }
 
 export function usePresentedProduct(product: Product | undefined): {
@@ -108,11 +100,10 @@ export function usePresentedProduct(product: Product | undefined): {
   feedImages: string[] | null;
 } {
   const { market } = useLocale();
-  const { enabled, productsByCode } = useStorefront();
+  const { productsByCode } = useStorefront();
   const language = market === 'eu' ? 'fr' : 'en';
   if (!product) return { name: '', imageUrl: undefined, feedImages: null };
   const catalogName = product.displayName || product.name;
-  if (!enabled) return { name: catalogName, imageUrl: product.imageUrl, feedImages: null };
   const overlay = productsByCode.get(product.code);
   const label = overlay ? productLabel(language, overlay) : null;
   return {

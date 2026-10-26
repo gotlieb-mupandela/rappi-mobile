@@ -46,19 +46,13 @@ const loadedDisplay = checkoutDisplay(checkout, 'en');
 
 type ViewInput = Parameters<typeof deriveCheckoutView>[0];
 
-function flagOnInput(overrides: Partial<ViewInput> = {}): ViewInput {
+function reviewInput(overrides: Partial<ViewInput> = {}): ViewInput {
   return {
-    enabled: true,
     loading: false,
     display: null,
     feedLoaded: false,
     selectedShipping: DEFAULT_METHOD,
     selectedCountry: DEFAULT_COUNTRY,
-    fallbackRows: [],
-    fallbackCountries: [],
-    fallbackVatPercent: 15,
-    fallbackShippingCost: 100,
-    totalsNote: en.checkout.totalsNote,
     totalsServer: NOTE,
     vatHiddenCopy: VAT_HIDDEN,
     name: 'Jane Doe',
@@ -168,7 +162,7 @@ function assertNothingSent(sent: { shippingMethod: ShippingMethod; country: stri
 
 test('checkout review shows the approximate totals note and a loading state before the feed arrives', () => {
   const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
-  const input = flagOnInput({ loading: true, display: null, feedLoaded: false });
+  const input = reviewInput({ loading: true, display: null, feedLoaded: false });
   const { tree, view } = renderReview(input, false, (body) => sent.push(body));
   const texts = visibleText(tree);
   assert.equal(view.vatHidden, VAT_HIDDEN);
@@ -184,7 +178,7 @@ test('checkout review shows the approximate totals note and a loading state befo
 
 test('checkout review says VAT is hidden when the loaded country has no feed rate', () => {
   const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
-  const input = flagOnInput({
+  const input = reviewInput({
     display: loadedDisplay,
     feedLoaded: true,
     selectedShipping: 'express',
@@ -201,9 +195,9 @@ test('checkout review says VAT is hidden when the loaded country has no feed rat
   assertNothingSent(sent, view, tree);
 });
 
-test('checkout review says VAT is hidden when the flag is on and there is no feed', () => {
+test('checkout review says VAT is hidden when there is no feed', () => {
   const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
-  const input = flagOnInput({ loading: false, display: null, feedLoaded: false });
+  const input = reviewInput({ loading: false, display: null, feedLoaded: false });
   const { tree, view } = renderReview(input, false, (body) => sent.push(body));
   const texts = visibleText(tree);
   assert.equal(view.vatHidden, VAT_HIDDEN);
@@ -223,7 +217,7 @@ test('checkout review says VAT is hidden when the flag is on and there is no fee
 test('checkout review keeps pay disabled after a load with no shipping rows', () => {
   const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
   const empty: CheckoutDisplay = checkoutDisplay({ ...checkout, shipping: [] }, 'en');
-  const input = flagOnInput({
+  const input = reviewInput({
     display: empty,
     feedLoaded: true,
     selectedShipping: DEFAULT_METHOD,
@@ -240,7 +234,7 @@ test('checkout review keeps pay disabled after a load with no shipping rows', ()
 
 test('checkout review enables pay with the selected feed shipping key and country name', () => {
   const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
-  const input = flagOnInput({
+  const input = reviewInput({
     display: loadedDisplay,
     feedLoaded: true,
     selectedShipping: 'express',
@@ -260,7 +254,7 @@ test('checkout review enables pay with the selected feed shipping key and countr
 test('checkout review disables Retry while a reload is in flight', () => {
   const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
   let retries = 0;
-  const input = flagOnInput({ loading: true, display: null, feedLoaded: false });
+  const input = reviewInput({ loading: true, display: null, feedLoaded: false });
   const { tree, view } = renderReview(input, true, (body) => sent.push(body), () => {
     retries += 1;
   });
