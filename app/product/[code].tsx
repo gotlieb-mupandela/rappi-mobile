@@ -15,8 +15,8 @@ import { SizePicker } from '@/src/components/SizePicker';
 import { EmptyState, ErrorState, PrimaryButton, Screen } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useBag } from '@/src/lib/bag';
-import { categoryName } from '@/src/lib/categories';
 import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
+import { useCategoryTitle, usePresentedProduct, useStorefront } from '@/src/lib/storefront/provider';
 import { defaultSize, isAvailable, isOneSize, isPack, isSoldOut, productSizes, stockLine } from '@/src/lib/sizes';
 import { useToast } from '@/src/lib/toast';
 import { makeStyles, useTheme } from '@/src/lib/theme';
@@ -24,10 +24,10 @@ import { useWishlist, useWishlistActions } from '@/src/lib/wishlist';
 import { fonts, space } from '@/src/theme';
 
 export default function ProductScreen() {
-  const { formatMoney, market, t } = useLocale();
+  const { formatMoney, t } = useLocale();
   const { colors } = useTheme();
   const styles = useStyles();
-  const language = market === 'eu' ? 'fr' : 'en';
+  const storefront = useStorefront();
   const { code: raw } = useLocalSearchParams<{ code: string }>();
   const code = useMemo(() => {
     try {
@@ -90,11 +90,14 @@ export default function ProductScreen() {
     setQty((current) => Math.min(current, maxQty));
   }, [maxQty]);
 
+  const presented = usePresentedProduct(product.data);
+  const categoryLabel = useCategoryTitle(product.data?.category);
   const images = useMemo(() => {
+    if (presented.feedImages && presented.feedImages.length > 0) return [...presented.feedImages];
     const list = [...new Set(product.data?.images?.filter(Boolean) ?? [])];
     if (list.length > 0) return list;
     return product.data?.imageUrl ? [product.data.imageUrl] : [];
-  }, [product.data]);
+  }, [presented.feedImages, product.data]);
 
   const canAdd = !!product.data && !gone && !soldOut && !!selected && selected.stock > 0;
 
@@ -104,8 +107,8 @@ export default function ProductScreen() {
       id: product.data.id,
       code: product.data.code,
       size: selected.size,
-      name: product.data.displayName || product.data.name,
-      imageUrl: product.data.imageUrl,
+      name: presented.name,
+      imageUrl: presented.imageUrl ?? product.data.imageUrl,
       price: product.data.price,
       qty,
     });
@@ -114,13 +117,13 @@ export default function ProductScreen() {
   };
 
   const line = stockLine(soldOut ? 0 : stockCount);
-  const pack = product.data ? isPack(product.data) : false;
+  const pack = !storefront.enabled && product.data ? isPack(product.data) : false;
   const saved = wishlist.has(code);
-  const name = product.data ? product.data.displayName || product.data.name : undefined;
+  const name = product.data ? presented.name : undefined;
 
   return (
     <Screen
-      title={product.data ? categoryName(product.data.category, language) : t('product.product')}
+      title={product.data ? categoryLabel : t('product.product')}
       back
       right={gone && !saved ? null : <HeartButton code={code} id={product.data?.id} name={name} />}>
       {gone ? (
@@ -174,14 +177,14 @@ export default function ProductScreen() {
                 </View>
               ) : null}
             </View>
-            <Text style={styles.eyebrow}>{categoryName(product.data.category, language)}</Text>
+            <Text style={styles.eyebrow}>{categoryLabel}</Text>
             <Text style={styles.title}>
-              {product.data.displayName || product.data.name}
+              {presented.name}
               {pack ? ' · Pack' : ''}
             </Text>
             <Text style={styles.price}>{formatMoney(product.data.price)}</Text>
             {pack ? <Text style={styles.note}>Sold as a pack. Sizes inside may be mixed.</Text> : null}
-            {product.data.packSize ? <Text style={styles.note}>Pack of {product.data.packSize}</Text> : null}
+            {!storefront.enabled && product.data.packSize ? <Text style={styles.note}>Pack of {product.data.packSize}</Text> : null}
             {!oneSize && sizes.length > 0 ? (
               <View style={styles.sizeBlock}>
                 <Text style={styles.sizeLabel}>SIZE</Text>

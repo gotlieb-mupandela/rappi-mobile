@@ -7,6 +7,10 @@ import { Screen } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { categoryName, HOME_TILES } from '@/src/lib/categories';
 import { tapHaptic } from '@/src/lib/haptics';
+import { localized, visibleNodes } from '@/src/lib/storefront/adapt';
+import { resolveTarget } from '@/src/lib/storefront/contract';
+import { openStorefrontRoute } from '@/src/lib/storefront/open';
+import { useStorefront } from '@/src/lib/storefront/provider';
 import { makeStyles } from '@/src/lib/theme';
 import { fonts, space } from '@/src/theme';
 
@@ -15,7 +19,47 @@ const SCRIM_STEPS = [55, 48, 42, 36, 31, 26, 22, 18, 14, 10] as const;
 export default function HomeScreen() {
   const { market, t } = useLocale();
   const styles = useStyles();
+  const storefront = useStorefront();
   const language = market === 'eu' ? 'fr' : 'en';
+  const feedTiles = storefront.enabled && storefront.feed ? visibleNodes(storefront.feed.homeTiles, null) : [];
+  if (feedTiles.length > 0) {
+    return (
+      <Screen wordmark right={<WishlistNavButton />}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <View style={styles.grid}>
+            {feedTiles.map((tile) => {
+              const label = localized(tile.title, language);
+              const route = resolveTarget(tile.target);
+              return (
+                <Pressable
+                  key={tile.key}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('home.shop', { name: label })}
+                  onPress={() => {
+                    if (!route) return;
+                    tapHaptic();
+                    openStorefrontRoute(route, label, [label]);
+                  }}
+                  style={({ pressed }) => [styles.tile, styles.half, pressed && styles.tilePressed]}>
+                  {tile.image ? (
+                    <Image source={{ uri: tile.image }} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={250} />
+                  ) : null}
+                  {SCRIM_STEPS.map((height) => (
+                    <View key={height} pointerEvents="none" style={[styles.scrim, { height: `${height}%` }]} />
+                  ))}
+                  <View pointerEvents="none" style={styles.labelBottom}>
+                    <Text style={styles.label} numberOfLines={1}>
+                      {label}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </ScrollView>
+      </Screen>
+    );
+  }
   const tileLabel = (key: string, fallback: string) => {
     if (key === 'teamwear') return t('home.teamwear');
     if (key === 'running') return t('home.running');

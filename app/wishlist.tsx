@@ -20,6 +20,8 @@ import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
 import { useReducedMotion } from '@/src/lib/motion';
 import { openLogin } from '@/src/lib/navigation';
 import { defaultSize, isAvailable, isOneSize, isSoldOut, productSizes, stockLine } from '@/src/lib/sizes';
+import { productLabel } from '@/src/lib/storefront/contract';
+import { usePresentedProduct, useStorefront } from '@/src/lib/storefront/provider';
 import { useToast } from '@/src/lib/toast';
 import { makeStyles, useTheme } from '@/src/lib/theme';
 import { useWishlist, useWishlistActions, type WishlistEntry } from '@/src/lib/wishlist';
@@ -241,14 +243,15 @@ function WishlistItem({
   const selected = sizes.find((item) => item.size === size);
   const soldOut = isSoldOut(sizes);
   const oneSize = isOneSize(sizes);
-  const name = product.displayName || product.name;
+  const presented = usePresentedProduct(product);
+  const name = presented.name;
   const href = { pathname: '/product/[code]' as const, params: { code: product.code } };
   const line = stockLine(soldOut ? 0 : (selected?.stock ?? 0));
   const lowStock = !soldOut && selected && selected.stock <= 5;
 
   const add = () => {
     if (!selected || selected.stock <= 0) return;
-    bag.add({ id: product.id, code: product.code, size: selected.size, name, imageUrl: product.imageUrl, price: product.price, qty: 1 });
+    bag.add({ id: product.id, code: product.code, size: selected.size, name, imageUrl: presented.imageUrl ?? product.imageUrl, price: product.price, qty: 1 });
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     toast.show(oneSize ? 'Added to bag' : `Added to bag · Size ${selected.size}`, {
       icon: 'bag-check-outline',
@@ -263,9 +266,9 @@ function WishlistItem({
           accessibilityLabel={`Open ${name}`}
           onPress={() => router.push(href)}
           style={({ pressed }) => [styles.photo, pressed && styles.pressed]}>
-          {product.imageUrl ? (
+          {presented.imageUrl ? (
             <Image
-              source={{ uri: sizedImage(product.imageUrl, IMAGE_WIDTH.card) }}
+              source={{ uri: sizedImage(presented.imageUrl, IMAGE_WIDTH.card) }}
               style={[styles.fill, soldOut && styles.dim]}
               contentFit="contain"
               cachePolicy="memory-disk"
@@ -308,6 +311,9 @@ function WishlistItem({
 function GoneSection({ items, onRemove, onClear }: { items: GoneItem[]; onRemove: (code: string) => void; onClear: () => void }) {
   const { colors, sectionLabel } = useTheme();
   const styles = useStyles();
+  const { market } = useLocale();
+  const storefront = useStorefront();
+  const language = market === 'eu' ? 'fr' : 'en';
   return (
     <View style={styles.gone}>
       <View style={styles.headerRow}>
@@ -315,25 +321,29 @@ function GoneSection({ items, onRemove, onClear }: { items: GoneItem[]; onRemove
         <TextButton label={items.length > 1 ? 'Clear all' : 'Clear'} muted onPress={onClear} />
       </View>
       {items.map(({ entry, product }) => {
-        const name = product ? product.displayName || product.name : 'Discontinued item';
+        const overlay = product && storefront.enabled ? storefront.productsByCode.get(product.code) : undefined;
+        const named = product
+          ? ((overlay ? productLabel(language, overlay) : null) ?? (product.displayName || product.name))
+          : 'Discontinued item';
+        const photo = overlay?.cardImage || product?.imageUrl;
         return (
           <View key={entry.code} style={styles.goneRow}>
             <View style={styles.gonePhoto}>
-              {product?.imageUrl ? (
-                <Image source={{ uri: sizedImage(product.imageUrl, IMAGE_WIDTH.thumb) }} style={[styles.fill, styles.dim]} contentFit="contain" cachePolicy="memory-disk" />
+              {photo ? (
+                <Image source={{ uri: sizedImage(photo, IMAGE_WIDTH.thumb) }} style={[styles.fill, styles.dim]} contentFit="contain" cachePolicy="memory-disk" />
               ) : (
                 <Ionicons name="image-outline" size={20} color={colors.muted} />
               )}
             </View>
             <View style={styles.info}>
               <Text style={styles.goneName} numberOfLines={1}>
-                {name}
+                {named}
               </Text>
               <Text style={styles.goneNote}>This item has been taken off the shop.</Text>
             </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Remove ${name} from wishlist`}
+              accessibilityLabel={`Remove ${named} from wishlist`}
               hitSlop={6}
               onPress={() => onRemove(entry.code)}
               style={({ pressed }) => [styles.heart, pressed && styles.pressed]}>

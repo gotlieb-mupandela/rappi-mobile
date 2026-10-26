@@ -11,7 +11,9 @@ import { EmptyState, FormScroll, LabeledField, PrimaryButton, Screen, SecondaryB
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useAuth } from '@/src/lib/auth';
 import { useBag } from '@/src/lib/bag';
-import { vatOn } from '@/src/lib/money';
+import { formatMoney as formatNad, vatOn } from '@/src/lib/money';
+import { checkoutDisplay, formatApproxEur } from '@/src/lib/storefront/checkoutDisplay';
+import { useStorefront } from '@/src/lib/storefront/provider';
 import { openLogin } from '@/src/lib/navigation';
 import { fetchProfile, latestOrderId, waitForNewOrder } from '@/src/lib/orders';
 import { usePendingPayment } from '@/src/lib/pendingPayment';
@@ -38,6 +40,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function CheckoutScreen() {
   const { market, formatMoney, t } = useLocale();
+  const storefront = useStorefront();
   const { session, ready } = useAuth();
   const { sectionLabel } = useTheme();
   const styles = useStyles();
@@ -60,6 +63,18 @@ export default function CheckoutScreen() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const prefilled = useRef(false);
+  const language = market === 'eu' ? 'fr' : 'en';
+  const display = useMemo(
+    () => (storefront.enabled && storefront.feed ? checkoutDisplay(storefront.feed.checkout, language) : null),
+    [language, storefront.enabled, storefront.feed],
+  );
+  const shippingRows = display && display.shipping.length > 0
+    ? display.shipping
+    : SHIPPING.map((item) => ({ id: item.id, label: t(item.labelKey), cost: item.cost }));
+  const countryRows = display && display.countries.length > 0
+    ? display.countries
+    : COUNTRIES.map(([name, rate]) => ({ name, vatPercent: rate as number }));
+  const showMoney = (amount: number) => (display ? formatNad(amount, 'na') : formatMoney(amount));
 
   useEffect(() => {
     if (ready && !session) {
@@ -76,8 +91,20 @@ export default function CheckoutScreen() {
     setEmail((current) => current || profile.data?.email || session.user.email || '');
   }, [profile.data, profile.isPending, session]);
 
-  const shippingCost = SHIPPING.find((item) => item.id === shipping)?.cost ?? 100;
-  const vatRate = COUNTRIES.find(([name]) => name === country)?.[1] ?? 15;
+  useEffect(() => {
+    if (!display || display.shipping.length === 0) return;
+    if (!display.shipping.some((item) => item.id === shipping)) setShipping(display.shipping[0].id);
+  }, [display, shipping]);
+
+  useEffect(() => {
+    if (!display || display.countries.length === 0) return;
+    if (display.countries.some((item) => item.name === country)) return;
+    const fallback = display.countries.find((item) => item.name === (market === 'eu' ? 'France' : 'Namibia')) ?? display.countries[0];
+    if (fallback) setCountry(fallback.name);
+  }, [country, display, market]);
+
+  const shippingCost = shippingRows.find((item) => item.id === shipping)?.cost ?? (display ? 0 : 100);
+  const vatRate = countryRows.find((item) => item.name === country)?.vatPercent ?? (display ? display.vatPercent : 15);
   const vat = vatOn(bag.subtotal + shippingCost, vatRate);
   const total = bag.subtotal + shippingCost + vat;
   const pickup = shipping === 'pickup';
@@ -233,7 +260,7 @@ export default function CheckoutScreen() {
 
         <Text style={[sectionLabel, styles.block]}>{t('checkout.delivery').toUpperCase()}</Text>
         <View style={styles.section}>
-          {SHIPPING.map((item) => {
+          {shippingRows.map((item) => {
             const selected = shipping === item.id;
             return (
               <Pressable
@@ -244,9 +271,9 @@ export default function CheckoutScreen() {
                 style={({ pressed }) => [styles.ship, selected && styles.shipOn, pressed && styles.pressed]}>
                 <View style={styles.shipCopy}>
                   <View style={[styles.radio, selected && styles.radioOn]}>{selected ? <View style={styles.radioDot} /> : null}</View>
-                  <Text style={styles.shipLabel}>{t(item.labelKey)}</Text>
+                  <Text style={styles.shipLabel}>{item.label}</Text>
                 </View>
-                <Text style={styles.shipCost}>{formatMoney(item.cost)}</Text>
+                <Text style={styles.shipCost}>{showMoney(item.cost)}</Text>
               </Pressable>
             );
           })}
@@ -283,12 +310,13 @@ export default function CheckoutScreen() {
 
         <Text style={[sectionLabel, styles.block]}>{t('checkout.summary').toUpperCase()}</Text>
         <View style={styles.section}>
-          <Row label={t('checkout.merchandise')} value={formatMoney(bag.subtotal)} />
-          <Row label={t('checkout.shipping')} value={formatMoney(shippingCost)} />
-          <Row label={t('checkout.vat', { rate: vatRate })} value={formatMoney(vat)} />
+          <Row label={t('checkout.merchandise')} value={showMoney(bag.subtotal)} />
+          <Row label={t('checkout.shipping')} value={showMoney(shippingCost)} />
+          <Row label={t('checkout.vat', { rate: vatRate })} value={showMoney(vat)} />
           <View style={styles.divider} />
-          <Row label={t('checkout.total')} value={formatMoney(total)} bold />
-          <Text style={styles.hint}>{t('checkout.totalsNote')}</Text>
+          <Row label={t('checkout.total')} value={showMoney(total)} bold />
+          {display ? <Text style={styles.hint}>{formatApproxEur(total, display.eurPerNad)}</Text> : null}
+          <Text style={styles.hint}>{display ? t('checkout.totalsApprox') : t('checkout.totalsNote')}</Text>
         </View>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {payments.pending && !busy ? (
@@ -312,10 +340,10 @@ export default function CheckoutScreen() {
         visible={countryOpen}
         title={t('checkout.country')}
         onClose={() => setCountryOpen(false)}
-        options={COUNTRIES.map(([name]) => ({
-          label: name,
-          icon: country === name ? 'checkmark-circle' : 'ellipse-outline',
-          onPress: () => setCountry(name),
+        options={countryRows.map((item) => ({
+          label: item.name,
+          icon: country === item.name ? 'checkmark-circle' : 'ellipse-outline',
+          onPress: () => setCountry(item.name),
         }))}
       />
     </Screen>

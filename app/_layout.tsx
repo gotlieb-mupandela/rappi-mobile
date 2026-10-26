@@ -21,6 +21,7 @@ import { SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from 'reac
 import { TabBar } from '@/src/components/TabBar';
 import { loadInitialMarket } from '@/src/i18n/detect';
 import { LocaleProvider } from '@/src/i18n/LocaleProvider';
+import { StorefrontProvider } from '@/src/lib/storefront/provider';
 import type { Market } from '@/src/i18n/market';
 
 import { AuthProvider } from '@/src/lib/auth';
@@ -184,6 +185,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <LocaleProvider initialMarket={market}>
+          <StorefrontProvider>
           <PersistQueryClientProvider
             client={queryClient}
             persistOptions={{
@@ -210,6 +212,7 @@ export default function RootLayout() {
               </BagProvider>
             </AuthProvider>
           </PersistQueryClientProvider>
+          </StorefrontProvider>
         </LocaleProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
