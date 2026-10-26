@@ -79,6 +79,28 @@ test('stock requests collapse duplicates and never send an invalid code', async 
   }
 });
 
+test('stock requests never send quotes, backslashes, or a broken quote', async () => {
+  const fetchStock = await loadFetchStock();
+  const capture = installFetch();
+  const unsafe = ['a"b', 'a\\b', 'a"),b'];
+  try {
+    const onlyUnsafe = await fetchStock(unsafe);
+    assert.deepEqual(onlyUnsafe, { stock: {} });
+    assert.equal(capture.urls.length, 0);
+
+    const mixed = await fetchStock(['a"b', '709/101', 'a\\b', 'a"),b', 'a"b']);
+    assert.equal(capture.urls.length, 1);
+    assert.equal(new URL(capture.urls[0]).search.slice(1), 'code=709%2F101');
+    assert.equal(capture.urls[0].includes('"'), false);
+    assert.equal(capture.urls[0].includes('\\'), false);
+    assert.equal(capture.urls[0].includes(')'), false);
+    assert.deepEqual(new URL(capture.urls[0]).searchParams.getAll('code'), ['709/101']);
+    for (const code of unsafe) assert.equal(capture.urls[0].includes(code), false, code);
+  } finally {
+    capture.restore();
+  }
+});
+
 test('51 stock codes are two requests of at most 50 and the stock maps merge', async () => {
   const fetchStock = await loadFetchStock();
   const codes = Array.from({ length: 51 }, (_, index) => `K${String(index + 1).padStart(2, '0')}`);
