@@ -1,6 +1,6 @@
 /**
  * Wire shape of MobileStorefront.
- * PR 98 at ac533ee is the base document. PR 105 at 7700b1d adds span, tone, slug, and audiences.
+ * The document includes span, tone, slug, and audiences from the web feed revision recorded in data/web-pin.json.
  * Routes are not part of the payload.
  */
 
