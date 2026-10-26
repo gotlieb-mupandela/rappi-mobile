@@ -26,6 +26,23 @@ function shell() {
   };
 }
 
+test('the six home tile ids resolve to their site paths', () => {
+  const expected = [
+    ['home-teamwear', '/teamwear', { screen: 'menu', menu: 'teams', path: [] }],
+    ['home-sportswear', '/category/sportswear', { screen: 'category', slug: 'sportswear' }],
+    ['home-running', '/category/running-fitness', { screen: 'category', slug: 'running-fitness' }],
+    ['home-lifestyle', '/category/lifestyle', { screen: 'category', slug: 'lifestyle' }],
+    ['home-footwear', '/category/shoes', { screen: 'category', slug: 'shoes' }],
+    ['home-kids', '/shop/kids', { screen: 'menu', menu: 'children', path: [] }],
+  ] as const;
+  assert.equal(table.length, 1357);
+  for (const [id, href, route] of expected) {
+    assert.equal(table.find((row) => row.id === id)?.href, href, id);
+    assert.deepEqual(resolveTarget(href), route, id);
+    assert.equal(resolveTarget(id), null, id);
+  }
+});
+
 test('every web table target resolves, starting from the QA list', () => {
   assert.equal(qa.unresolved.length, 53);
   for (const href of qa.unresolved) {

@@ -1,5 +1,29 @@
 [
   {
+    "id": "home-teamwear",
+    "href": "/teamwear"
+  },
+  {
+    "id": "home-sportswear",
+    "href": "/category/sportswear"
+  },
+  {
+    "id": "home-running",
+    "href": "/category/running-fitness"
+  },
+  {
+    "id": "home-lifestyle",
+    "href": "/category/lifestyle"
+  },
+  {
+    "id": "home-footwear",
+    "href": "/category/shoes"
+  },
+  {
+    "id": "home-kids",
+    "href": "/shop/kids"
+  },
+  {
     "id": "teamwear-pro-2026",
     "href": "/shop/men?group=teamwear-pro-2026"
   },
