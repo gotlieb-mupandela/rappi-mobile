@@ -8,7 +8,10 @@ import {
   SUB_LINK_JSON_PATH,
   SUB_LINK_SOURCE_SHA,
   renderSubLinkTargets,
+  subLinkCheckFailure,
 } from '../../../scripts/gen-sub-link-targets.mjs';
+import { childNodes, shopTileDestination } from './adapt.ts';
+import { validateMobileStorefront } from './contract.ts';
 import { SUB_LINK_TARGETS } from './subLinkTargets.generated.ts';
 import { resolveTarget } from './targets.ts';
 
@@ -45,7 +48,11 @@ function folderKey(sub: string, group?: string) {
 
 test('every shop sub-link href resolves to its fixed group route', () => {
   assert.equal(rows.length, 139);
-  assert.equal(Object.keys(SUB_LINK_TARGETS).length, 139);
+  assert.equal(SUB_LINK_TARGETS.size, 139);
+  for (const key of SUB_LINK_TARGETS.keys()) {
+    assert.match(key, /^\/shop\/[a-z0-9-]+\?sub=[a-z0-9-]+(?:&group=[a-z0-9-]+)?$/);
+    assert.equal(key.includes('--'), false);
+  }
   const hubs = new Map<string, number>();
   for (const row of rows) {
     const route = resolveTarget(row.href);
@@ -81,8 +88,45 @@ test('the generated file is exactly the generator output', () => {
   assert.equal(generated, renderSubLinkTargets(rows));
   assert.equal(generated.includes(SUB_LINK_SOURCE_SHA), true);
   assert.equal(generated.includes('Joma'), false);
-  assert.equal(JSON.stringify(SUB_LINK_TARGETS).includes('Joma'), false);
+  assert.equal(JSON.stringify([...SUB_LINK_TARGETS]).includes('Joma'), false);
   assert.equal(readFileSync(SUB_LINK_JSON_PATH, 'utf8').includes('Joma'), false);
+});
+
+test('a target that is not in the list drops the link and opens nothing', () => {
+  const missing = '/shop/sportswear?sub=not-in-the-list';
+  assert.equal(SUB_LINK_TARGETS.has(missing), false);
+  assert.equal(SUB_LINK_TARGETS.get(missing), undefined);
+  assert.equal(resolveTarget(missing), null);
+  for (const key of ['__proto__', 'constructor', 'prototype', 'toString']) {
+    assert.equal(SUB_LINK_TARGETS.get(key), undefined);
+    assert.equal(resolveTarget(key), null);
+  }
+
+  const parsed = validateMobileStorefront(JSON.parse(readFileSync(new URL('./fixture.json', import.meta.url), 'utf8')));
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+  const broken = structuredClone(parsed.value);
+  const beach = broken.nodes.find((node) => node.key === 'beachwear');
+  const menu = broken.nodes.find((node) => node.key === 'man');
+  assert.ok(beach);
+  assert.ok(menu);
+  beach.target = missing;
+  menu.target = missing;
+  assert.equal(childNodes(broken, 'man').some((node) => node.key === 'beachwear'), false);
+  assert.equal(shopTileDestination(broken, 'man'), null);
+});
+
+test('check:sub-links fails when the committed list drifts', () => {
+  const committed = readFileSync(SUB_LINK_JSON_PATH, 'utf8');
+  const generated = readFileSync(SUB_LINK_GENERATED_PATH, 'utf8');
+  assert.equal(subLinkCheckFailure(committed, committed, generated), null);
+  const drifted = committed.replace('"count": 117', '"count": 999');
+  assert.notEqual(drifted, committed);
+  const listDrift = subLinkCheckFailure(drifted, committed, renderSubLinkTargets(JSON.parse(drifted)));
+  assert.match(listDrift ?? '', /drifted from the committed copy/);
+  assert.match(listDrift ?? '', new RegExp(SUB_LINK_SOURCE_SHA));
+  const handEdited = generated.replace('sub:jerseys@shirts', 'sub:jerseys@nope');
+  assert.match(subLinkCheckFailure(committed, committed, handEdited) ?? '', /does not match/);
 });
 
 test('the generator rejects a bad href and a duplicate href', () => {
