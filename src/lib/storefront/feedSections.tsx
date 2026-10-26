@@ -9,6 +9,8 @@ export type FeedTileModel = {
   key: string;
   label: string;
   image: string | null;
+  span?: 1 | 2 | null;
+  tone?: 'dark' | 'light' | null;
 };
 
 type Status = 'loading' | 'unavailable' | 'ready';
@@ -74,7 +76,12 @@ export function HomeFeed({
             accessibilityRole="button"
             accessibilityLabel={tile.label}
             onPress={() => onOpen(tile.key, tile.label)}
-            style={({ pressed }) => [styles.homeTile, styles.homeHalf, pressed && styles.pressed]}>
+            style={({ pressed }) => [
+              styles.homeTile,
+              tile.span === 2 ? styles.homeWide : styles.homeHalf,
+              tile.tone === 'light' && styles.homeLight,
+              pressed && styles.pressed,
+            ]}>
             {tile.image ? (
               <Image source={{ uri: tile.image }} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={250} />
             ) : null}
@@ -82,7 +89,7 @@ export function HomeFeed({
               ? SCRIM_STEPS.map((height) => <View key={height} pointerEvents="none" style={[styles.scrim, { height: `${height}%` }]} />)
               : null}
             <View pointerEvents="none" style={styles.homeLabelWrap}>
-              <Text style={styles.homeLabel} numberOfLines={1}>
+              <Text style={[styles.homeLabel, tile.tone === 'light' && styles.homeLabelLight]} numberOfLines={1}>
                 {tile.label}
               </Text>
             </View>
@@ -189,7 +196,7 @@ export function AthleteCards({
 }) {
   if (tiles.length === 0) return null;
   return (
-    <View testID="athlete-cards" style={styles.athletes}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} testID="athlete-cards" contentContainerStyle={styles.athletes}>
       {tiles.map((tile) => (
         <Pressable
           key={tile.key}
@@ -208,7 +215,7 @@ export function AthleteCards({
           </View>
         </Pressable>
       ))}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -267,6 +274,8 @@ const styles = StyleSheet.create({
   homeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   homeTile: { borderRadius: 14, overflow: 'hidden', backgroundColor: '#1a1c1e' },
   homeHalf: { width: '48%', flexGrow: 1, height: 210 },
+  homeWide: { width: '100%', height: 210 },
+  homeLight: { backgroundColor: '#f3f0ea' },
   scrim: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.045)' },
   homeLabelWrap: { position: 'absolute', left: 14, right: 14, bottom: 14 },
   homeLabel: {
@@ -279,6 +288,7 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
+  homeLabelLight: { color: colors.text, textShadowColor: 'transparent' },
   shopContent: { padding: space.screen, paddingBottom: 40 },
   shopMenus: { gap: space.gap },
   shopRow: { flexDirection: 'row', gap: space.gap },
@@ -301,7 +311,7 @@ const styles = StyleSheet.create({
   typeImage: { aspectRatio: 1, width: '100%', borderRadius: radius.card, backgroundColor: colors.imageWell, overflow: 'hidden' },
   typeName: { marginTop: 10, fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text },
   athletes: { flexDirection: 'row', gap: 10, paddingHorizontal: space.screen },
-  athlete: { flex: 1 },
+  athlete: { width: 148 },
   athleteCard: {
     aspectRatio: 0.72,
     width: '100%',

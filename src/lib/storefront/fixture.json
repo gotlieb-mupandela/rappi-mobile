@@ -8,12 +8,22 @@
       "order": 0,
       "target": "/",
       "image": null,
-      "title": { "en": "Shop", "fr": "Boutique" },
-      "description": { "en": "Shop", "fr": "Boutique" },
+      "title": {
+        "en": "Shop",
+        "fr": "Boutique"
+      },
+      "description": {
+        "en": "Shop",
+        "fr": "Boutique"
+      },
       "hidden": false,
       "count": 3,
       "group": null,
-      "tiles": ["children", "teams", "sportswear"]
+      "tiles": [
+        "children",
+        "teams",
+        "sportswear"
+      ]
     },
     {
       "key": "man",
@@ -22,12 +32,22 @@
       "order": 1,
       "target": "/shop/men",
       "image": "https://www.rappisportshub.com/brand/audience-men.png",
-      "title": { "en": "Man", "fr": "Homme" },
-      "description": { "en": "Men's sport apparel.", "fr": "Vetements de sport homme." },
+      "title": {
+        "en": "Man",
+        "fr": "Homme"
+      },
+      "description": {
+        "en": "Men's sport apparel.",
+        "fr": "Vetements de sport homme."
+      },
       "hidden": false,
       "count": 10,
       "group": null,
-      "tiles": ["beachwear", "athletes-combat", "hidden-fitness"]
+      "tiles": [
+        "beachwear",
+        "athletes-combat",
+        "hidden-fitness"
+      ]
     },
     {
       "key": "beachwear",
@@ -36,8 +56,14 @@
       "order": 0,
       "target": "/shop/men?group=beachwear",
       "image": "https://www.joma-sport.com/on/demandware.static/Sites-joma-sport/images/medium/SW10601D0101_1.jpg",
-      "title": { "en": "Beachwear", "fr": "Beachwear" },
-      "description": { "en": "Beachwear", "fr": "Beachwear" },
+      "title": {
+        "en": "Beachwear",
+        "fr": "Beachwear"
+      },
+      "description": {
+        "en": "Beachwear",
+        "fr": "Beachwear"
+      },
       "hidden": false,
       "count": 4,
       "group": null,
@@ -50,8 +76,14 @@
       "order": 1,
       "target": "/shop/men?group=athletes-combat",
       "image": "https://v1.joma-sport.net/files/hiking.jpg",
-      "title": { "en": "Athletes / Combat", "fr": "Athletes / Combat" },
-      "description": { "en": "Athletes / Combat", "fr": "Athletes / Combat" },
+      "title": {
+        "en": "Athletes / Combat",
+        "fr": "Athletes / Combat"
+      },
+      "description": {
+        "en": "Athletes / Combat",
+        "fr": "Athletes / Combat"
+      },
       "hidden": false,
       "count": 2,
       "group": null,
@@ -64,8 +96,14 @@
       "order": 2,
       "target": "/shop/men?group=fitness-gym",
       "image": null,
-      "title": { "en": "Hidden fitness", "fr": "Fitness cache" },
-      "description": { "en": "Hidden fitness", "fr": "Fitness cache" },
+      "title": {
+        "en": "Hidden fitness",
+        "fr": "Fitness cache"
+      },
+      "description": {
+        "en": "Hidden fitness",
+        "fr": "Fitness cache"
+      },
       "hidden": true,
       "count": 0,
       "group": null,
@@ -78,12 +116,21 @@
       "order": 2,
       "target": "/shop/women",
       "image": "https://www.rappisportshub.com/brand/audience-women.png",
-      "title": { "en": "Woman", "fr": "Femme" },
-      "description": { "en": "Woman", "fr": "Femme" },
+      "title": {
+        "en": "Woman",
+        "fr": "Femme"
+      },
+      "description": {
+        "en": "Woman",
+        "fr": "Femme"
+      },
       "hidden": false,
       "count": 8,
       "group": null,
-      "tiles": ["fitness-gym-woman", "wf-running"]
+      "tiles": [
+        "fitness-gym-woman",
+        "wf-running"
+      ]
     },
     {
       "key": "fitness-gym-woman",
@@ -92,8 +139,14 @@
       "order": 0,
       "target": "/shop/women?group=fitness-gym-woman",
       "image": "https://www.joma-sport.com/on/demandware.static/Sites-joma-sport/images/medium/101015.100_1.jpg",
-      "title": { "en": "Fitness / Gym", "fr": "Fitness / Gym" },
-      "description": { "en": "Fitness / Gym", "fr": "Fitness / Gym" },
+      "title": {
+        "en": "Fitness / Gym",
+        "fr": "Fitness / Gym"
+      },
+      "description": {
+        "en": "Fitness / Gym",
+        "fr": "Fitness / Gym"
+      },
       "hidden": false,
       "count": 6,
       "group": null,
@@ -106,8 +159,14 @@
       "order": 1,
       "target": "/shop/shoes?audience=women&group=wf-running",
       "image": "https://www.rappisportshub.com/brand/hub-shoes.png",
-      "title": { "en": "Running", "fr": "Course" },
-      "description": { "en": "Running", "fr": "Course" },
+      "title": {
+        "en": "Running",
+        "fr": "Course"
+      },
+      "description": {
+        "en": "Running",
+        "fr": "Course"
+      },
       "hidden": false,
       "count": 3,
       "group": null,
@@ -120,12 +179,22 @@
       "order": 3,
       "target": "/shop/kids",
       "image": "https://wsrv.nl/?url=https%3A%2F%2Fwww.rappisportshub.com%2Fbrand%2Fkids.png",
-      "title": { "en": "Kids", "fr": "Enfants" },
-      "description": { "en": "Youth sport.", "fr": "" },
+      "title": {
+        "en": "Kids",
+        "fr": "Enfants"
+      },
+      "description": {
+        "en": "Youth sport.",
+        "fr": ""
+      },
       "hidden": false,
       "count": 5,
       "group": null,
-      "tiles": ["kids-1-4"]
+      "tiles": [
+        "kids-1-4"
+      ],
+      "span": 2,
+      "tone": "light"
     },
     {
       "key": "kids-1-4",
@@ -134,8 +203,14 @@
       "order": 0,
       "target": "/shop/kids?group=kids-1-4",
       "image": null,
-      "title": { "en": "1 to 4", "fr": "1 a 4" },
-      "description": { "en": "1 to 4", "fr": "1 a 4" },
+      "title": {
+        "en": "1 to 4",
+        "fr": "1 a 4"
+      },
+      "description": {
+        "en": "1 to 4",
+        "fr": "1 a 4"
+      },
       "hidden": false,
       "count": 2,
       "group": null,
@@ -148,12 +223,20 @@
       "order": 4,
       "target": "/teamwear",
       "image": "https://www.rappisportshub.com/brand/hub-teampro-2026.webp",
-      "title": { "en": "Teams", "fr": "Teams" },
-      "description": { "en": "Teams", "fr": "Teams" },
+      "title": {
+        "en": "Teams",
+        "fr": "Teams"
+      },
+      "description": {
+        "en": "Teams",
+        "fr": "Teams"
+      },
       "hidden": false,
       "count": 0,
       "group": null,
-      "tiles": []
+      "tiles": [],
+      "span": 2,
+      "tone": "dark"
     },
     {
       "key": "sportswear",
@@ -162,12 +245,83 @@
       "order": 0,
       "target": "/category/sportswear",
       "image": "https://www.rappisportshub.com/brand/hub-sportswear.png",
-      "title": { "en": "Sportswear", "fr": "Sportswear" },
-      "description": { "en": "Tees, shorts, and training layers.", "fr": "T-shirts, shorts et couches d'entrainement." },
+      "title": {
+        "en": "Sportswear",
+        "fr": "Sportswear"
+      },
+      "description": {
+        "en": "Tees, shorts, and training layers.",
+        "fr": "T-shirts, shorts et couches d'entrainement."
+      },
       "hidden": false,
       "count": 20,
       "group": null,
-      "tiles": ["beachwear", "fitness-gym-woman"]
+      "tiles": [
+        "beachwear",
+        "fitness-gym-woman",
+        "sportswear--shirts"
+      ],
+      "span": 1,
+      "tone": "dark",
+      "audiences": [
+        {
+          "id": "sportswear--men",
+          "label": {
+            "en": "Men",
+            "fr": "Hommes"
+          },
+          "count": 10,
+          "target": "/shop/sportswear?audience=men"
+        }
+      ]
+    },
+    {
+      "key": "sportswear--shirts",
+      "kind": "tile",
+      "parent": "sportswear",
+      "order": 2,
+      "target": "/shop/sportswear?group=shirts",
+      "image": null,
+      "title": {
+        "en": "Shirts",
+        "fr": "Hauts"
+      },
+      "description": {
+        "en": "Shirts",
+        "fr": "Hauts"
+      },
+      "hidden": false,
+      "count": 4,
+      "group": "shirts",
+      "tiles": [],
+      "span": null,
+      "tone": null,
+      "slug": null,
+      "audiences": []
+    },
+    {
+      "key": "football--tw-medias",
+      "kind": "tile",
+      "parent": "football",
+      "order": 3,
+      "target": "/shop/football?group=tw-medias",
+      "image": null,
+      "title": {
+        "en": "Medias",
+        "fr": "Medias"
+      },
+      "description": {
+        "en": "Medias",
+        "fr": "Medias"
+      },
+      "hidden": false,
+      "count": 2,
+      "group": "tw-medias",
+      "tiles": [],
+      "span": null,
+      "tone": null,
+      "slug": null,
+      "audiences": []
     },
     {
       "key": "shoes",
@@ -176,24 +330,16 @@
       "order": 1,
       "target": "/category/shoes",
       "image": "https://www.rappisportshub.com/brand/hub-shoes.png",
-      "title": { "en": "Shoes", "fr": "Chaussures" },
-      "description": { "en": "Footwear for every surface.", "fr": "Chaussures pour chaque surface." },
+      "title": {
+        "en": "Shoes",
+        "fr": "Chaussures"
+      },
+      "description": {
+        "en": "Footwear for every surface.",
+        "fr": "Chaussures pour chaque surface."
+      },
       "hidden": false,
       "count": 12,
-      "group": null,
-      "tiles": ["flow"]
-    },
-    {
-      "key": "flow",
-      "kind": "folder",
-      "parent": "shoes",
-      "order": 0,
-      "target": "/shop/shoes?group=flow",
-      "image": null,
-      "title": { "en": "Flow", "fr": "Flow" },
-      "description": { "en": "Flow", "fr": "Flow" },
-      "hidden": false,
-      "count": 0,
       "group": null,
       "tiles": []
     },
@@ -204,50 +350,131 @@
       "order": 2,
       "target": "/category/netball",
       "image": null,
-      "title": { "en": "Netball", "fr": "Netball" },
-      "description": { "en": "Netball", "fr": "Netball" },
+      "title": {
+        "en": "Netball",
+        "fr": "Netball"
+      },
+      "description": {
+        "en": "Netball",
+        "fr": "Netball"
+      },
       "hidden": true,
       "count": 0,
       "group": null,
       "tiles": []
+    },
+    {
+      "key": "football",
+      "kind": "category",
+      "parent": null,
+      "order": 3,
+      "target": "/category/football",
+      "image": null,
+      "title": {
+        "en": "Football",
+        "fr": "Football"
+      },
+      "description": {
+        "en": "Football",
+        "fr": "Football"
+      },
+      "hidden": false,
+      "count": 2,
+      "group": null,
+      "tiles": [
+        "football--tw-medias"
+      ],
+      "span": null,
+      "tone": null,
+      "slug": null,
+      "audiences": []
     }
   ],
-  "menus": ["man", "woman", "children", "teams"],
-  "categoryOrder": ["sportswear", "shoes", "netball"],
+  "menus": [
+    "man",
+    "woman",
+    "children",
+    "teams"
+  ],
+  "categoryOrder": [
+    "sportswear",
+    "shoes",
+    "netball"
+  ],
   "counts": {
-    "categories": { "sportswear": 20, "shoes": 12, "netball": 0 },
+    "categories": {
+      "sportswear": 20,
+      "shoes": 12,
+      "netball": 0
+    },
     "products": 3
   },
   "checkout": {
     "shipping": [
       {
         "key": "standard",
-        "title": { "en": "Standard (5-8 days)", "fr": "Standard (5-8 jours)" },
+        "title": {
+          "en": "Standard (5-8 days)",
+          "fr": "Standard (5-8 jours)"
+        },
         "amountNad": 100
       },
       {
         "key": "express",
-        "title": { "en": "Express (2-3 days)", "fr": "Express (2-3 jours)" },
+        "title": {
+          "en": "Express (2-3 days)",
+          "fr": "Express (2-3 jours)"
+        },
         "amountNad": 150
       },
       {
         "key": "pickup",
-        "title": { "en": "Hub pickup", "fr": "Retrait au hub" },
+        "title": {
+          "en": "Hub pickup",
+          "fr": "Retrait au hub"
+        },
         "amountNad": 0
       },
       {
         "key": "courier-note",
-        "title": { "en": "Not a payment method", "fr": "Pas un mode de paiement" },
+        "title": {
+          "en": "Not a payment method",
+          "fr": "Pas un mode de paiement"
+        },
         "amountNad": 40
       }
     ],
     "countries": [
-      { "code": "NA", "name": "Namibia", "vatRate": 0.15 },
-      { "code": "ZA", "name": "South Africa", "vatRate": 0.15 },
-      { "code": "FR", "name": "France", "vatRate": 0.2 },
-      { "code": "DE", "name": "Germany", "vatRate": 0.19 },
-      { "code": "FI", "name": "Finland", "vatRate": 0.255 },
-      { "code": "XK", "name": "Kosovo", "vatRate": 0.18 }
+      {
+        "code": "NA",
+        "name": "Namibia",
+        "vatRate": 0.15
+      },
+      {
+        "code": "ZA",
+        "name": "South Africa",
+        "vatRate": 0.15
+      },
+      {
+        "code": "FR",
+        "name": "France",
+        "vatRate": 0.2
+      },
+      {
+        "code": "DE",
+        "name": "Germany",
+        "vatRate": 0.19
+      },
+      {
+        "code": "FI",
+        "name": "Finland",
+        "vatRate": 0.255
+      },
+      {
+        "code": "XK",
+        "name": "Kosovo",
+        "vatRate": 0.18
+      }
     ],
     "eurPerNad": 0.05
   },
@@ -303,6 +530,23 @@
       "line": "Plain line",
       "category": "sportswear",
       "subcategory": null,
+      "audience": null
+    },
+    {
+      "code": "TEAM/14",
+      "name": "Team bag",
+      "label": "Team bag",
+      "labelFr": "Sac equipe",
+      "packLabel": null,
+      "pairCount": null,
+      "isPack": false,
+      "price": 499,
+      "priceLabel": "N$499",
+      "cardImage": null,
+      "images": [],
+      "line": "Team bag",
+      "category": "balls-bags",
+      "subcategory": "bags",
       "audience": null
     }
   ]

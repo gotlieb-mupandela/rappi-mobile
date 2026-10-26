@@ -14,7 +14,7 @@ import { hubImage } from '@/src/lib/categories';
 import { pressHaptic, tapHaptic } from '@/src/lib/haptics';
 import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
 import { AUDIENCE_IMAGES, HUB_DESCRIPTIONS, HUB_TYPES, menuImage, type MenuNode } from '@/src/lib/menus';
-import { audienceNodes, categoryHubImage, categoryNode, foldersForCategory, localized } from '@/src/lib/storefront/adapt';
+import { categoryAudiences, categoryHubImage, categoryNode, foldersForCategory, localized } from '@/src/lib/storefront/adapt';
 import { resolveTarget } from '@/src/lib/storefront/contract';
 import { AthleteCards, HubCover, HubTypeGrid, StorefrontUnavailable } from '@/src/lib/storefront/feedSections';
 import { openStorefrontRoute } from '@/src/lib/storefront/open';
@@ -43,7 +43,7 @@ export function CategoryHub({ slug }: { slug: string }) {
   const category = storefront.enabled && storefront.feed ? categoryNode(storefront.feed, slug) : undefined;
   const feedDescription = category ? localized(category.description, language).trim() : '';
   const feedImage = storefront.enabled && storefront.feed ? categoryHubImage(storefront.feed, slug) : null;
-  const athletesFromFeed = storefront.enabled && storefront.feed ? audienceNodes(storefront.feed) : [];
+  const athletesFromFeed = storefront.enabled && storefront.feed ? categoryAudiences(storefront.feed, slug) : [];
 
   const nav = useQuery({ queryKey: ['catalog-nav'], queryFn: fetchNav, staleTime: 60_000 });
   const overview = useQuery({
@@ -207,14 +207,14 @@ export function CategoryHub({ slug }: { slug: string }) {
           <View style={styles.section}>
             <SectionHeader title="Shop by athlete" />
             <AthleteCards
-              tiles={athletesFromFeed.map((node) => ({
-                key: node.key,
-                label: localized(node.title, language),
-                image: node.image,
+              tiles={athletesFromFeed.map((row) => ({
+                key: row.id,
+                label: localized(row.label, language),
+                image: null,
               }))}
               onOpen={(key, label) => {
-                const node = athletesFromFeed.find((item) => item.key === key);
-                const route = node ? resolveTarget(node.target) : null;
+                const row = athletesFromFeed.find((item) => item.id === key);
+                const route = row ? resolveTarget(row.target) : null;
                 if (!route) return;
                 tapHaptic();
                 openStorefrontRoute(route, label, crumbs);

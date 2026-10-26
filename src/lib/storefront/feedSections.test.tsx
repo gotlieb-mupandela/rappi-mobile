@@ -26,6 +26,10 @@ function node(partial: Pick<StorefrontNode, 'key' | 'kind' | 'target' | 'image' 
     count: 1,
     group: null,
     tiles: [],
+    span: null,
+    tone: null,
+    slug: null,
+    audiences: [],
     ...partial,
   };
 }
@@ -85,7 +89,13 @@ function textsOf(tree: ReactTestRenderer): string[] {
 }
 
 function tilesOf(feed: MobileStorefront, keys: StorefrontNode[]): FeedTileModel[] {
-  return keys.map((item) => ({ key: item.key, label: localized(item.title, 'en'), image: item.image }));
+  return keys.map((item) => ({
+    key: item.key,
+    label: localized(item.title, 'en'),
+    image: item.image,
+    span: item.span,
+    tone: item.tone,
+  }));
 }
 
 test('feed home tiles, shop menus, hub types, audiences and athletes render from the feed', () => {
@@ -93,7 +103,11 @@ test('feed home tiles, shop menus, hub types, audiences and athletes render from
   const home = homeTiles(feed);
   assert.equal(home.some((item) => item.key === 'secret-link'), false);
   assert.deepEqual(headerMenus(feed).map((item) => item.key), ['man', 'woman', 'children', 'teams']);
-  assert.deepEqual(foldersForCategory(feed, 'sportswear').map((item) => item.key), ['beachwear', 'fitness-gym-woman']);
+  assert.deepEqual(foldersForCategory(feed, 'sportswear').map((item) => item.key), [
+    'beachwear',
+    'fitness-gym-woman',
+    'sportswear--shirts',
+  ]);
   assert.equal(categoryHubImage(feed, 'sportswear'), 'https://www.rappisportshub.com/brand/hub-sportswear.png');
   assert.deepEqual(audienceNodes(feed).map((item) => item.key), ['audience-men', 'audience-women']);
 
@@ -114,7 +128,7 @@ test('feed home tiles, shop menus, hub types, audiences and athletes render from
   const teamsStyle = typeof teams.props.style === 'function' ? teams.props.style({ pressed: false }) : teams.props.style;
   const tileStyle = Object.assign({}, ...(Array.isArray(teamsStyle) ? teamsStyle.filter(Boolean) : [teamsStyle]));
   assert.equal(tileStyle.height, 210);
-  assert.equal(tileStyle.width, '48%');
+  assert.equal(tileStyle.width, '100%');
   const teamsImage = teams.findAllByType(Image)[0];
   assert.ok(teamsImage);
   assert.equal(teamsImage.props.contentFit, 'cover');

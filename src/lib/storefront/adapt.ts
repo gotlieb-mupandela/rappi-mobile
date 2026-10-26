@@ -1,5 +1,5 @@
 import { resolveTarget } from './targets.ts';
-import type { MobileStorefront, StorefrontLanguage, StorefrontNode, StorefrontProduct } from './types.ts';
+import type { MobileStorefront, StorefrontAudienceRef, StorefrontLanguage, StorefrontNode, StorefrontProduct } from './types.ts';
 
 export function localized(copy: { en: string; fr: string }, language: StorefrontLanguage): string {
   if (language === 'fr' && copy.fr.trim()) return copy.fr;
@@ -43,7 +43,7 @@ export function shopTileDestination(
 }
 
 export function homeTiles(feed: MobileStorefront): StorefrontNode[] {
-  return childNodes(feed, 'home');
+  return childNodes(feed, 'home').filter((node) => node.span === 1 || node.span === 2);
 }
 
 export function headerMenus(feed: MobileStorefront): StorefrontNode[] {
@@ -94,6 +94,13 @@ export function foldersForCategory(feed: MobileStorefront, slug: string): Storef
 
 export function categoryNode(feed: MobileStorefront, slug: string): StorefrontNode | undefined {
   return feed.nodes.find((node) => node.key === slug);
+}
+
+/** Per-hub audience rows. A target that is not in the list is dropped. */
+export function categoryAudiences(feed: MobileStorefront, slug: string): StorefrontAudienceRef[] {
+  const node = categoryNode(feed, slug);
+  if (!node) return [];
+  return node.audiences.filter((row) => resolveTarget(row.target) !== null);
 }
 
 /**

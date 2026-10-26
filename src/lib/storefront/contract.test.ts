@@ -189,6 +189,46 @@ test('labelFr is optional and falls back to label', () => {
   assert.equal(pack?.labelFr, null);
 });
 
+test('a bad span, tone, or slug hides that node and a bad audience row is omitted', () => {
+  const body = clone();
+  const nodes = body.nodes as Array<Record<string, unknown>>;
+  const kids = nodes.find((node) => node.key === 'children');
+  assert.ok(kids);
+  kids.span = 3;
+  const teams = nodes.find((node) => node.key === 'teams');
+  assert.ok(teams);
+  teams.tone = 'blue';
+  const sportswear = nodes.find((node) => node.key === 'sportswear');
+  assert.ok(sportswear);
+  sportswear.audiences = [
+    { id: 'sportswear--men', label: { en: 'Men', fr: 'Hommes' }, count: 10, target: '/shop/sportswear?audience=men' },
+    { id: 'sportswear--bad', label: { en: 'Bad', fr: '' }, count: 1, target: '/shop/sportswear?audience=men' },
+    { extra: true },
+  ];
+  sportswear.unexpected = 'kept';
+  const parsed = validateMobileStorefront(body);
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+  assert.equal(parsed.value.nodes.some((node) => node.key === 'children'), false);
+  assert.equal(parsed.value.nodes.some((node) => node.key === 'teams'), false);
+  const kept = parsed.value.nodes.find((node) => node.key === 'sportswear');
+  assert.ok(kept);
+  assert.deepEqual(kept.audiences.map((row) => row.id), ['sportswear--men']);
+});
+
+test('the fixture omits Flow and records TEAM/14 under balls-bags', () => {
+  const raw = fixture() as {
+    nodes: Array<{ key: string; target: string; group: string | null }>;
+    products: Array<{ code: string; category: string; subcategory: string | null }>;
+  };
+  assert.equal(raw.nodes.some((node) => node.key === 'flow' || node.target === '/shop/shoes?group=flow' || node.group === '-flow'), false);
+  const team = raw.products.find((product) => product.code === 'TEAM/14');
+  assert.ok(team);
+  assert.equal(team.category, 'balls-bags');
+  assert.equal(team.subcategory, 'bags');
+  assert.equal(resolveTarget('/shop/shoes?group=flow')?.screen, 'group');
+});
+
 test('a feed that is not an object is rejected', () => {
   assert.equal(validateMobileStorefront(null).ok, false);
   assert.equal(validateMobileStorefront([]).ok, false);
