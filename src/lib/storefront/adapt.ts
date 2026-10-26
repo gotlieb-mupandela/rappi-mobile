@@ -1,5 +1,5 @@
 import { resolveTarget } from './targets.ts';
-import type { MobileStorefront, StorefrontLanguage, StorefrontNode, StorefrontProduct } from './types.ts';
+import type { MobileStorefront, StorefrontAudienceRef, StorefrontLanguage, StorefrontNode, StorefrontProduct } from './types.ts';
 
 export function localized(copy: { en: string; fr: string }, language: StorefrontLanguage): string {
   if (language === 'fr' && copy.fr.trim()) return copy.fr;
@@ -29,8 +29,21 @@ export function hasVisibleChildren(feed: MobileStorefront, key: string): boolean
   return childNodes(feed, key).length > 0;
 }
 
+/** Shop tab: a menu with visible children opens the menu screen. Otherwise the tile target. */
+export function shopTileDestination(
+  feed: MobileStorefront,
+  key: string,
+): { kind: 'menu'; menu: string } | { kind: 'target'; route: NonNullable<ReturnType<typeof resolveTarget>> } | null {
+  const node = headerMenus(feed).find((item) => item.key === key);
+  if (!node) return null;
+  if (hasVisibleChildren(feed, key)) return { kind: 'menu', menu: key };
+  const route = resolveTarget(node.target);
+  if (!route) return null;
+  return { kind: 'target', route };
+}
+
 export function homeTiles(feed: MobileStorefront): StorefrontNode[] {
-  return childNodes(feed, 'home');
+  return childNodes(feed, 'home').filter((node) => node.span === 1 || node.span === 2);
 }
 
 export function headerMenus(feed: MobileStorefront): StorefrontNode[] {
@@ -81,6 +94,28 @@ export function foldersForCategory(feed: MobileStorefront, slug: string): Storef
 
 export function categoryNode(feed: MobileStorefront, slug: string): StorefrontNode | undefined {
   return feed.nodes.find((node) => node.key === slug);
+}
+
+/** Per-hub audience rows. A target that is not in the list is dropped. */
+export function categoryAudiences(feed: MobileStorefront, slug: string): StorefrontAudienceRef[] {
+  const node = categoryNode(feed, slug);
+  if (!node) return [];
+  return node.audiences.filter((row) => resolveTarget(row.target) !== null);
+}
+
+/**
+ * Audience nodes from the feed. The document has no separate athlete list.
+ * Shop-by-athlete cards use these nodes. Unknown targets are omitted.
+ */
+export function audienceNodes(feed: MobileStorefront): StorefrontNode[] {
+  return feed.nodes
+    .filter((node) => node.kind === 'audience' && !node.hidden && resolveTarget(node.target) !== null)
+    .sort((left, right) => left.order - right.order || left.key.localeCompare(right.key));
+}
+
+/** Hub cover is the category node image only. Null means the screen shows no photo. */
+export function categoryHubImage(feed: MobileStorefront, slug: string): string | null {
+  return categoryNode(feed, slug)?.image ?? null;
 }
 
 export function indexProducts(feed: MobileStorefront | null): Map<string, StorefrontProduct> {

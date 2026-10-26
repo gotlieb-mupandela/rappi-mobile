@@ -40,3 +40,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# AWAITING GOTLIEB'S OK. Generated storefront snapshot. Never commit.
+src/lib/storefront/generated/

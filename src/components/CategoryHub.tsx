@@ -8,14 +8,15 @@ import { ALL_FOLDER, fetchCatalog, fetchHubTypes, fetchNav, subFolderKey } from 
 import { openCatalogFolder } from '@/src/components/FolderBrowser';
 import { MenuGrid } from '@/src/components/MenuGrid';
 import { ProductCard } from '@/src/components/ProductCard';
-import { Chip, ErrorState, FolderCard, PressableScale, Screen, SecondaryButton, SkeletonBlock, SkeletonGrid } from '@/src/components/ui';
+import { Chip, ErrorState, PressableScale, Screen, SecondaryButton, SkeletonBlock, SkeletonGrid } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { hubImage } from '@/src/lib/categories';
 import { pressHaptic, tapHaptic } from '@/src/lib/haptics';
 import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
 import { AUDIENCE_IMAGES, HUB_DESCRIPTIONS, HUB_TYPES, menuImage, type MenuNode } from '@/src/lib/menus';
-import { categoryNode, foldersForCategory, localized } from '@/src/lib/storefront/adapt';
+import { categoryAudiences, categoryHubImage, categoryNode, foldersForCategory, localized } from '@/src/lib/storefront/adapt';
 import { resolveTarget } from '@/src/lib/storefront/contract';
+import { AthleteCards, HubCover, HubTypeGrid, StorefrontUnavailable } from '@/src/lib/storefront/feedSections';
 import { openStorefrontRoute } from '@/src/lib/storefront/open';
 import { useCategoryTitle, useStorefront } from '@/src/lib/storefront/provider';
 import type { StorefrontLanguage } from '@/src/lib/storefront/types';
@@ -41,7 +42,8 @@ export function CategoryHub({ slug }: { slug: string }) {
   const feedFolders = storefront.enabled && storefront.feed ? foldersForCategory(storefront.feed, slug) : [];
   const category = storefront.enabled && storefront.feed ? categoryNode(storefront.feed, slug) : undefined;
   const feedDescription = category ? localized(category.description, language).trim() : '';
-  const feedImage = category?.image ?? null;
+  const feedImage = storefront.enabled && storefront.feed ? categoryHubImage(storefront.feed, slug) : null;
+  const athletesFromFeed = storefront.enabled && storefront.feed ? categoryAudiences(storefront.feed, slug) : [];
 
   const nav = useQuery({ queryKey: ['catalog-nav'], queryFn: fetchNav, staleTime: 60_000 });
   const overview = useQuery({
@@ -70,7 +72,7 @@ export function CategoryHub({ slug }: { slug: string }) {
     (folders.data ?? []).map((folder) => ({ key: folder.key, name: folderName(folder.key, folder.name), image: folder.imageUrl, folder: folder.key }));
   const subs = nav.data?.taxonomy?.[slug] ?? [];
   const products = overview.data?.products ?? [];
-  const heroImage = feedImage || hubImage(slug) || sizedImage(products[0]?.imageUrl, IMAGE_WIDTH.full);
+  const heroImage = storefront.enabled ? feedImage : hubImage(slug) || sizedImage(products[0]?.imageUrl, IMAGE_WIDTH.full);
   const shopAll = () => openCatalogFolder({ cat: slug, folder: ALL_FOLDER, name: 'Shop all', crumbs, leaf: true });
   const openAthlete = (audience: string, label: string) => {
     if (slug === 'shoes') {
@@ -82,6 +84,18 @@ export function CategoryHub({ slug }: { slug: string }) {
   const athleteCards = ATHLETES.map((athlete, index) => ({ ...athlete, label: t(athlete.labelKey), data: athletes[index].data })).filter(
     (athlete) => (athlete.data?.total ?? 0) > 0,
   );
+
+  if (storefront.enabled && !storefront.feed) {
+    return (
+      <Screen title={name} back>
+        <StorefrontUnavailable
+          loading={storefront.loading || !storefront.ready}
+          onRetry={() => storefront.reload()}
+          testID="hub-unavailable"
+        />
+      </Screen>
+    );
+  }
 
   if (overview.isError && !overview.data) {
     return (
@@ -95,7 +109,9 @@ export function CategoryHub({ slug }: { slug: string }) {
     <Screen title={name} back>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.hero}>
-          {heroImage ? (
+          {storefront.enabled ? (
+            <HubCover image={feedImage} />
+          ) : heroImage ? (
             <Image source={{ uri: heroImage }} style={styles.fill} contentFit="cover" contentPosition="top" cachePolicy="memory-disk" transition={250} />
           ) : null}
           <Image source={SHADE} style={styles.heroShade} contentFit="fill" pointerEvents="none" />
@@ -144,28 +160,24 @@ export function CategoryHub({ slug }: { slug: string }) {
           </View>
         ) : null}
 
+        {storefront.enabled && feedFolders.length === 0 ? null : (
         <View style={styles.section}>
           <SectionHeader title="Shop by type" />
           <View style={styles.padded}>
-            {feedFolders.length > 0 ? (
-              <View style={styles.feedGrid}>
-                {feedFolders.map((node) => {
-                  const label = localized(node.title, language);
-                  return (
-                    <View key={node.key} style={styles.feedCell}>
-                      <FolderCard
-                        name={label}
-                        imageUrl={node.image ?? undefined}
-                        onPress={() => {
-                          const route = resolveTarget(node.target);
-                          if (!route) return;
-                          openStorefrontRoute(route, label, crumbs);
-                        }}
-                      />
-                    </View>
-                  );
-                })}
-              </View>
+            {storefront.enabled ? (
+              <HubTypeGrid
+                tiles={feedFolders.map((node) => ({
+                  key: node.key,
+                  label: localized(node.title, language),
+                  image: node.image,
+                }))}
+                onOpen={(key, label) => {
+                  const node = feedFolders.find((item) => item.key === key);
+                  const route = node ? resolveTarget(node.target) : null;
+                  if (!route) return;
+                  openStorefrontRoute(route, label, crumbs);
+                }}
+              />
             ) : !staticTypes && folders.isPending ? (
               <SkeletonGrid count={4} />
             ) : (
@@ -173,6 +185,7 @@ export function CategoryHub({ slug }: { slug: string }) {
             )}
           </View>
         </View>
+        )}
 
         {products.length > 0 || overview.isPending ? (
           <View style={styles.section}>
@@ -189,7 +202,27 @@ export function CategoryHub({ slug }: { slug: string }) {
           </View>
         ) : null}
 
-        {athleteCards.length > 0 ? (
+        {storefront.enabled ? (
+          athletesFromFeed.length > 0 ? (
+          <View style={styles.section}>
+            <SectionHeader title="Shop by athlete" />
+            <AthleteCards
+              tiles={athletesFromFeed.map((row) => ({
+                key: row.id,
+                label: localized(row.label, language),
+                image: null,
+              }))}
+              onOpen={(key, label) => {
+                const row = athletesFromFeed.find((item) => item.id === key);
+                const route = row ? resolveTarget(row.target) : null;
+                if (!route) return;
+                tapHaptic();
+                openStorefrontRoute(route, label, crumbs);
+              }}
+            />
+          </View>
+          ) : null
+        ) : athleteCards.length > 0 ? (
           <View style={styles.section}>
             <SectionHeader title="Shop by athlete" />
             <View style={[styles.athletes, styles.padded]}>

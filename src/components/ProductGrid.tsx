@@ -8,6 +8,9 @@ import type { CatalogQuery } from '@/src/api/types';
 import { ProductCard } from '@/src/components/ProductCard';
 import { Chip, EmptyState, ErrorState, SkeletonBlock, SkeletonGrid } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
+import { audienceNodes, localized } from '@/src/lib/storefront/adapt';
+import { AudienceChips } from '@/src/lib/storefront/feedSections';
+import { useStorefront } from '@/src/lib/storefront/provider';
 import { makeStyles, useTheme } from '@/src/lib/theme';
 import { fonts, space } from '@/src/theme';
 
@@ -26,7 +29,9 @@ const AUDIENCES = [
 ] as const;
 
 export function ProductGrid({ query, emptyMessage, emptyAction, showFilters }: Props) {
-  const { t } = useLocale();
+  const { market, t } = useLocale();
+  const storefront = useStorefront();
+  const language = market === 'eu' ? 'fr' : 'en';
   const { sectionLabel } = useTheme();
   const styles = useStyles();
   const insets = useSafeAreaInsets();
@@ -118,7 +123,23 @@ export function ProductGrid({ query, emptyMessage, emptyAction, showFilters }: P
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
             {query.audience
               ? null
-              : AUDIENCES.map((item) => (
+              : storefront.enabled
+                ? (
+                  <AudienceChips
+                    tiles={
+                      storefront.feed
+                        ? audienceNodes(storefront.feed).map((node) => ({
+                            key: node.key,
+                            label: localized(node.title, language),
+                          }))
+                        : []
+                    }
+                    allLabel={t('common.all')}
+                    selected={audience}
+                    onSelect={setAudience}
+                  />
+                )
+                : AUDIENCES.map((item) => (
                   <Chip
                     key={item.labelKey}
                     label={t(item.labelKey)}

@@ -1,4 +1,5 @@
 import { validateMobileStorefront } from './contract.ts';
+import { acceptSnapshot, readApprovedSnapshot } from './snapshot.ts';
 import type { MobileStorefront } from './types.ts';
 
 export const STOREFRONT_CACHE_KEY = 'rappi-storefront-feed';
@@ -60,6 +61,8 @@ export async function resolveStorefront(options: {
   apiUrl: string | undefined;
   store: StorefrontStore;
   fetchFeed: () => Promise<unknown>;
+  /** Last resort when the network fails and there is no cached feed. */
+  readSnapshot?: () => Promise<unknown | null>;
 }): Promise<MobileStorefront | null> {
   if (!options.enabled) return null;
   const cached = await readCached(options.store);
@@ -75,6 +78,12 @@ export async function resolveStorefront(options: {
     }
     return parsed.value;
   } catch {
-    return cached;
+    if (cached) return cached;
+    try {
+      const read = options.readSnapshot ?? readApprovedSnapshot;
+      return acceptSnapshot(await read());
+    } catch {
+      return null;
+    }
   }
 }

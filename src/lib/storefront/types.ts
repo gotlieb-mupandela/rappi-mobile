@@ -1,4 +1,8 @@
-/** Wire shape of MobileStorefront from rappi-webapp PR 98 at ac533ee. Routes are not part of the payload. */
+/**
+ * Wire shape of MobileStorefront.
+ * The document includes span, tone, slug, and audiences from the web feed revision recorded in data/web-pin.json.
+ * Routes are not part of the payload.
+ */
 
 export type LocalizedText = {
   en: string;
@@ -6,6 +10,14 @@ export type LocalizedText = {
 };
 
 export type StorefrontNodeKind = 'menu' | 'folder' | 'category' | 'audience' | 'tile';
+
+/** One audience row on a category node. target is an exact fixed path. */
+export type StorefrontAudienceRef = {
+  id: string;
+  label: LocalizedText;
+  count: number;
+  target: string;
+};
 
 export type StorefrontNode = {
   key: string;
@@ -20,6 +32,14 @@ export type StorefrontNode = {
   count: number;
   group: string | null;
   tiles: string[];
+  /** Home tiles only. 1 or 2, or null when this node is not a home tile. */
+  span: 1 | 2 | null;
+  /** Home tiles only. dark or light, or null when this node is not a home tile. */
+  tone: 'dark' | 'light' | null;
+  /** Audience nodes only. men, women, or kids. Null on every other kind. */
+  slug: string | null;
+  /** Per-hub audiences from the feed. Empty when the category has one or none. */
+  audiences: StorefrontAudienceRef[];
 };
 
 export type StorefrontShipping = {

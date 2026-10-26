@@ -9,6 +9,7 @@ import { categoryName, HOME_TILES } from '@/src/lib/categories';
 import { tapHaptic } from '@/src/lib/haptics';
 import { homeTiles, localized } from '@/src/lib/storefront/adapt';
 import { resolveTarget } from '@/src/lib/storefront/contract';
+import { HomeFeed } from '@/src/lib/storefront/feedSections';
 import { openStorefrontRoute } from '@/src/lib/storefront/open';
 import { useStorefront } from '@/src/lib/storefront/provider';
 import { makeStyles } from '@/src/lib/theme';
@@ -21,42 +22,31 @@ export default function HomeScreen() {
   const styles = useStyles();
   const storefront = useStorefront();
   const language = market === 'eu' ? 'fr' : 'en';
-  const feedTiles = storefront.enabled && storefront.feed ? homeTiles(storefront.feed) : [];
-  if (feedTiles.length > 0) {
+  if (storefront.enabled) {
+    const tiles = storefront.feed
+      ? homeTiles(storefront.feed).map((tile) => ({
+          key: tile.key,
+          label: localized(tile.title, language),
+          image: tile.image,
+          span: tile.span,
+          tone: tile.tone,
+        }))
+      : [];
+    const status = storefront.feed ? 'ready' : storefront.loading || !storefront.ready ? 'loading' : 'unavailable';
     return (
       <Screen wordmark right={<WishlistNavButton />}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.grid}>
-            {feedTiles.map((tile) => {
-              const label = localized(tile.title, language);
-              const route = resolveTarget(tile.target);
-              return (
-                <Pressable
-                  key={tile.key}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('home.shop', { name: label })}
-                  onPress={() => {
-                    if (!route) return;
-                    tapHaptic();
-                    openStorefrontRoute(route, label, [label]);
-                  }}
-                  style={({ pressed }) => [styles.tile, styles.half, pressed && styles.tilePressed]}>
-                  {tile.image ? (
-                    <Image source={{ uri: tile.image }} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={250} />
-                  ) : null}
-                  {SCRIM_STEPS.map((height) => (
-                    <View key={height} pointerEvents="none" style={[styles.scrim, { height: `${height}%` }]} />
-                  ))}
-                  <View pointerEvents="none" style={styles.labelBottom}>
-                    <Text style={styles.label} numberOfLines={1}>
-                      {label}
-                    </Text>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-        </ScrollView>
+        <HomeFeed
+          status={status}
+          tiles={tiles}
+          onRetry={() => storefront.reload()}
+          onOpen={(key, label) => {
+            const tile = storefront.feed ? homeTiles(storefront.feed).find((item) => item.key === key) : undefined;
+            const route = tile ? resolveTarget(tile.target) : null;
+            if (!route) return;
+            tapHaptic();
+            openStorefrontRoute(route, label, [label]);
+          }}
+        />
       </Screen>
     );
   }

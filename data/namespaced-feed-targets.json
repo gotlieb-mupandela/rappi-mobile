@@ -1,0 +1,1170 @@
+[
+  {
+    "id": "sportswear--men",
+    "href": "/shop/sportswear?audience=men"
+  },
+  {
+    "id": "sportswear--women",
+    "href": "/shop/sportswear?audience=women"
+  },
+  {
+    "id": "sportswear--kids",
+    "href": "/shop/sportswear?audience=kids"
+  },
+  {
+    "id": "sportswear--shirts",
+    "href": "/shop/sportswear?group=shirts"
+  },
+  {
+    "id": "sportswear--jackets",
+    "href": "/shop/sportswear?group=jackets"
+  },
+  {
+    "id": "sportswear--shorts",
+    "href": "/shop/sportswear?group=shorts"
+  },
+  {
+    "id": "sportswear--pants",
+    "href": "/shop/sportswear?group=pants"
+  },
+  {
+    "id": "sportswear--dresses",
+    "href": "/shop/sportswear?group=dresses"
+  },
+  {
+    "id": "sportswear--skirts",
+    "href": "/shop/sportswear?group=skirts"
+  },
+  {
+    "id": "sportswear--bras",
+    "href": "/shop/sportswear?group=bras"
+  },
+  {
+    "id": "sportswear--swimwear",
+    "href": "/shop/sportswear?group=swimwear"
+  },
+  {
+    "id": "sportswear--shoes",
+    "href": "/shop/sportswear?group=shoes"
+  },
+  {
+    "id": "sportswear--accessories",
+    "href": "/shop/sportswear?group=accessories"
+  },
+  {
+    "id": "sportswear--equipment",
+    "href": "/shop/sportswear?group=equipment"
+  },
+  {
+    "id": "football--men",
+    "href": "/shop/football?audience=men"
+  },
+  {
+    "id": "football--women",
+    "href": "/shop/football?audience=women"
+  },
+  {
+    "id": "football--kids",
+    "href": "/shop/football?audience=kids"
+  },
+  {
+    "id": "football--shirts",
+    "href": "/shop/football?group=shirts"
+  },
+  {
+    "id": "football--jackets",
+    "href": "/shop/football?group=jackets"
+  },
+  {
+    "id": "football--shorts",
+    "href": "/shop/football?group=shorts"
+  },
+  {
+    "id": "football--pants",
+    "href": "/shop/football?group=pants"
+  },
+  {
+    "id": "football--dresses",
+    "href": "/shop/football?group=dresses"
+  },
+  {
+    "id": "football--skirts",
+    "href": "/shop/football?group=skirts"
+  },
+  {
+    "id": "football--bras",
+    "href": "/shop/football?group=bras"
+  },
+  {
+    "id": "football--swimwear",
+    "href": "/shop/football?group=swimwear"
+  },
+  {
+    "id": "football--shoes",
+    "href": "/shop/football?group=shoes"
+  },
+  {
+    "id": "football--accessories",
+    "href": "/shop/football?group=accessories"
+  },
+  {
+    "id": "football--equipment",
+    "href": "/shop/football?group=equipment"
+  },
+  {
+    "id": "football--tw-football-tshirts",
+    "href": "/shop/football?group=tw-football-tshirts"
+  },
+  {
+    "id": "football--tw-football-sets",
+    "href": "/shop/football?group=tw-football-sets"
+  },
+  {
+    "id": "football--tw-football-outlet",
+    "href": "/shop/football?group=tw-football-outlet"
+  },
+  {
+    "id": "football--tw-pants-corto",
+    "href": "/shop/football?group=tw-pants-corto"
+  },
+  {
+    "id": "football--tw-medias",
+    "href": "/shop/football?group=tw-medias"
+  },
+  {
+    "id": "football--tw-accessories",
+    "href": "/shop/football?group=tw-accessories"
+  },
+  {
+    "id": "basketball--men",
+    "href": "/shop/basketball?audience=men"
+  },
+  {
+    "id": "basketball--women",
+    "href": "/shop/basketball?audience=women"
+  },
+  {
+    "id": "basketball--kids",
+    "href": "/shop/basketball?audience=kids"
+  },
+  {
+    "id": "basketball--shirts",
+    "href": "/shop/basketball?group=shirts"
+  },
+  {
+    "id": "basketball--jackets",
+    "href": "/shop/basketball?group=jackets"
+  },
+  {
+    "id": "basketball--shorts",
+    "href": "/shop/basketball?group=shorts"
+  },
+  {
+    "id": "basketball--pants",
+    "href": "/shop/basketball?group=pants"
+  },
+  {
+    "id": "basketball--dresses",
+    "href": "/shop/basketball?group=dresses"
+  },
+  {
+    "id": "basketball--skirts",
+    "href": "/shop/basketball?group=skirts"
+  },
+  {
+    "id": "basketball--bras",
+    "href": "/shop/basketball?group=bras"
+  },
+  {
+    "id": "basketball--swimwear",
+    "href": "/shop/basketball?group=swimwear"
+  },
+  {
+    "id": "basketball--shoes",
+    "href": "/shop/basketball?group=shoes"
+  },
+  {
+    "id": "basketball--accessories",
+    "href": "/shop/basketball?group=accessories"
+  },
+  {
+    "id": "basketball--equipment",
+    "href": "/shop/basketball?group=equipment"
+  },
+  {
+    "id": "basketball--twb-phoenix-iii",
+    "href": "/shop/basketball?group=twb-phoenix-iii"
+  },
+  {
+    "id": "basketball--twb-final-four-set",
+    "href": "/shop/basketball?group=twb-final-four-set"
+  },
+  {
+    "id": "basketball--twb-lider-set",
+    "href": "/shop/basketball?group=twb-lider-set"
+  },
+  {
+    "id": "basketball--twb-cancha",
+    "href": "/shop/basketball?group=twb-cancha"
+  },
+  {
+    "id": "basketball--twb-final-ii-set",
+    "href": "/shop/basketball?group=twb-final-ii-set"
+  },
+  {
+    "id": "basketball--twb-atlanta-set",
+    "href": "/shop/basketball?group=twb-atlanta-set"
+  },
+  {
+    "id": "basketball--twb-cancha-iii",
+    "href": "/shop/basketball?group=twb-cancha-iii"
+  },
+  {
+    "id": "basketball--twb-kansas-set",
+    "href": "/shop/basketball?group=twb-kansas-set"
+  },
+  {
+    "id": "basketball--twb-olimpiada-set",
+    "href": "/shop/basketball?group=twb-olimpiada-set"
+  },
+  {
+    "id": "basketball--twb-aro",
+    "href": "/shop/basketball?group=twb-aro"
+  },
+  {
+    "id": "basketball--twb-combi",
+    "href": "/shop/basketball?group=twb-combi"
+  },
+  {
+    "id": "basketball--twb-pants",
+    "href": "/shop/basketball?group=twb-pants"
+  },
+  {
+    "id": "basketball--twb-accessories",
+    "href": "/shop/basketball?group=twb-accessories"
+  },
+  {
+    "id": "netball--men",
+    "href": "/shop/netball?audience=men"
+  },
+  {
+    "id": "netball--women",
+    "href": "/shop/netball?audience=women"
+  },
+  {
+    "id": "netball--kids",
+    "href": "/shop/netball?audience=kids"
+  },
+  {
+    "id": "netball--shirts",
+    "href": "/shop/netball?group=shirts"
+  },
+  {
+    "id": "netball--jackets",
+    "href": "/shop/netball?group=jackets"
+  },
+  {
+    "id": "netball--shorts",
+    "href": "/shop/netball?group=shorts"
+  },
+  {
+    "id": "netball--pants",
+    "href": "/shop/netball?group=pants"
+  },
+  {
+    "id": "netball--dresses",
+    "href": "/shop/netball?group=dresses"
+  },
+  {
+    "id": "netball--skirts",
+    "href": "/shop/netball?group=skirts"
+  },
+  {
+    "id": "netball--bras",
+    "href": "/shop/netball?group=bras"
+  },
+  {
+    "id": "netball--swimwear",
+    "href": "/shop/netball?group=swimwear"
+  },
+  {
+    "id": "netball--shoes",
+    "href": "/shop/netball?group=shoes"
+  },
+  {
+    "id": "netball--accessories",
+    "href": "/shop/netball?group=accessories"
+  },
+  {
+    "id": "netball--equipment",
+    "href": "/shop/netball?group=equipment"
+  },
+  {
+    "id": "swimming--men",
+    "href": "/shop/swimming?audience=men"
+  },
+  {
+    "id": "swimming--women",
+    "href": "/shop/swimming?audience=women"
+  },
+  {
+    "id": "swimming--kids",
+    "href": "/shop/swimming?audience=kids"
+  },
+  {
+    "id": "swimming--shirts",
+    "href": "/shop/swimming?group=shirts"
+  },
+  {
+    "id": "swimming--jackets",
+    "href": "/shop/swimming?group=jackets"
+  },
+  {
+    "id": "swimming--shorts",
+    "href": "/shop/swimming?group=shorts"
+  },
+  {
+    "id": "swimming--pants",
+    "href": "/shop/swimming?group=pants"
+  },
+  {
+    "id": "swimming--dresses",
+    "href": "/shop/swimming?group=dresses"
+  },
+  {
+    "id": "swimming--skirts",
+    "href": "/shop/swimming?group=skirts"
+  },
+  {
+    "id": "swimming--bras",
+    "href": "/shop/swimming?group=bras"
+  },
+  {
+    "id": "swimming--swimwear",
+    "href": "/shop/swimming?group=swimwear"
+  },
+  {
+    "id": "swimming--shoes",
+    "href": "/shop/swimming?group=shoes"
+  },
+  {
+    "id": "swimming--accessories",
+    "href": "/shop/swimming?group=accessories"
+  },
+  {
+    "id": "swimming--equipment",
+    "href": "/shop/swimming?group=equipment"
+  },
+  {
+    "id": "rugby--men",
+    "href": "/shop/rugby?audience=men"
+  },
+  {
+    "id": "rugby--women",
+    "href": "/shop/rugby?audience=women"
+  },
+  {
+    "id": "rugby--kids",
+    "href": "/shop/rugby?audience=kids"
+  },
+  {
+    "id": "rugby--shirts",
+    "href": "/shop/rugby?group=shirts"
+  },
+  {
+    "id": "rugby--jackets",
+    "href": "/shop/rugby?group=jackets"
+  },
+  {
+    "id": "rugby--shorts",
+    "href": "/shop/rugby?group=shorts"
+  },
+  {
+    "id": "rugby--pants",
+    "href": "/shop/rugby?group=pants"
+  },
+  {
+    "id": "rugby--dresses",
+    "href": "/shop/rugby?group=dresses"
+  },
+  {
+    "id": "rugby--skirts",
+    "href": "/shop/rugby?group=skirts"
+  },
+  {
+    "id": "rugby--bras",
+    "href": "/shop/rugby?group=bras"
+  },
+  {
+    "id": "rugby--swimwear",
+    "href": "/shop/rugby?group=swimwear"
+  },
+  {
+    "id": "rugby--shoes",
+    "href": "/shop/rugby?group=shoes"
+  },
+  {
+    "id": "rugby--accessories",
+    "href": "/shop/rugby?group=accessories"
+  },
+  {
+    "id": "rugby--equipment",
+    "href": "/shop/rugby?group=equipment"
+  },
+  {
+    "id": "rugby--twr-phoenix-iii",
+    "href": "/shop/rugby?group=twr-phoenix-iii"
+  },
+  {
+    "id": "rugby--twr-myskin-iii",
+    "href": "/shop/rugby?group=twr-myskin-iii"
+  },
+  {
+    "id": "rugby--twr-stimulus",
+    "href": "/shop/rugby?group=twr-stimulus"
+  },
+  {
+    "id": "rugby--twr-nation",
+    "href": "/shop/rugby?group=twr-nation"
+  },
+  {
+    "id": "rugby--twr-teamwork",
+    "href": "/shop/rugby?group=twr-teamwork"
+  },
+  {
+    "id": "rugby--twr-skrum",
+    "href": "/shop/rugby?group=twr-skrum"
+  },
+  {
+    "id": "rugby--twr-olimpiada",
+    "href": "/shop/rugby?group=twr-olimpiada"
+  },
+  {
+    "id": "rugby--twr-strong",
+    "href": "/shop/rugby?group=twr-strong"
+  },
+  {
+    "id": "rugby--twr-pants",
+    "href": "/shop/rugby?group=twr-pants"
+  },
+  {
+    "id": "rugby--twr-accessories",
+    "href": "/shop/rugby?group=twr-accessories"
+  },
+  {
+    "id": "cricket--men",
+    "href": "/shop/cricket?audience=men"
+  },
+  {
+    "id": "cricket--women",
+    "href": "/shop/cricket?audience=women"
+  },
+  {
+    "id": "cricket--kids",
+    "href": "/shop/cricket?audience=kids"
+  },
+  {
+    "id": "cricket--shirts",
+    "href": "/shop/cricket?group=shirts"
+  },
+  {
+    "id": "cricket--jackets",
+    "href": "/shop/cricket?group=jackets"
+  },
+  {
+    "id": "cricket--shorts",
+    "href": "/shop/cricket?group=shorts"
+  },
+  {
+    "id": "cricket--pants",
+    "href": "/shop/cricket?group=pants"
+  },
+  {
+    "id": "cricket--dresses",
+    "href": "/shop/cricket?group=dresses"
+  },
+  {
+    "id": "cricket--skirts",
+    "href": "/shop/cricket?group=skirts"
+  },
+  {
+    "id": "cricket--bras",
+    "href": "/shop/cricket?group=bras"
+  },
+  {
+    "id": "cricket--swimwear",
+    "href": "/shop/cricket?group=swimwear"
+  },
+  {
+    "id": "cricket--shoes",
+    "href": "/shop/cricket?group=shoes"
+  },
+  {
+    "id": "cricket--accessories",
+    "href": "/shop/cricket?group=accessories"
+  },
+  {
+    "id": "cricket--equipment",
+    "href": "/shop/cricket?group=equipment"
+  },
+  {
+    "id": "boxing--men",
+    "href": "/shop/boxing?audience=men"
+  },
+  {
+    "id": "boxing--women",
+    "href": "/shop/boxing?audience=women"
+  },
+  {
+    "id": "boxing--kids",
+    "href": "/shop/boxing?audience=kids"
+  },
+  {
+    "id": "boxing--shirts",
+    "href": "/shop/boxing?group=shirts"
+  },
+  {
+    "id": "boxing--jackets",
+    "href": "/shop/boxing?group=jackets"
+  },
+  {
+    "id": "boxing--shorts",
+    "href": "/shop/boxing?group=shorts"
+  },
+  {
+    "id": "boxing--pants",
+    "href": "/shop/boxing?group=pants"
+  },
+  {
+    "id": "boxing--dresses",
+    "href": "/shop/boxing?group=dresses"
+  },
+  {
+    "id": "boxing--skirts",
+    "href": "/shop/boxing?group=skirts"
+  },
+  {
+    "id": "boxing--bras",
+    "href": "/shop/boxing?group=bras"
+  },
+  {
+    "id": "boxing--swimwear",
+    "href": "/shop/boxing?group=swimwear"
+  },
+  {
+    "id": "boxing--shoes",
+    "href": "/shop/boxing?group=shoes"
+  },
+  {
+    "id": "boxing--accessories",
+    "href": "/shop/boxing?group=accessories"
+  },
+  {
+    "id": "boxing--equipment",
+    "href": "/shop/boxing?group=equipment"
+  },
+  {
+    "id": "hockey--men",
+    "href": "/shop/hockey?audience=men"
+  },
+  {
+    "id": "hockey--women",
+    "href": "/shop/hockey?audience=women"
+  },
+  {
+    "id": "hockey--kids",
+    "href": "/shop/hockey?audience=kids"
+  },
+  {
+    "id": "hockey--shirts",
+    "href": "/shop/hockey?group=shirts"
+  },
+  {
+    "id": "hockey--jackets",
+    "href": "/shop/hockey?group=jackets"
+  },
+  {
+    "id": "hockey--shorts",
+    "href": "/shop/hockey?group=shorts"
+  },
+  {
+    "id": "hockey--pants",
+    "href": "/shop/hockey?group=pants"
+  },
+  {
+    "id": "hockey--dresses",
+    "href": "/shop/hockey?group=dresses"
+  },
+  {
+    "id": "hockey--skirts",
+    "href": "/shop/hockey?group=skirts"
+  },
+  {
+    "id": "hockey--bras",
+    "href": "/shop/hockey?group=bras"
+  },
+  {
+    "id": "hockey--swimwear",
+    "href": "/shop/hockey?group=swimwear"
+  },
+  {
+    "id": "hockey--shoes",
+    "href": "/shop/hockey?group=shoes"
+  },
+  {
+    "id": "hockey--accessories",
+    "href": "/shop/hockey?group=accessories"
+  },
+  {
+    "id": "hockey--equipment",
+    "href": "/shop/hockey?group=equipment"
+  },
+  {
+    "id": "running-fitness--men",
+    "href": "/shop/running-fitness?audience=men"
+  },
+  {
+    "id": "running-fitness--women",
+    "href": "/shop/running-fitness?audience=women"
+  },
+  {
+    "id": "running-fitness--kids",
+    "href": "/shop/running-fitness?audience=kids"
+  },
+  {
+    "id": "running-fitness--shirts",
+    "href": "/shop/running-fitness?group=shirts"
+  },
+  {
+    "id": "running-fitness--jackets",
+    "href": "/shop/running-fitness?group=jackets"
+  },
+  {
+    "id": "running-fitness--shorts",
+    "href": "/shop/running-fitness?group=shorts"
+  },
+  {
+    "id": "running-fitness--pants",
+    "href": "/shop/running-fitness?group=pants"
+  },
+  {
+    "id": "running-fitness--dresses",
+    "href": "/shop/running-fitness?group=dresses"
+  },
+  {
+    "id": "running-fitness--skirts",
+    "href": "/shop/running-fitness?group=skirts"
+  },
+  {
+    "id": "running-fitness--bras",
+    "href": "/shop/running-fitness?group=bras"
+  },
+  {
+    "id": "running-fitness--swimwear",
+    "href": "/shop/running-fitness?group=swimwear"
+  },
+  {
+    "id": "running-fitness--shoes",
+    "href": "/shop/running-fitness?group=shoes"
+  },
+  {
+    "id": "running-fitness--accessories",
+    "href": "/shop/running-fitness?group=accessories"
+  },
+  {
+    "id": "running-fitness--equipment",
+    "href": "/shop/running-fitness?group=equipment"
+  },
+  {
+    "id": "running-fitness--jp-1124524088",
+    "href": "/shop/running-fitness?group=jp-1124524088"
+  },
+  {
+    "id": "running-fitness--rt-previous",
+    "href": "/shop/running-fitness?group=rt-previous"
+  },
+  {
+    "id": "running-fitness--rt-teamwear-collections",
+    "href": "/shop/running-fitness?group=rt-teamwear-collections"
+  },
+  {
+    "id": "running-fitness--rt-in-stock",
+    "href": "/shop/running-fitness?group=rt-in-stock"
+  },
+  {
+    "id": "brama--men",
+    "href": "/shop/brama?audience=men"
+  },
+  {
+    "id": "brama--women",
+    "href": "/shop/brama?audience=women"
+  },
+  {
+    "id": "brama--kids",
+    "href": "/shop/brama?audience=kids"
+  },
+  {
+    "id": "brama--shirts",
+    "href": "/shop/brama?group=shirts"
+  },
+  {
+    "id": "brama--jackets",
+    "href": "/shop/brama?group=jackets"
+  },
+  {
+    "id": "brama--shorts",
+    "href": "/shop/brama?group=shorts"
+  },
+  {
+    "id": "brama--pants",
+    "href": "/shop/brama?group=pants"
+  },
+  {
+    "id": "brama--dresses",
+    "href": "/shop/brama?group=dresses"
+  },
+  {
+    "id": "brama--skirts",
+    "href": "/shop/brama?group=skirts"
+  },
+  {
+    "id": "brama--bras",
+    "href": "/shop/brama?group=bras"
+  },
+  {
+    "id": "brama--swimwear",
+    "href": "/shop/brama?group=swimwear"
+  },
+  {
+    "id": "brama--shoes",
+    "href": "/shop/brama?group=shoes"
+  },
+  {
+    "id": "brama--accessories",
+    "href": "/shop/brama?group=accessories"
+  },
+  {
+    "id": "brama--equipment",
+    "href": "/shop/brama?group=equipment"
+  },
+  {
+    "id": "padel--men",
+    "href": "/shop/padel?audience=men"
+  },
+  {
+    "id": "padel--women",
+    "href": "/shop/padel?audience=women"
+  },
+  {
+    "id": "padel--kids",
+    "href": "/shop/padel?audience=kids"
+  },
+  {
+    "id": "padel--shirts",
+    "href": "/shop/padel?group=shirts"
+  },
+  {
+    "id": "padel--jackets",
+    "href": "/shop/padel?group=jackets"
+  },
+  {
+    "id": "padel--shorts",
+    "href": "/shop/padel?group=shorts"
+  },
+  {
+    "id": "padel--pants",
+    "href": "/shop/padel?group=pants"
+  },
+  {
+    "id": "padel--dresses",
+    "href": "/shop/padel?group=dresses"
+  },
+  {
+    "id": "padel--skirts",
+    "href": "/shop/padel?group=skirts"
+  },
+  {
+    "id": "padel--bras",
+    "href": "/shop/padel?group=bras"
+  },
+  {
+    "id": "padel--swimwear",
+    "href": "/shop/padel?group=swimwear"
+  },
+  {
+    "id": "padel--shoes",
+    "href": "/shop/padel?group=shoes"
+  },
+  {
+    "id": "padel--accessories",
+    "href": "/shop/padel?group=accessories"
+  },
+  {
+    "id": "padel--equipment",
+    "href": "/shop/padel?group=equipment"
+  },
+  {
+    "id": "padel--jp-6126919d25",
+    "href": "/shop/padel?group=jp-6126919d25"
+  },
+  {
+    "id": "padel--rk-in-stock",
+    "href": "/shop/padel?group=rk-in-stock"
+  },
+  {
+    "id": "padel--rk-previous",
+    "href": "/shop/padel?group=rk-previous"
+  },
+  {
+    "id": "padel--rk-teamwear-collections",
+    "href": "/shop/padel?group=rk-teamwear-collections"
+  },
+  {
+    "id": "hiking--men",
+    "href": "/shop/hiking?audience=men"
+  },
+  {
+    "id": "hiking--women",
+    "href": "/shop/hiking?audience=women"
+  },
+  {
+    "id": "hiking--kids",
+    "href": "/shop/hiking?audience=kids"
+  },
+  {
+    "id": "hiking--shirts",
+    "href": "/shop/hiking?group=shirts"
+  },
+  {
+    "id": "hiking--jackets",
+    "href": "/shop/hiking?group=jackets"
+  },
+  {
+    "id": "hiking--shorts",
+    "href": "/shop/hiking?group=shorts"
+  },
+  {
+    "id": "hiking--pants",
+    "href": "/shop/hiking?group=pants"
+  },
+  {
+    "id": "hiking--dresses",
+    "href": "/shop/hiking?group=dresses"
+  },
+  {
+    "id": "hiking--skirts",
+    "href": "/shop/hiking?group=skirts"
+  },
+  {
+    "id": "hiking--bras",
+    "href": "/shop/hiking?group=bras"
+  },
+  {
+    "id": "hiking--swimwear",
+    "href": "/shop/hiking?group=swimwear"
+  },
+  {
+    "id": "hiking--shoes",
+    "href": "/shop/hiking?group=shoes"
+  },
+  {
+    "id": "hiking--accessories",
+    "href": "/shop/hiking?group=accessories"
+  },
+  {
+    "id": "hiking--equipment",
+    "href": "/shop/hiking?group=equipment"
+  },
+  {
+    "id": "hiking--jp-637bed87eb",
+    "href": "/shop/hiking?group=jp-637bed87eb"
+  },
+  {
+    "id": "hiking--hk-in-stock",
+    "href": "/shop/hiking?group=hk-in-stock"
+  },
+  {
+    "id": "hiking--hk-previous",
+    "href": "/shop/hiking?group=hk-previous"
+  },
+  {
+    "id": "resort--men",
+    "href": "/shop/resort?audience=men"
+  },
+  {
+    "id": "resort--women",
+    "href": "/shop/resort?audience=women"
+  },
+  {
+    "id": "resort--kids",
+    "href": "/shop/resort?audience=kids"
+  },
+  {
+    "id": "resort--shirts",
+    "href": "/shop/resort?group=shirts"
+  },
+  {
+    "id": "resort--jackets",
+    "href": "/shop/resort?group=jackets"
+  },
+  {
+    "id": "resort--shorts",
+    "href": "/shop/resort?group=shorts"
+  },
+  {
+    "id": "resort--pants",
+    "href": "/shop/resort?group=pants"
+  },
+  {
+    "id": "resort--dresses",
+    "href": "/shop/resort?group=dresses"
+  },
+  {
+    "id": "resort--skirts",
+    "href": "/shop/resort?group=skirts"
+  },
+  {
+    "id": "resort--bras",
+    "href": "/shop/resort?group=bras"
+  },
+  {
+    "id": "resort--swimwear",
+    "href": "/shop/resort?group=swimwear"
+  },
+  {
+    "id": "resort--shoes",
+    "href": "/shop/resort?group=shoes"
+  },
+  {
+    "id": "resort--accessories",
+    "href": "/shop/resort?group=accessories"
+  },
+  {
+    "id": "resort--equipment",
+    "href": "/shop/resort?group=equipment"
+  },
+  {
+    "id": "lifestyle--men",
+    "href": "/shop/lifestyle?audience=men"
+  },
+  {
+    "id": "lifestyle--women",
+    "href": "/shop/lifestyle?audience=women"
+  },
+  {
+    "id": "lifestyle--kids",
+    "href": "/shop/lifestyle?audience=kids"
+  },
+  {
+    "id": "lifestyle--shirts",
+    "href": "/shop/lifestyle?group=shirts"
+  },
+  {
+    "id": "lifestyle--jackets",
+    "href": "/shop/lifestyle?group=jackets"
+  },
+  {
+    "id": "lifestyle--shorts",
+    "href": "/shop/lifestyle?group=shorts"
+  },
+  {
+    "id": "lifestyle--pants",
+    "href": "/shop/lifestyle?group=pants"
+  },
+  {
+    "id": "lifestyle--dresses",
+    "href": "/shop/lifestyle?group=dresses"
+  },
+  {
+    "id": "lifestyle--skirts",
+    "href": "/shop/lifestyle?group=skirts"
+  },
+  {
+    "id": "lifestyle--bras",
+    "href": "/shop/lifestyle?group=bras"
+  },
+  {
+    "id": "lifestyle--swimwear",
+    "href": "/shop/lifestyle?group=swimwear"
+  },
+  {
+    "id": "lifestyle--shoes",
+    "href": "/shop/lifestyle?group=shoes"
+  },
+  {
+    "id": "lifestyle--accessories",
+    "href": "/shop/lifestyle?group=accessories"
+  },
+  {
+    "id": "lifestyle--equipment",
+    "href": "/shop/lifestyle?group=equipment"
+  },
+  {
+    "id": "teampro-2026--men",
+    "href": "/shop/teampro-2026?audience=men"
+  },
+  {
+    "id": "teampro-2026--women",
+    "href": "/shop/teampro-2026?audience=women"
+  },
+  {
+    "id": "teampro-2026--kids",
+    "href": "/shop/teampro-2026?audience=kids"
+  },
+  {
+    "id": "teampro-2026--shirts",
+    "href": "/shop/teampro-2026?group=shirts"
+  },
+  {
+    "id": "teampro-2026--jackets",
+    "href": "/shop/teampro-2026?group=jackets"
+  },
+  {
+    "id": "teampro-2026--shorts",
+    "href": "/shop/teampro-2026?group=shorts"
+  },
+  {
+    "id": "teampro-2026--pants",
+    "href": "/shop/teampro-2026?group=pants"
+  },
+  {
+    "id": "teampro-2026--dresses",
+    "href": "/shop/teampro-2026?group=dresses"
+  },
+  {
+    "id": "teampro-2026--skirts",
+    "href": "/shop/teampro-2026?group=skirts"
+  },
+  {
+    "id": "teampro-2026--bras",
+    "href": "/shop/teampro-2026?group=bras"
+  },
+  {
+    "id": "teampro-2026--swimwear",
+    "href": "/shop/teampro-2026?group=swimwear"
+  },
+  {
+    "id": "teampro-2026--shoes",
+    "href": "/shop/teampro-2026?group=shoes"
+  },
+  {
+    "id": "teampro-2026--accessories",
+    "href": "/shop/teampro-2026?group=accessories"
+  },
+  {
+    "id": "teampro-2026--equipment",
+    "href": "/shop/teampro-2026?group=equipment"
+  },
+  {
+    "id": "shoes--men",
+    "href": "/shop/shoes?audience=men"
+  },
+  {
+    "id": "shoes--women",
+    "href": "/shop/shoes?audience=women"
+  },
+  {
+    "id": "shoes--kids",
+    "href": "/shop/shoes?audience=kids"
+  },
+  {
+    "id": "shoes--shirts",
+    "href": "/shop/shoes?group=shirts"
+  },
+  {
+    "id": "shoes--jackets",
+    "href": "/shop/shoes?group=jackets"
+  },
+  {
+    "id": "shoes--shorts",
+    "href": "/shop/shoes?group=shorts"
+  },
+  {
+    "id": "shoes--pants",
+    "href": "/shop/shoes?group=pants"
+  },
+  {
+    "id": "shoes--dresses",
+    "href": "/shop/shoes?group=dresses"
+  },
+  {
+    "id": "shoes--skirts",
+    "href": "/shop/shoes?group=skirts"
+  },
+  {
+    "id": "shoes--bras",
+    "href": "/shop/shoes?group=bras"
+  },
+  {
+    "id": "shoes--swimwear",
+    "href": "/shop/shoes?group=swimwear"
+  },
+  {
+    "id": "shoes--shoes",
+    "href": "/shop/shoes?group=shoes"
+  },
+  {
+    "id": "shoes--accessories",
+    "href": "/shop/shoes?group=accessories"
+  },
+  {
+    "id": "shoes--equipment",
+    "href": "/shop/shoes?group=equipment"
+  },
+  {
+    "id": "balls-bags--men",
+    "href": "/shop/balls-bags?audience=men"
+  },
+  {
+    "id": "balls-bags--women",
+    "href": "/shop/balls-bags?audience=women"
+  },
+  {
+    "id": "balls-bags--kids",
+    "href": "/shop/balls-bags?audience=kids"
+  },
+  {
+    "id": "balls-bags--shirts",
+    "href": "/shop/balls-bags?group=shirts"
+  },
+  {
+    "id": "balls-bags--jackets",
+    "href": "/shop/balls-bags?group=jackets"
+  },
+  {
+    "id": "balls-bags--shorts",
+    "href": "/shop/balls-bags?group=shorts"
+  },
+  {
+    "id": "balls-bags--pants",
+    "href": "/shop/balls-bags?group=pants"
+  },
+  {
+    "id": "balls-bags--dresses",
+    "href": "/shop/balls-bags?group=dresses"
+  },
+  {
+    "id": "balls-bags--skirts",
+    "href": "/shop/balls-bags?group=skirts"
+  },
+  {
+    "id": "balls-bags--bras",
+    "href": "/shop/balls-bags?group=bras"
+  },
+  {
+    "id": "balls-bags--swimwear",
+    "href": "/shop/balls-bags?group=swimwear"
+  },
+  {
+    "id": "balls-bags--shoes",
+    "href": "/shop/balls-bags?group=shoes"
+  },
+  {
+    "id": "balls-bags--accessories",
+    "href": "/shop/balls-bags?group=accessories"
+  },
+  {
+    "id": "balls-bags--equipment",
+    "href": "/shop/balls-bags?group=equipment"
+  }
+]

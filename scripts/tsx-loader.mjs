@@ -5,7 +5,7 @@ import ts from 'typescript';
 const stubUrl = pathToFileURL(fileURLToPath(new URL('./rn-stub.tsx', import.meta.url))).href;
 
 export async function resolve(specifier, context, nextResolve) {
-  if (specifier === 'react-native') {
+  if (specifier === 'react-native' || specifier === 'expo-image') {
     return { url: stubUrl, shortCircuit: true };
   }
   return nextResolve(specifier, context);

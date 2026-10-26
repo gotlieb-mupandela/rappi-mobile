@@ -1,13 +1,15 @@
 /**
  * Feed contract for GET /api/mobile/v1/storefront.
- * Types and target paths match rappi-webapp PR 98 at ac533ee05c521c0000dc06e408dc6c25aec30d50.
+ * span, tone, slug, and audiences match rappi-webapp PR 105.
+ * The target table sha is data/web-pin.json. scripts/gen-feed-targets.mjs writes the map.
  * One later web push may adjust how `line` is chosen. This app reads `line` only and never `item`.
- * The target table lives in targets.ts. The released image-map route is GET /api/mobile/storefront.
+ * The released image-map route is GET /api/mobile/storefront.
  */
-import { sanitizeImageUrl } from './images.ts';
+import { feedImageUrl } from './images.ts';
 import type {
   LocalizedText,
   MobileStorefront,
+  StorefrontAudienceRef,
   StorefrontCheckout,
   StorefrontCounts,
   StorefrontCountry,
@@ -23,7 +25,7 @@ export const STOREFRONT_PATH = '/api/mobile/v1/storefront';
 export const STORE_HOST = 'www.rappisportshub.com';
 
 export type { StorefrontRoute } from './types.ts';
-export { HIDDEN_FEED_TARGETS, TARGET_ALIASES, TARGET_ALIAS_KEYS, resolveTarget } from './targets.ts';
+export { HIDDEN_FEED_TARGETS, resolveTarget } from './targets.ts';
 
 export type StorefrontValidation =
   | { ok: true; value: MobileStorefront }
@@ -33,6 +35,7 @@ const KEY = /^[A-Za-z0-9][A-Za-z0-9._-]{0,80}$/;
 const CODE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,64}$/;
 const COUNTRY = /^[A-Z]{2}$/;
 const KINDS = new Set<StorefrontNodeKind>(['menu', 'folder', 'category', 'audience', 'tile']);
+const AUDIENCE_SLUGS = new Set(['men', 'women', 'kids']);
 
 const LIMITS = {
   nodes: 5000,
@@ -101,20 +104,74 @@ function readNode(value: unknown): StorefrontNode | null {
   const description = readCopy(value.description, LIMITS.description, false);
   if (!title || !description) return null;
   if (value.image !== null && value.image !== undefined && typeof value.image !== 'string') return null;
+  const span = readSpan(value.span);
+  const tone = readTone(value.tone);
+  const slug = readSlug(value.slug);
+  const audiences = readAudiences(value.audiences);
+  if (span === undefined || tone === undefined || slug === undefined || !audiences) return null;
+  const kind = value.kind as StorefrontNodeKind;
+  if (kind !== 'audience' && slug !== null) return null;
   return {
     key: value.key,
-    kind: value.kind as StorefrontNodeKind,
+    kind,
     parent: value.parent,
     order: value.order,
     target: value.target,
-    image: sanitizeImageUrl(value.image),
+    image: feedImageUrl(value.image),
     title,
     description,
     hidden: value.hidden,
     count: value.count,
     group: value.group,
     tiles,
+    span,
+    tone,
+    slug,
+    audiences,
   };
+}
+
+/** Missing span is null. A value outside 1 or 2 hides the node. */
+function readSpan(value: unknown): 1 | 2 | null | undefined {
+  if (value === undefined || value === null) return null;
+  if (value === 1 || value === 2) return value;
+  return undefined;
+}
+
+/** Missing tone is null. Any other string hides the node. */
+function readTone(value: unknown): 'dark' | 'light' | null | undefined {
+  if (value === undefined || value === null) return null;
+  if (value === 'dark' || value === 'light') return value;
+  return undefined;
+}
+
+/** Missing slug is null. Only men, women, and kids are audience slugs. */
+function readSlug(value: unknown): string | null | undefined {
+  if (value === undefined || value === null) return null;
+  if (typeof value === 'string' && AUDIENCE_SLUGS.has(value)) return value;
+  return undefined;
+}
+
+/** Missing audiences is an empty list. A bad row is omitted. A non-array hides the node. */
+function readAudiences(value: unknown): StorefrontAudienceRef[] | null {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) return null;
+  const rows: StorefrontAudienceRef[] = [];
+  for (const item of value) {
+    const row = readAudience(item);
+    if (row) rows.push(row);
+  }
+  return rows;
+}
+
+function readAudience(value: unknown): StorefrontAudienceRef | null {
+  if (!isRecord(value)) return null;
+  if (typeof value.id !== 'string' || !KEY.test(value.id)) return null;
+  if (typeof value.target !== 'string' || value.target.length === 0 || value.target.length > 180) return null;
+  if (typeof value.count !== 'number' || !Number.isInteger(value.count) || value.count <= 0 || value.count > 1_000_000) return null;
+  const label = readCopy(value.label, LIMITS.title, true);
+  if (!label || label.fr.trim() === '') return null;
+  return { id: value.id, label, count: value.count, target: value.target };
 }
 
 function readNodes(value: unknown, limit: number): StorefrontNode[] | null {
@@ -206,7 +263,7 @@ function readProduct(value: unknown): StorefrontProduct | null {
   const images: string[] = [];
   for (const image of value.images) {
     if (images.length >= LIMITS.images) break;
-    const clean = sanitizeImageUrl(image);
+    const clean = feedImageUrl(image);
     if (clean) images.push(clean);
   }
   return {
@@ -215,7 +272,7 @@ function readProduct(value: unknown): StorefrontProduct | null {
     labelFr,
     isPack: value.isPack,
     pairCount: value.pairCount,
-    cardImage: sanitizeImageUrl(value.cardImage),
+    cardImage: feedImageUrl(value.cardImage),
     images,
     line,
     category: category.value,

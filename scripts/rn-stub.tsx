@@ -13,6 +13,8 @@ function host(type: string) {
   };
 }
 
+export const Image = host('Image');
+export const ScrollView = host('ScrollView');
 export const View = host('View');
 export const Text = host('Text');
 export const Pressable = host('Pressable');
@@ -23,4 +25,9 @@ export const StyleSheet = {
   },
   hairlineWidth: 1,
 };
-export const Platform = { OS: 'ios' as const };
+export const Platform = {
+  OS: 'ios' as const,
+  select<T>(options: { ios?: T; android?: T; default?: T }): T | undefined {
+    return options.ios ?? options.default;
+  },
+};
