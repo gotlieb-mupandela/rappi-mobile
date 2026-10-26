@@ -8,6 +8,7 @@ import { findMenu, parseMenuPath, resolveMenuPath } from '@/src/lib/menus';
 import { goBack } from '@/src/lib/navigation';
 import { hasVisibleChildren, localized, menuLevel } from '@/src/lib/storefront/adapt';
 import { resolveTarget } from '@/src/lib/storefront/contract';
+import { MenuUnavailable, StorefrontUnavailable } from '@/src/lib/storefront/feedSections';
 import { openStorefrontRoute } from '@/src/lib/storefront/open';
 import { useStorefront } from '@/src/lib/storefront/provider';
 import { fonts, space } from '@/src/theme';
@@ -20,11 +21,23 @@ export default function MenuScreen() {
   const language = market === 'eu' ? 'fr' : 'en';
   const driven = storefront.enabled && storefront.feed ? menuLevel(storefront.feed, params.menu, path) : null;
 
+  if (storefront.enabled && !storefront.feed) {
+    return (
+      <Screen title="Shop" back>
+        <StorefrontUnavailable
+          loading={storefront.loading || !storefront.ready}
+          onRetry={() => storefront.reload()}
+          testID="menu-feed"
+        />
+      </Screen>
+    );
+  }
+
   if (storefront.enabled && storefront.feed) {
     if (!driven) {
       return (
         <Screen title="Shop" back>
-          <EmptyState message="This page isn't available." action="Back" onPress={goBack} />
+          <MenuUnavailable />
         </Screen>
       );
     }

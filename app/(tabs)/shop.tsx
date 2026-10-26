@@ -4,8 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { FolderCard, Screen } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { findMenu, menuImage, NAV_MENU_KEYS, type Menu } from '@/src/lib/menus';
-import { headerMenus, localized } from '@/src/lib/storefront/adapt';
-import { resolveTarget } from '@/src/lib/storefront/contract';
+import { headerMenus, localized, shopTileDestination } from '@/src/lib/storefront/adapt';
 import { ShopFeed } from '@/src/lib/storefront/feedSections';
 import { openStorefrontRoute } from '@/src/lib/storefront/open';
 import { useStorefront } from '@/src/lib/storefront/provider';
@@ -33,10 +32,14 @@ export default function ShopScreen() {
           menus={menus}
           onRetry={() => storefront.reload()}
           onOpen={(key, label) => {
-            const menu = storefront.feed ? headerMenus(storefront.feed).find((item) => item.key === key) : undefined;
-            const route = menu ? resolveTarget(menu.target) : null;
-            if (!route) return;
-            openStorefrontRoute(route, label, [label]);
+            if (!storefront.feed) return;
+            const destination = shopTileDestination(storefront.feed, key);
+            if (!destination) return;
+            if (destination.kind === 'menu') {
+              router.push({ pathname: '/menu/[menu]', params: { menu: destination.menu } });
+              return;
+            }
+            openStorefrontRoute(destination.route, label, [label]);
           }}
         />
       </Screen>

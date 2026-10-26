@@ -6,9 +6,9 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 import { Image, Pressable, Text } from 'react-native';
 
-import { audienceNodes, categoryHubImage, foldersForCategory, headerMenus, homeTiles, localized } from './adapt.ts';
+import { audienceNodes, categoryHubImage, foldersForCategory, headerMenus, homeTiles, localized, shopTileDestination } from './adapt.ts';
 import { validateMobileStorefront } from './contract.ts';
-import { AthleteCards, HomeFeed, HubCover, HubTypeGrid, ShopFeed, type FeedTileModel } from './feedSections.tsx';
+import { AthleteCards, HomeFeed, HubCover, HubTypeGrid, MenuUnavailable, ShopFeed, type FeedTileModel } from './feedSections.tsx';
 import type { MobileStorefront, StorefrontNode } from './types.ts';
 
 function baseFeed(): MobileStorefront {
@@ -109,6 +109,17 @@ test('feed home tiles, shop menus, hub types, audiences and athletes render from
   const kids = tree.root.findAllByType(Pressable).find((item) => item.props.accessibilityLabel === 'Kids');
   assert.ok(kids);
   assert.equal(kids.findAllByType(Image).length, 0);
+  const teams = tree.root.findAllByType(Pressable).find((item) => item.props.accessibilityLabel === 'Teams');
+  assert.ok(teams);
+  const teamsStyle = typeof teams.props.style === 'function' ? teams.props.style({ pressed: false }) : teams.props.style;
+  const tileStyle = Object.assign({}, ...(Array.isArray(teamsStyle) ? teamsStyle.filter(Boolean) : [teamsStyle]));
+  assert.equal(tileStyle.height, 210);
+  assert.equal(tileStyle.width, '48%');
+  const teamsImage = teams.findAllByType(Image)[0];
+  assert.ok(teamsImage);
+  assert.equal(teamsImage.props.contentFit, 'cover');
+  assert.equal(teamsImage.props.style.height, '100%');
+  assert.equal(teamsImage.props.style.width, '100%');
 
   act(() => {
     tree = create(<ShopFeed status="ready" menus={tilesOf(feed, headerMenus(feed))} onRetry={() => undefined} onOpen={() => undefined} />);
@@ -156,4 +167,22 @@ test('a null hub cover shows no image and a missing feed shows retry', () => {
   assert.ok(retry);
   retry.props.onPress();
   assert.equal(retried, 1);
+});
+
+test('a shop tile with children opens the menu level and one without opens its target', () => {
+  const feed = sample();
+  const withChildren = shopTileDestination(feed, 'man');
+  assert.deepEqual(withChildren, { kind: 'menu', menu: 'man' });
+  const leaf = shopTileDestination(feed, 'teams');
+  assert.equal(leaf?.kind, 'target');
+  if (leaf?.kind !== 'target') return;
+  assert.equal(leaf.route.screen, 'menu');
+  assert.equal(shopTileDestination(feed, 'not-a-menu'), null);
+
+  let tree!: ReactTestRenderer;
+  act(() => {
+    tree = create(<MenuUnavailable />);
+  });
+  assert.ok(tree.root.findByProps({ testID: 'menu-unavailable' }));
+  assert.equal(textsOf(tree).includes("This page isn't available."), true);
 });
