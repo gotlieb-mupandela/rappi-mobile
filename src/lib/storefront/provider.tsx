@@ -7,6 +7,7 @@ import { useLocale } from '@/src/i18n/LocaleProvider';
 import { categoryName } from '@/src/lib/categories';
 import { categoryNode, indexProducts, lineByCode, localized } from '@/src/lib/storefront/adapt';
 import { keyValueStore, resolveStorefront } from '@/src/lib/storefront/cache';
+import { readApprovedSnapshot } from '@/src/lib/storefront/snapshot';
 import { productLabel, STOREFRONT_PATH } from '@/src/lib/storefront/contract';
 import { dataDrivenStorefrontEnabled } from '@/src/lib/storefront/flag';
 import type { MobileStorefront, StorefrontProduct } from '@/src/lib/storefront/types';
@@ -60,6 +61,7 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
       store: keyValueStore(AsyncStorage),
       fetchFeed: () => apiFetch<unknown>(STOREFRONT_PATH, { fallbackMessage: "Can't load the shop" }),
+      readSnapshot: readApprovedSnapshot,
     })
       .then((next) => {
         if (!cancel) setFeed(next);

@@ -4,7 +4,7 @@
  * One later web push may adjust how `line` is chosen. This app reads `line` only and never `item`.
  * The target table lives in targets.ts. The released image-map route is GET /api/mobile/storefront.
  */
-import { sanitizeImageUrl } from './images.ts';
+import { feedImageUrl } from './images.ts';
 import type {
   LocalizedText,
   MobileStorefront,
@@ -107,7 +107,7 @@ function readNode(value: unknown): StorefrontNode | null {
     parent: value.parent,
     order: value.order,
     target: value.target,
-    image: sanitizeImageUrl(value.image),
+    image: feedImageUrl(value.image),
     title,
     description,
     hidden: value.hidden,
@@ -206,7 +206,7 @@ function readProduct(value: unknown): StorefrontProduct | null {
   const images: string[] = [];
   for (const image of value.images) {
     if (images.length >= LIMITS.images) break;
-    const clean = sanitizeImageUrl(image);
+    const clean = feedImageUrl(image);
     if (clean) images.push(clean);
   }
   return {
@@ -215,7 +215,7 @@ function readProduct(value: unknown): StorefrontProduct | null {
     labelFr,
     isPack: value.isPack,
     pairCount: value.pairCount,
-    cardImage: sanitizeImageUrl(value.cardImage),
+    cardImage: feedImageUrl(value.cardImage),
     images,
     line,
     category: category.value,

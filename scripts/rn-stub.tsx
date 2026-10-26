@@ -13,6 +13,8 @@ function host(type: string) {
   };
 }
 
+export const Image = host('Image');
+export const ScrollView = host('ScrollView');
 export const View = host('View');
 export const Text = host('Text');
 export const Pressable = host('Pressable');

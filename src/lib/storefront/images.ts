@@ -54,3 +54,8 @@ export function sanitizeImageUrl(value: unknown): string | null {
   if (!allowed) return null;
   return parsed.href;
 }
+
+/** Web calls this host check `feedImageUrl`. The app uses the same rules. */
+export function feedImageUrl(value: unknown): string | null {
+  return sanitizeImageUrl(value);
+}

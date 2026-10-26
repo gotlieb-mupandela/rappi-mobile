@@ -83,6 +83,21 @@ export function categoryNode(feed: MobileStorefront, slug: string): StorefrontNo
   return feed.nodes.find((node) => node.key === slug);
 }
 
+/**
+ * Audience nodes from the feed. The document has no separate athlete list.
+ * Shop-by-athlete cards use these nodes. Unknown targets are omitted.
+ */
+export function audienceNodes(feed: MobileStorefront): StorefrontNode[] {
+  return feed.nodes
+    .filter((node) => node.kind === 'audience' && !node.hidden && resolveTarget(node.target) !== null)
+    .sort((left, right) => left.order - right.order || left.key.localeCompare(right.key));
+}
+
+/** Hub cover is the category node image only. Null means the screen shows no photo. */
+export function categoryHubImage(feed: MobileStorefront, slug: string): string | null {
+  return categoryNode(feed, slug)?.image ?? null;
+}
+
 export function indexProducts(feed: MobileStorefront | null): Map<string, StorefrontProduct> {
   const map = new Map<string, StorefrontProduct>();
   if (!feed) return map;
