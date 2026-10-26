@@ -11,7 +11,10 @@ import { EmptyState, FormScroll, LabeledField, PrimaryButton, Screen, SecondaryB
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useAuth } from '@/src/lib/auth';
 import { useBag } from '@/src/lib/bag';
-import { vatOn } from '@/src/lib/money';
+import { formatMoney as formatNad, vatOn } from '@/src/lib/money';
+import { checkoutDisplay, checkoutPaymentFields, deriveCheckoutView, formatApproxEur } from '@/src/lib/storefront/checkoutDisplay';
+import { CheckoutShippingState, CheckoutTotalsNote } from '@/src/lib/storefront/checkoutReview';
+import { useStorefront } from '@/src/lib/storefront/provider';
 import { openLogin } from '@/src/lib/navigation';
 import { fetchProfile, latestOrderId, waitForNewOrder } from '@/src/lib/orders';
 import { usePendingPayment } from '@/src/lib/pendingPayment';
@@ -34,10 +37,9 @@ const COUNTRIES = [
   ['United Kingdom', 20], ['Switzerland', 8.1],
 ] as const;
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export default function CheckoutScreen() {
   const { market, formatMoney, t } = useLocale();
+  const storefront = useStorefront();
   const { session, ready } = useAuth();
   const { sectionLabel } = useTheme();
   const styles = useStyles();
@@ -60,6 +62,51 @@ export default function CheckoutScreen() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const prefilled = useRef(false);
+  const language = market === 'eu' ? 'fr' : 'en';
+  const display = useMemo(
+    () => (storefront.enabled && storefront.feed ? checkoutDisplay(storefront.feed.checkout, language) : null),
+    [language, storefront.enabled, storefront.feed],
+  );
+  const view = useMemo(
+    () =>
+      deriveCheckoutView({
+        enabled: storefront.enabled,
+        loading: storefront.loading,
+        display,
+        feedLoaded: storefront.feed !== null,
+        selectedShipping: shipping,
+        selectedCountry: country,
+        fallbackRows: SHIPPING.map((item) => ({ id: item.id, label: t(item.labelKey), cost: item.cost })),
+        fallbackCountries: COUNTRIES.map(([name, rate]) => ({ name, vatPercent: rate })),
+        fallbackVatPercent: 15,
+        fallbackShippingCost: 100,
+        totalsNote: t('checkout.totalsNote'),
+        totalsServer: t('checkout.totalsServer'),
+        vatHiddenCopy: t('checkout.vatHidden'),
+        name,
+        email,
+        phone,
+        address,
+        city,
+        hasLines: bag.lines.length > 0,
+      }),
+    [
+      address,
+      bag.lines.length,
+      city,
+      country,
+      display,
+      email,
+      name,
+      phone,
+      shipping,
+      storefront.enabled,
+      storefront.feed,
+      storefront.loading,
+      t,
+    ],
+  );
+  const showMoney = (amount: number) => (storefront.enabled ? formatNad(amount, 'na') : formatMoney(amount));
 
   useEffect(() => {
     if (ready && !session) {
@@ -76,23 +123,36 @@ export default function CheckoutScreen() {
     setEmail((current) => current || profile.data?.email || session.user.email || '');
   }, [profile.data, profile.isPending, session]);
 
-  const shippingCost = SHIPPING.find((item) => item.id === shipping)?.cost ?? 100;
-  const vatRate = COUNTRIES.find(([name]) => name === country)?.[1] ?? 15;
-  const vat = vatOn(bag.subtotal + shippingCost, vatRate);
-  const total = bag.subtotal + shippingCost + vat;
-  const pickup = shipping === 'pickup';
+  useEffect(() => {
+    if (!storefront.enabled || !display || display.shipping.length === 0) return;
+    if (display.shipping.some((item) => item.id === shipping)) return;
+    setShipping(display.shipping[0].id);
+  }, [display, shipping, storefront.enabled]);
 
-  const canPay = useMemo(() => {
-    if (!name.trim() || !EMAIL.test(email.trim()) || !phone.trim()) return false;
-    if (!pickup && (!address.trim() || !city.trim())) return false;
-    return bag.lines.length > 0;
-  }, [address, bag.lines.length, city, email, name, phone, pickup]);
+  useEffect(() => {
+    if (!storefront.enabled || !display || display.countries.length === 0) return;
+    if (display.countries.some((item) => item.name === country)) return;
+    const preferred = market === 'eu' ? 'France' : 'Namibia';
+    const fallback = display.countries.find((item) => item.name === preferred) ?? display.countries[0];
+    if (fallback) setCountry(fallback.name);
+  }, [country, display, market, storefront.enabled]);
+
+  const shippingCost = view.shippingCost;
+  const vatPercent = view.vatPercent;
+  const vat = vatPercent === undefined ? 0 : vatOn(bag.subtotal + shippingCost, vatPercent);
+  const total = bag.subtotal + shippingCost + vat;
+  const pickup = view.selection?.shippingMethod === 'pickup';
+  const canPay = view.canPay;
 
   const pay = async () => {
     if (!session) {
       openLogin('/checkout');
       return;
     }
+    const fields = checkoutPaymentFields(view.selection);
+    if (!fields) return;
+    const shippingMethod = fields.shippingMethod;
+    const paymentCountry = fields.country;
     setBusy(t('checkout.openingDpo'));
     setError(null);
 
@@ -111,9 +171,9 @@ export default function CheckoutScreen() {
         phone: phone.trim(),
         address: pickup ? 'Hub pickup' : address.trim(),
         city: pickup ? '—' : city.trim(),
-        country,
+        country: paymentCountry,
         notes: notes.trim(),
-        shippingMethod: shipping,
+        shippingMethod,
         lines: bag.lines.map((line) => ({ code: line.code, size: line.size, qty: line.qty })),
       });
       if (!payment?.paymentUrl) throw new ApiError("Payment couldn't be started. Try again.", 500);
@@ -233,23 +293,23 @@ export default function CheckoutScreen() {
 
         <Text style={[sectionLabel, styles.block]}>{t('checkout.delivery').toUpperCase()}</Text>
         <View style={styles.section}>
-          {SHIPPING.map((item) => {
-            const selected = shipping === item.id;
-            return (
-              <Pressable
-                key={item.id}
-                accessibilityRole="radio"
-                accessibilityState={{ selected }}
-                onPress={() => setShipping(item.id)}
-                style={({ pressed }) => [styles.ship, selected && styles.shipOn, pressed && styles.pressed]}>
-                <View style={styles.shipCopy}>
-                  <View style={[styles.radio, selected && styles.radioOn]}>{selected ? <View style={styles.radioDot} /> : null}</View>
-                  <Text style={styles.shipLabel}>{t(item.labelKey)}</Text>
-                </View>
-                <Text style={styles.shipCost}>{formatMoney(item.cost)}</Text>
-              </Pressable>
-            );
-          })}
+          <CheckoutShippingState
+            loading={view.loading}
+            unavailable={view.unavailable}
+            retrying={storefront.ready && storefront.loading}
+            loadingText={t('checkout.shippingLoading')}
+            unavailableText={t('checkout.shippingUnavailable')}
+            retryLabel={t('common.retry')}
+            onRetry={() => storefront.reload()}
+            rows={view.rows.map((item) => ({
+              id: item.id,
+              label: item.label,
+              costLabel: showMoney(item.cost),
+              selected: shipping === item.id,
+            }))}
+            onSelect={(id) => setShipping(id)}
+            styles={styles}
+          />
           {!pickup ? (
             <>
               <LabeledField
@@ -270,25 +330,28 @@ export default function CheckoutScreen() {
               />
             </>
           ) : null}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('checkout.country')}
-            onPress={() => setCountryOpen(true)}
-            style={({ pressed }) => [styles.country, pressed && styles.pressed]}>
-            <Text style={styles.rowLabel}>{t('checkout.country')}</Text>
-            <Text style={styles.rowValue}>{country}</Text>
-          </Pressable>
+          {view.countryRows.length > 0 ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('checkout.country')}
+              onPress={() => setCountryOpen(true)}
+              style={({ pressed }) => [styles.country, pressed && styles.pressed]}>
+              <Text style={styles.rowLabel}>{t('checkout.country')}</Text>
+              <Text style={styles.rowValue}>{country}</Text>
+            </Pressable>
+          ) : null}
           <LabeledField label={t('checkout.notes')} optional placeholder={t('checkout.notesPlaceholder')} value={notes} onChangeText={setNotes} />
         </View>
 
         <Text style={[sectionLabel, styles.block]}>{t('checkout.summary').toUpperCase()}</Text>
         <View style={styles.section}>
-          <Row label={t('checkout.merchandise')} value={formatMoney(bag.subtotal)} />
-          <Row label={t('checkout.shipping')} value={formatMoney(shippingCost)} />
-          <Row label={t('checkout.vat', { rate: vatRate })} value={formatMoney(vat)} />
+          <Row label={t('checkout.merchandise')} value={showMoney(bag.subtotal)} />
+          <Row label={t('checkout.shipping')} value={showMoney(shippingCost)} />
+          {vatPercent !== undefined ? <Row label={t('checkout.vat', { rate: vatPercent })} value={showMoney(vat)} /> : null}
           <View style={styles.divider} />
-          <Row label={t('checkout.total')} value={formatMoney(total)} bold />
-          <Text style={styles.hint}>{t('checkout.totalsNote')}</Text>
+          <Row label={t('checkout.total')} value={showMoney(total)} bold />
+          <CheckoutTotalsNote note={view.note} vatHidden={view.vatHidden} style={styles.hint} />
+          {display && market === 'eu' ? <Text style={styles.hint}>{formatApproxEur(total, display.eurPerNad)}</Text> : null}
         </View>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {payments.pending && !busy ? (
@@ -312,10 +375,10 @@ export default function CheckoutScreen() {
         visible={countryOpen}
         title={t('checkout.country')}
         onClose={() => setCountryOpen(false)}
-        options={COUNTRIES.map(([name]) => ({
-          label: name,
-          icon: country === name ? 'checkmark-circle' : 'ellipse-outline',
-          onPress: () => setCountry(name),
+        options={view.countryRows.map((item) => ({
+          label: item.name,
+          icon: country === item.name ? 'checkmark-circle' : 'ellipse-outline',
+          onPress: () => setCountry(item.name),
         }))}
       />
     </Screen>

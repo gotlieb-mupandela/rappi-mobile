@@ -7,7 +7,7 @@ import type { Folder } from '@/src/api/types';
 import { FolderProducts } from '@/src/components/FolderProducts';
 import { EmptyState, ErrorState, FolderCard, PathTrail, Screen, SkeletonGrid, TypeCard } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
-import { categoryName } from '@/src/lib/categories';
+import { useCategoryTitle } from '@/src/lib/storefront/provider';
 import { goBack } from '@/src/lib/navigation';
 import { space } from '@/src/theme';
 
@@ -70,11 +70,11 @@ type Props = {
 };
 
 export function FolderBrowser({ slug, trail, leaf, audience, crumbs }: Props) {
-  const { folderName, market } = useLocale();
-  const language = market === 'eu' ? 'fr' : 'en';
+  const { folderName } = useLocale();
+  const categoryLabel = useCategoryTitle(slug);
   const current = trail[trail.length - 1];
-  const title = current ? folderName(current.key, current.name) : categoryName(slug, language);
-  const rootCrumbs = crumbs ?? [categoryName(slug, language)];
+  const title = current ? folderName(current.key, current.name) : categoryLabel;
+  const rootCrumbs = crumbs ?? [categoryLabel];
 
   const folders = useQuery({
     queryKey: ['site-folders', slug, current?.key ?? null, audience ?? null],

@@ -6,6 +6,7 @@ import { fetchFolderCatalog } from '@/src/api/catalog';
 import type { CatalogPage, CatalogQuery, Product } from '@/src/api/types';
 import { ProductCard } from '@/src/components/ProductCard';
 import { Chip, EmptyState, ErrorState, SkeletonGrid } from '@/src/components/ui';
+import { useStorefront } from '@/src/lib/storefront/provider';
 import { makeStyles } from '@/src/lib/theme';
 import { fonts, space } from '@/src/theme';
 
@@ -32,15 +33,23 @@ export function lineName(item: string | undefined): string {
  * The website splits each page into sections: by product line when the folder is a single subcategory,
  * otherwise by subcategory in catalog order with "More" last.
  */
-export function sectionProducts(products: Product[], facets: CatalogPage['facets'] | undefined, byLine: boolean): Section[] {
+export function sectionProducts(
+  products: Product[],
+  facets: CatalogPage['facets'] | undefined,
+  byLine: boolean,
+  lines?: ReadonlyMap<string, string> | null,
+): Section[] {
   const sections = new Map<string, Section>();
   for (const product of products) {
-    const key = byLine ? lineName(product.item) : product.subcategory || 'general';
-    const title = byLine
-      ? key
-      : key === 'general'
-        ? 'More'
-        : (facets?.subs?.find((sub) => sub.slug === key)?.name ?? titleCase(key.replace(/-/g, ' ')));
+    const fed = byLine ? lines?.get(product.code) : undefined;
+    const key = fed || (byLine ? lineName(product.item) : product.subcategory || 'general');
+    const title = fed
+      ? fed
+      : byLine
+        ? key
+        : key === 'general'
+          ? 'More'
+          : (facets?.subs?.find((sub) => sub.slug === key)?.name ?? titleCase(key.replace(/-/g, ' ')));
     const section = sections.get(key) ?? { key, title, products: [] };
     section.products.push(product);
     sections.set(key, section);
@@ -63,6 +72,8 @@ type Props = {
 
 export function FolderProducts({ query, byLine, emptyAction }: Props) {
   const styles = useStyles();
+  const storefront = useStorefront();
+  const lines = storefront.enabled ? storefront.linesByCode : null;
   const [page, setPage] = useState(1);
   const scroll = useRef<ScrollView>(null);
   const sectionY = useRef<Record<string, number>>({});
@@ -84,7 +95,7 @@ export function FolderProducts({ query, byLine, emptyAction }: Props) {
     return <EmptyState message="Nothing here right now." action={emptyAction?.label} onPress={emptyAction?.onPress} />;
   }
 
-  const sections = sectionProducts(data.products, data.facets, byLine);
+  const sections = sectionProducts(data.products, data.facets, byLine, lines);
   const pageCount = Math.max(1, data.pageCount);
   const goTo = (next: number) => {
     sectionY.current = {};

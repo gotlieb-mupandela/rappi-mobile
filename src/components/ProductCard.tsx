@@ -7,6 +7,7 @@ import { HeartButton } from '@/src/components/HeartButton';
 import { PressableScale } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
+import { usePresentedProduct } from '@/src/lib/storefront/provider';
 import { makeStyles } from '@/src/lib/theme';
 import { fonts, radius } from '@/src/theme';
 
@@ -28,7 +29,8 @@ function badgeFor(product: Product, labels: Record<Badge['tone'], string>): Badg
 export function ProductCard({ product }: Props) {
   const styles = useStyles();
   const { formatMoney, t } = useLocale();
-  const name = product.displayName || product.name;
+  const presented = usePresentedProduct(product);
+  const name = presented.name;
   const badge = badgeFor(product, {
     sold: t('product.soldOut'),
     new: t('product.new'),
@@ -45,9 +47,9 @@ export function ProductCard({ product }: Props) {
         scaleTo={0.97}
         style={styles.card}>
         <View style={styles.well}>
-          {product.imageUrl ? (
+          {presented.imageUrl ? (
             <Image
-              source={{ uri: sizedImage(product.imageUrl, IMAGE_WIDTH.card) }}
+              source={{ uri: sizedImage(presented.imageUrl, IMAGE_WIDTH.card) }}
               style={[styles.image, badge?.tone === 'sold' && styles.soldImage]}
               contentFit="contain"
               cachePolicy="memory-disk"

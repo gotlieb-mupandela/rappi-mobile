@@ -43,6 +43,7 @@
     "@expo/ngrok": "^4.1.3",
     "@types/node": "^24.19.1",
     "@types/react": "~19.2.2",
+    "react-test-renderer": "^19.2.3",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -51,7 +52,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "node --no-warnings --experimental-strip-types --test src/lib/money.test.ts src/lib/bagRules.test.ts src/lib/bagSyncRules.test.ts src/lib/categories.test.ts src/lib/wishlistRules.test.ts",
+    "test": "node --no-warnings --experimental-strip-types --test src/lib/money.test.ts src/lib/bagRules.test.ts src/lib/bagSyncRules.test.ts src/lib/categories.test.ts src/lib/wishlistRules.test.ts src/lib/storefront/flag.test.ts src/lib/storefront/images.test.ts src/lib/storefront/contract.test.ts src/lib/storefront/adapt.test.ts src/lib/storefront/cache.test.ts src/lib/storefront/targets.test.ts && node --no-warnings --import ./scripts/register-tsx.mjs --test src/lib/storefront/checkoutReview.test.tsx",
     "check": "npm run typecheck && npm test",
     "export:android": "expo export --platform android"
   },

@@ -8,12 +8,17 @@ import { ALL_FOLDER, fetchCatalog, fetchHubTypes, fetchNav, subFolderKey } from 
 import { openCatalogFolder } from '@/src/components/FolderBrowser';
 import { MenuGrid } from '@/src/components/MenuGrid';
 import { ProductCard } from '@/src/components/ProductCard';
-import { Chip, ErrorState, PressableScale, Screen, SecondaryButton, SkeletonBlock, SkeletonGrid } from '@/src/components/ui';
+import { Chip, ErrorState, FolderCard, PressableScale, Screen, SecondaryButton, SkeletonBlock, SkeletonGrid } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
-import { categoryName, hubImage } from '@/src/lib/categories';
+import { hubImage } from '@/src/lib/categories';
 import { pressHaptic, tapHaptic } from '@/src/lib/haptics';
 import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
 import { AUDIENCE_IMAGES, HUB_DESCRIPTIONS, HUB_TYPES, menuImage, type MenuNode } from '@/src/lib/menus';
+import { categoryNode, foldersForCategory, localized } from '@/src/lib/storefront/adapt';
+import { resolveTarget } from '@/src/lib/storefront/contract';
+import { openStorefrontRoute } from '@/src/lib/storefront/open';
+import { useCategoryTitle, useStorefront } from '@/src/lib/storefront/provider';
+import type { StorefrontLanguage } from '@/src/lib/storefront/types';
 import { makeStyles, useTheme } from '@/src/lib/theme';
 import { fonts, radius, space } from '@/src/theme';
 
@@ -30,7 +35,13 @@ export function CategoryHub({ slug }: { slug: string }) {
   const { folderName, market, t } = useLocale();
   const { colors } = useTheme();
   const styles = useStyles();
-  const name = categoryName(slug, market === 'eu' ? 'fr' : 'en');
+  const storefront = useStorefront();
+  const name = useCategoryTitle(slug);
+  const language: StorefrontLanguage = market === 'eu' ? 'fr' : 'en';
+  const feedFolders = storefront.enabled && storefront.feed ? foldersForCategory(storefront.feed, slug) : [];
+  const category = storefront.enabled && storefront.feed ? categoryNode(storefront.feed, slug) : undefined;
+  const feedDescription = category ? localized(category.description, language).trim() : '';
+  const feedImage = category?.image ?? null;
 
   const nav = useQuery({ queryKey: ['catalog-nav'], queryFn: fetchNav, staleTime: 60_000 });
   const overview = useQuery({
@@ -38,11 +49,11 @@ export function CategoryHub({ slug }: { slug: string }) {
     queryFn: () => fetchCatalog({ cat: slug, pageSize: RAIL_SIZE }),
     staleTime: 60_000,
   });
-  const staticTypes = HUB_TYPES[slug];
+  const staticTypes = feedFolders.length > 0 ? undefined : HUB_TYPES[slug];
   const folders = useQuery({
     queryKey: ['hub-types', slug],
     queryFn: () => fetchHubTypes(slug),
-    enabled: !staticTypes,
+    enabled: !staticTypes && feedFolders.length === 0,
     staleTime: 60_000,
   });
   const athletes = useQueries({
@@ -59,7 +70,7 @@ export function CategoryHub({ slug }: { slug: string }) {
     (folders.data ?? []).map((folder) => ({ key: folder.key, name: folderName(folder.key, folder.name), image: folder.imageUrl, folder: folder.key }));
   const subs = nav.data?.taxonomy?.[slug] ?? [];
   const products = overview.data?.products ?? [];
-  const heroImage = hubImage(slug) ?? sizedImage(products[0]?.imageUrl, IMAGE_WIDTH.full);
+  const heroImage = feedImage || hubImage(slug) || sizedImage(products[0]?.imageUrl, IMAGE_WIDTH.full);
   const shopAll = () => openCatalogFolder({ cat: slug, folder: ALL_FOLDER, name: 'Shop all', crumbs, leaf: true });
   const openAthlete = (audience: string, label: string) => {
     if (slug === 'shoes') {
@@ -91,7 +102,13 @@ export function CategoryHub({ slug }: { slug: string }) {
           <View style={styles.heroText}>
             <Text style={styles.eyebrow}>Rappi Sports Hub</Text>
             <Text style={styles.heroTitle}>{name}</Text>
-            {HUB_DESCRIPTIONS[slug] ? (
+            {storefront.enabled ? (
+              feedDescription ? (
+                <Text style={styles.heroDescription} numberOfLines={2}>
+                  {feedDescription}
+                </Text>
+              ) : null
+            ) : HUB_DESCRIPTIONS[slug] ? (
               <Text style={styles.heroDescription} numberOfLines={2}>
                 {HUB_DESCRIPTIONS[slug]}
               </Text>
@@ -130,7 +147,26 @@ export function CategoryHub({ slug }: { slug: string }) {
         <View style={styles.section}>
           <SectionHeader title="Shop by type" />
           <View style={styles.padded}>
-            {!staticTypes && folders.isPending ? (
+            {feedFolders.length > 0 ? (
+              <View style={styles.feedGrid}>
+                {feedFolders.map((node) => {
+                  const label = localized(node.title, language);
+                  return (
+                    <View key={node.key} style={styles.feedCell}>
+                      <FolderCard
+                        name={label}
+                        imageUrl={node.image ?? undefined}
+                        onPress={() => {
+                          const route = resolveTarget(node.target);
+                          if (!route) return;
+                          openStorefrontRoute(route, label, crumbs);
+                        }}
+                      />
+                    </View>
+                  );
+                })}
+              </View>
+            ) : !staticTypes && folders.isPending ? (
               <SkeletonGrid count={4} />
             ) : (
               <MenuGrid nodes={types} cat={slug} crumbs={crumbs} variant="card" />
@@ -243,6 +279,8 @@ const useStyles = makeStyles(({ colors, displayTitle, sectionLabel }) => ({
   rail: { paddingHorizontal: space.screen, gap: space.gap },
   railItem: { width: 168 },
   railSkeleton: { width: 168, height: 250, borderRadius: radius.card },
+  feedGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.gap },
+  feedCell: { width: '47.5%', flexGrow: 1 },
   athletes: { flexDirection: 'row', gap: 10 },
   athlete: { flex: 1 },
   athleteCard: { aspectRatio: 0.72, borderRadius: radius.card, overflow: 'hidden', backgroundColor: colors.imageWell, justifyContent: 'flex-end' },
