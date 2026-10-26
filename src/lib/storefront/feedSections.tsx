@@ -83,7 +83,7 @@ export function HomeFeed({
               pressed && styles.pressed,
             ]}>
             {tile.image ? (
-              <Image source={{ uri: tile.image }} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={250} />
+              <Image source={{ uri: tile.image }} style={styles.fill} contentFit="cover" contentPosition="top" cachePolicy="memory-disk" transition={250} />
             ) : null}
             {tile.image
               ? SCRIM_STEPS.map((height) => <View key={height} pointerEvents="none" style={[styles.scrim, { height: `${height}%` }]} />)
@@ -153,7 +153,7 @@ export function ShopFeed({
 
 export function HubCover({ image }: { image: string | null }) {
   if (!image) return <View testID="hub-cover-empty" style={styles.hubCover} />;
-  return <Image testID="hub-cover" source={{ uri: image }} style={styles.hubCover} contentFit="cover" cachePolicy="memory-disk" transition={250} />;
+  return <Image testID="hub-cover" source={{ uri: image }} style={styles.hubCover} contentFit="cover" contentPosition="top" cachePolicy="memory-disk" transition={250} />;
 }
 
 export function HubTypeGrid({
