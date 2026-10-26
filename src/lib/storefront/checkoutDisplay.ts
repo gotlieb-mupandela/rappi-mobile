@@ -78,9 +78,9 @@ export function shippingUnavailable(enabled: boolean, rowCount: number, loading 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Flag on: a feed row for both shipping and country, or null.
+ * Flag on: a feed shipping key plus that row's country code, or null.
  * Null means the payment call must not run, so the default method and country are not sent.
- * Flag off: the existing checkout selection.
+ * Flag off: the existing checkout selection, including the country name.
  */
 export function beginCheckoutPayment(input: {
   enabled: boolean;
@@ -88,15 +88,111 @@ export function beginCheckoutPayment(input: {
   method: ShippingMethod | null;
   fallbackShipping: ShippingMethod;
   country: string;
-  countryNames: readonly string[];
+  countries: readonly { code: string; name: string }[];
 }): { shippingMethod: ShippingMethod; country: string } | null {
   if (!input.enabled) {
     if (!PAYMENT_METHODS.has(input.fallbackShipping)) return null;
     return { shippingMethod: input.fallbackShipping, country: input.country };
   }
   if (!input.feedLoaded || !input.method) return null;
-  if (!input.countryNames.includes(input.country)) return null;
-  return { shippingMethod: input.method, country: input.country };
+  const match = input.countries.find((row) => row.name === input.country);
+  if (!match) return null;
+  return { shippingMethod: input.method, country: match.code };
+}
+
+/** Fields the checkout screen copies into createPayment. Null skips the call. */
+export function checkoutPaymentFields(
+  selection: { shippingMethod: ShippingMethod; country: string } | null,
+): { shippingMethod: ShippingMethod; country: string } | null {
+  if (!selection) return null;
+  return { shippingMethod: selection.shippingMethod, country: selection.country };
+}
+
+export type CheckoutView = {
+  loading: boolean;
+  unavailable: boolean;
+  rows: CheckoutShippingRow[];
+  countryRows: { name: string; vatPercent: number }[];
+  vatPercent: number | undefined;
+  note: string;
+  /** Copy when VAT is hidden. Null when a rate is shown, or when the flag is off. */
+  vatHidden: string | null;
+  selection: { shippingMethod: ShippingMethod; country: string } | null;
+  canPay: boolean;
+  shippingCost: number;
+};
+
+/**
+ * Checkout display values shared by the screen and the render test.
+ * Flag on with no feed still sets `vatHidden`, because there is no rate to show.
+ */
+export function deriveCheckoutView(input: {
+  enabled: boolean;
+  loading: boolean;
+  display: CheckoutDisplay | null;
+  feedLoaded: boolean;
+  selectedShipping: string;
+  selectedCountry: string;
+  fallbackRows: readonly CheckoutShippingRow[];
+  fallbackCountries: readonly { name: string; vatPercent: number }[];
+  fallbackVatPercent: number;
+  fallbackShippingCost: number;
+  totalsNote: string;
+  totalsServer: string;
+  vatHiddenCopy: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  hasLines: boolean;
+}): CheckoutView {
+  const rows = input.enabled ? [...(input.display?.shipping ?? [])] : [...input.fallbackRows];
+  const method = selectedPaymentMethod(input.enabled, rows, input.selectedShipping);
+  const loading = shippingLoading(input.enabled, input.loading, rows.length);
+  const unavailable = shippingUnavailable(input.enabled, rows.length, input.loading);
+  const countryRows = input.enabled
+    ? (input.display?.countries.map((row) => ({ name: row.name, vatPercent: row.vatPercent })) ?? [])
+    : input.fallbackCountries.map((row) => ({ name: row.name, vatPercent: row.vatPercent }));
+  const matchedFallback = input.fallbackCountries.find((row) => row.name === input.selectedCountry);
+  const vatPercent = input.enabled
+    ? (input.display ? vatPercentForCountry(input.display, input.selectedCountry) : undefined)
+    : (matchedFallback?.vatPercent ?? input.fallbackVatPercent);
+  const vatHidden: string | null = input.enabled && vatPercent === undefined ? input.vatHiddenCopy : null;
+  const note = input.enabled ? input.totalsServer : input.totalsNote;
+  const selection = beginCheckoutPayment({
+    enabled: input.enabled,
+    feedLoaded: input.feedLoaded,
+    method,
+    fallbackShipping: input.selectedShipping as ShippingMethod,
+    country: input.selectedCountry,
+    countries: input.display?.countries ?? [],
+  });
+  const activeId = input.enabled ? method : input.selectedShipping;
+  const found = rows.find((item) => item.id === activeId);
+  const shippingCost = found ? found.cost : input.enabled ? 0 : input.fallbackShippingCost;
+  const canPay = checkoutCanPay({
+    selectionReady: selection !== null,
+    name: input.name,
+    email: input.email,
+    phone: input.phone,
+    address: input.address,
+    city: input.city,
+    pickup: selection?.shippingMethod === 'pickup',
+    hasLines: input.hasLines,
+  });
+  return {
+    loading,
+    unavailable,
+    rows,
+    countryRows,
+    vatPercent,
+    note,
+    vatHidden,
+    selection,
+    canPay,
+    shippingCost,
+  };
 }
 
 export function checkoutCanPay(input: {

@@ -23,9 +23,36 @@ type ShippingStyles = {
   shipCost: StyleProp<TextStyle>;
 };
 
+function RetryButton({
+  retrying,
+  retryLabel,
+  onRetry,
+}: {
+  retrying: boolean;
+  retryLabel: string;
+  onRetry: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={retryLabel}
+      accessibilityState={{ disabled: retrying, busy: retrying }}
+      disabled={retrying}
+      onPress={() => {
+        if (retrying) return;
+        onRetry();
+      }}
+      style={retrying ? { opacity: 0.4 } : undefined}>
+      {retrying ? <ActivityIndicator accessibilityLabel={retryLabel} /> : null}
+      <Text>{retryLabel}</Text>
+    </Pressable>
+  );
+}
+
 export function CheckoutShippingState({
   loading,
   unavailable,
+  retrying = false,
   loadingText,
   unavailableText,
   retryLabel,
@@ -36,6 +63,8 @@ export function CheckoutShippingState({
 }: {
   loading: boolean;
   unavailable: boolean;
+  /** True while Retry has already been shown and a reload is in flight. */
+  retrying?: boolean;
   loadingText: string;
   unavailableText: string;
   retryLabel: string;
@@ -49,6 +78,7 @@ export function CheckoutShippingState({
       <View style={styles.pending} testID="checkout-shipping-loading">
         <ActivityIndicator accessibilityLabel={loadingText} />
         <Text style={styles.pendingBody}>{loadingText}</Text>
+        {retrying ? <RetryButton retrying retryLabel={retryLabel} onRetry={onRetry} /> : null}
       </View>
     );
   }
@@ -56,9 +86,7 @@ export function CheckoutShippingState({
     return (
       <View style={styles.pending} testID="checkout-shipping-unavailable">
         <Text style={styles.pendingBody}>{unavailableText}</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel={retryLabel} onPress={onRetry}>
-          <Text>{retryLabel}</Text>
-        </Pressable>
+        <RetryButton retrying={retrying} retryLabel={retryLabel} onRetry={onRetry} />
       </View>
     );
   }
