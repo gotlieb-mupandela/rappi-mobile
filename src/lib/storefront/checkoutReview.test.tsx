@@ -238,7 +238,7 @@ test('checkout review keeps pay disabled after a load with no shipping rows', ()
   assertNothingSent(sent, view, tree);
 });
 
-test('checkout review enables pay with the selected feed shipping key and country code', () => {
+test('checkout review enables pay with the selected feed shipping key and country name', () => {
   const sent: { shippingMethod: ShippingMethod; country: string }[] = [];
   const input = flagOnInput({
     display: loadedDisplay,
@@ -254,7 +254,7 @@ test('checkout review enables pay with the selected feed shipping key and countr
   const pay = payPressable(tree);
   assert.equal(pay.props.disabled, false);
   pay.props.onPress();
-  assert.deepEqual(sent, [{ shippingMethod: 'express', country: 'NA' }]);
+  assert.deepEqual(sent, [{ shippingMethod: 'express', country: 'Namibia' }]);
 });
 
 test('checkout review disables Retry while a reload is in flight', () => {

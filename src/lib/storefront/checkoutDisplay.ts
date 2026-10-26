@@ -78,7 +78,7 @@ export function shippingUnavailable(enabled: boolean, rowCount: number, loading 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Flag on: a feed shipping key plus that row's country code, or null.
+ * Flag on: a feed shipping key plus that row's country name, or null.
  * Null means the payment call must not run, so the default method and country are not sent.
  * Flag off: the existing checkout selection, including the country name.
  */
@@ -97,10 +97,10 @@ export function beginCheckoutPayment(input: {
   if (!input.feedLoaded || !input.method) return null;
   const match = input.countries.find((row) => row.name === input.country);
   if (!match) return null;
-  return { shippingMethod: input.method, country: match.code };
+  return { shippingMethod: input.method, country: match.name };
 }
 
-/** Fields the checkout screen copies into createPayment. Null skips the call. */
+/** Fields the checkout screen copies into createPayment. Country is the feed row name. Null skips the call. */
 export function checkoutPaymentFields(
   selection: { shippingMethod: ShippingMethod; country: string } | null,
 ): { shippingMethod: ShippingMethod; country: string } | null {
