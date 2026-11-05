@@ -4,4 +4,4 @@ AWAITING GOTLIEB'S OK: `scripts/generate-storefront-snapshot.mjs` is not wired i
 
 The app was never released with the data-driven feed. A release stays gated by this file and by Gotlieb.
 
-The feed is the only source of storefront content. The DATA_DRIVEN_STOREFRONT flag is removed. With no feed and no last good copy, Home, Shop, and the category hub show a clear can't load screen with Retry. They do not show a blank screen and they do not show a hardcoded fallback. The snapshot script still awaits Gotlieb's OK and is not part of any build.
+The feed path is the default for the next build. Nothing has to be switched on. Set `EXPO_PUBLIC_STOREFRONT_ROLLBACK` to `1` before a build to render catalog photos and prices again. With no feed and no copy from the last minute, Home, Shop, and the category hub show a clear can't load screen with Retry. They do not show a blank screen and they do not show a hardcoded fallback. The app refetches the feed on every open and when it returns to the foreground, and on pull to refresh. A saved feed older than one minute is not shown. The snapshot script still awaits Gotlieb's OK and is not part of any build.

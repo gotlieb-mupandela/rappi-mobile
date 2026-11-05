@@ -1,9 +1,10 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { FolderCard, PathTrail, Screen } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { hasVisibleChildren, localized, menuLevel } from '@/src/lib/storefront/adapt';
+import { TILE_CROP_WHEN_FEED_OMITS, contentPositionFor } from '@/src/lib/storefront/crop';
 import { resolveTarget } from '@/src/lib/storefront/contract';
 import { MenuUnavailable, StorefrontUnavailable } from '@/src/lib/storefront/feedSections';
 import { openStorefrontRoute } from '@/src/lib/storefront/open';
@@ -55,7 +56,11 @@ export default function MenuScreen() {
   return (
     <Screen title={localized(current.title, language)} back>
       <PathTrail parts={parts} />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={storefront.loading} onRefresh={() => storefront.reload()} />
+        }>
         {description ? <Text style={styles.description}>{description}</Text> : null}
         <View style={styles.grid}>
           {rows.map((row, rowIndex) => (
@@ -68,6 +73,9 @@ export default function MenuScreen() {
                     <FolderCard
                       name={label}
                       imageUrl={node.image ?? undefined}
+                      fromFeed
+                      contentFit={node.imageFit ?? 'cover'}
+                      contentPosition={contentPositionFor(node.objectPosition, TILE_CROP_WHEN_FEED_OMITS)}
                       onPress={() => {
                         if (hasVisibleChildren(feed, node.key)) {
                           router.push({

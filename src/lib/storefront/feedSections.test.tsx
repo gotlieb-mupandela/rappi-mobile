@@ -30,6 +30,8 @@ function node(partial: Pick<StorefrontNode, 'key' | 'kind' | 'target' | 'image' 
     tone: null,
     slug: null,
     audiences: [],
+    objectPosition: null,
+    imageFit: null,
     ...partial,
   };
 }
@@ -95,6 +97,8 @@ function tilesOf(feed: MobileStorefront, keys: StorefrontNode[]): FeedTileModel[
     image: item.image,
     span: item.span,
     tone: item.tone,
+    objectPosition: item.objectPosition,
+    imageFit: item.imageFit,
   }));
 }
 
@@ -132,6 +136,8 @@ test('feed home tiles, shop menus, hub types, audiences and athletes render from
   const teamsImage = teams.findAllByType(Image)[0];
   assert.ok(teamsImage);
   assert.equal(teamsImage.props.contentFit, 'cover');
+  assert.equal(teamsImage.props.contentPosition, 'top');
+  assert.equal(teamsImage.props.source.uri, 'https://www.rappisportshub.com/brand/hub-teampro-2026.webp');
   assert.equal(teamsImage.props.style.height, '100%');
   assert.equal(teamsImage.props.style.width, '100%');
 
@@ -228,6 +234,65 @@ test('a shop tile with children opens the menu level and one without opens its t
   assert.equal(shopTileDestination(feed, 'not-a-menu'), null);
 
   let tree!: ReactTestRenderer;
+  let refreshed = 0;
+  act(() => {
+    tree = create(
+      <HomeFeed
+        status="ready"
+        tiles={[
+          {
+            key: 'home-sportswear',
+            label: 'Sportswear',
+            image: 'https://www.rappisportshub.com/brand/hub-sportswear.png?v=1',
+            span: 1,
+            objectPosition: '50% 0%',
+            imageFit: 'cover',
+          },
+          {
+            key: 'home-running',
+            label: 'Running',
+            image: 'https://www.rappisportshub.com/brand/hub-shoes.png?v=2',
+            span: 1,
+            objectPosition: 'center 20%',
+          },
+        ]}
+        onRetry={() => undefined}
+        onOpen={() => undefined}
+        onRefresh={() => {
+          refreshed += 1;
+        }}
+      />,
+    );
+  });
+  const sportswear = tree.root.findAllByType(Pressable).find((item) => item.props.accessibilityLabel === 'Sportswear');
+  const running = tree.root.findAllByType(Pressable).find((item) => item.props.accessibilityLabel === 'Running');
+  assert.ok(sportswear);
+  assert.ok(running);
+  assert.equal(sportswear.findAllByType(Image)[0].props.source.uri, 'https://www.rappisportshub.com/brand/hub-sportswear.png?v=1');
+  assert.deepEqual(sportswear.findAllByType(Image)[0].props.contentPosition, { left: '50%', top: '0%' });
+  assert.deepEqual(running.findAllByType(Image)[0].props.contentPosition, { left: '50%', top: '20%' });
+  const scroller = tree.root.findByProps({ testID: 'home-feed' });
+  scroller.props.refreshControl.props.onRefresh();
+  assert.equal(refreshed, 1);
+
+  act(() => {
+    tree = create(
+      <AthleteCards
+        tiles={[
+          { key: 'sportswear--men', label: 'Men', image: 'https://www.rappisportshub.com/brand/audience-men.png?v=3', imageFit: 'contain', objectPosition: 'center' },
+          { key: 'sportswear--women', label: 'Women', image: 'https://www.rappisportshub.com/brand/audience-women.png?v=4', imageFit: 'contain' },
+          { key: 'sportswear--kids', label: 'Kids', image: 'https://www.rappisportshub.com/catalog-photos/kids.jpg?v=9', imageFit: 'cover', objectPosition: 'center' },
+        ]}
+        onOpen={() => undefined}
+      />,
+    );
+  });
+  assert.equal(tree.root.findByProps({ testID: 'athlete-image-sportswear--men' }).props.source.uri, 'https://www.rappisportshub.com/brand/audience-men.png?v=3');
+  assert.equal(tree.root.findByProps({ testID: 'athlete-image-sportswear--women' }).props.source.uri, 'https://www.rappisportshub.com/brand/audience-women.png?v=4');
+  assert.equal(tree.root.findByProps({ testID: 'athlete-image-sportswear--kids' }).props.source.uri, 'https://www.rappisportshub.com/catalog-photos/kids.jpg?v=9');
+  assert.equal(tree.root.findByProps({ testID: 'athlete-image-sportswear--men' }).props.contentFit, 'contain');
+  assert.equal(tree.root.findByProps({ testID: 'athlete-image-sportswear--kids' }).props.contentFit, 'cover');
+
   act(() => {
     tree = create(<MenuUnavailable />);
   });

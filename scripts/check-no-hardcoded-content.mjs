@@ -79,6 +79,9 @@ function quoteHit(line) {
   return REF_PATTERNS.some((pattern) => pattern.test(line)) || COUNTRY_DEFAULT.test(line) || standardDefaultAssignment(line);
 }
 
+const CROP_LITERAL = /contentPosition\s*=\s*['"`]/;
+const CROP_SKIP = new Set(['src/lib/storefront/crop.ts', 'src/lib/storefront/present.ts']);
+
 const PATTERN_CASES = [
   ["const x = 'J:1'", true],
   ['const x = "V:1"', true],
@@ -120,6 +123,9 @@ for (const file of files) {
   const skipDefaults = isTestFile(file) || DEFAULT_SKIP.has(file);
   lines.forEach((line, index) => {
     if (identifier.test(line) || REF_PATTERNS.some((pattern) => pattern.test(line))) {
+      failures.push(`${file}:${index + 1}: ${line.trim()}`);
+    }
+    if (!isTestFile(file) && !CROP_SKIP.has(file) && CROP_LITERAL.test(line)) {
       failures.push(`${file}:${index + 1}: ${line.trim()}`);
     }
     if (!skipDefaults && (COUNTRY_DEFAULT.test(line) || standardDefaultAssignment(line))) {

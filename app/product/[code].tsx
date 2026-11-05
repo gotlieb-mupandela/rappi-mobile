@@ -15,7 +15,8 @@ import { SizePicker } from '@/src/components/SizePicker';
 import { EmptyState, ErrorState, PrimaryButton, Screen } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useBag } from '@/src/lib/bag';
-import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
+import { IMAGE_WIDTH } from '@/src/lib/images';
+import { displayUri } from '@/src/lib/storefront/present';
 import { useCategoryTitle, usePresentedProduct } from '@/src/lib/storefront/provider';
 import { defaultSize, isAvailable, isOneSize, isSoldOut, productSizes, stockLine } from '@/src/lib/sizes';
 import { useToast } from '@/src/lib/toast';
@@ -24,7 +25,7 @@ import { useWishlist, useWishlistActions } from '@/src/lib/wishlist';
 import { fonts, space } from '@/src/theme';
 
 export default function ProductScreen() {
-  const { formatMoney, t } = useLocale();
+  const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useStyles();
   const { code: raw } = useLocalSearchParams<{ code: string }>();
@@ -92,11 +93,9 @@ export default function ProductScreen() {
   const presented = usePresentedProduct(product.data);
   const categoryLabel = useCategoryTitle(product.data?.category);
   const images = useMemo(() => {
-    if (presented.feedImages && presented.feedImages.length > 0) return [...presented.feedImages];
-    const list = [...new Set(product.data?.images?.filter(Boolean) ?? [])];
-    if (list.length > 0) return list;
-    return product.data?.imageUrl ? [product.data.imageUrl] : [];
-  }, [presented.feedImages, product.data]);
+    if (presented.images.length > 0) return presented.images;
+    return [];
+  }, [presented.images]);
 
   const canAdd = !!product.data && !gone && !soldOut && !!selected && selected.stock > 0;
 
@@ -108,7 +107,7 @@ export default function ProductScreen() {
       size: selected.size,
       name: presented.name,
       imageUrl: presented.imageUrl ?? product.data.imageUrl,
-      price: product.data.price,
+      price: presented.price,
       qty,
     });
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -151,18 +150,24 @@ export default function ProductScreen() {
                   setIndex(Math.round(event.nativeEvent.contentOffset.x / width));
                 }}>
                 {images.length > 0 ? (
-                  images.map((uri) => (
+                  images.map((uri) => {
+                    const full = displayUri(uri, presented.fromFeedGallery, IMAGE_WIDTH.full);
+                    const preview = displayUri(uri, presented.fromFeedGallery, IMAGE_WIDTH.card);
+                    return (
                     <Image
                       key={uri}
-                      source={{ uri: sizedImage(uri, IMAGE_WIDTH.full) }}
-                      placeholder={{ uri: sizedImage(uri, IMAGE_WIDTH.card) }}
-                      placeholderContentFit="contain"
+                      source={{ uri: full }}
+                      placeholder={{ uri: preview }}
+                      placeholderContentFit={presented.imageFit}
                       style={{ width, height: width }}
-                      contentFit="contain"
+                      contentFit={presented.imageFit}
+                      contentPosition={presented.contentPosition}
                       cachePolicy="memory-disk"
+                      recyclingKey={full}
                       transition={200}
                     />
-                  ))
+                    );
+                  })
                 ) : (
                   <View style={{ width, height: width }} />
                 )}
@@ -178,7 +183,7 @@ export default function ProductScreen() {
             <Text style={styles.eyebrow}>{categoryLabel}</Text>
             <Text style={styles.title}>{presented.name}</Text>
             {presented.packLabel ? <Text style={styles.note}>{presented.packLabel}</Text> : null}
-            <Text style={styles.price}>{formatMoney(product.data.price)}</Text>
+            <Text style={styles.price}>{presented.priceLabel}</Text>
             {!oneSize && sizes.length > 0 ? (
               <View style={styles.sizeBlock}>
                 <Text style={styles.sizeLabel}>SIZE</Text>

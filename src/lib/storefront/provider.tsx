@@ -1,13 +1,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { AppState } from 'react-native';
 
 import { apiFetch } from '@/src/api/client';
 import type { Product } from '@/src/api/types';
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { categoryNode, indexProducts, lineByCode, localized } from '@/src/lib/storefront/adapt';
-import { keyValueStore, resolveStorefront } from '@/src/lib/storefront/cache';
+import { keyValueStore, readFreshStorefront, resolveStorefront, storefrontRefreshOnState } from '@/src/lib/storefront/cache';
+import { feedPathEnabled } from '@/src/lib/storefront/flag';
+import { presentProduct, type PresentedProduct } from '@/src/lib/storefront/present';
 import { readApprovedSnapshot } from '@/src/lib/storefront/snapshot';
-import { productLabel, STOREFRONT_PATH } from '@/src/lib/storefront/contract';
+import { STOREFRONT_PATH } from '@/src/lib/storefront/contract';
 import type { MobileStorefront, StorefrontProduct } from '@/src/lib/storefront/types';
 
 type StorefrontValue = {
@@ -48,15 +51,22 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancel = false;
     setLoading(true);
-    resolveStorefront({
+    const store = keyValueStore(AsyncStorage);
+    const load = {
       production: productionBuild(),
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
-      store: keyValueStore(AsyncStorage),
+      store,
       fetchFeed: () => apiFetch<unknown>(STOREFRONT_PATH, { fallbackMessage: "Can't load the shop" }),
       readSnapshot: readApprovedSnapshot,
-    })
+    };
+    // Show a copy from the last minute while this open refetches.
+    void readFreshStorefront(store).then((cached) => {
+      if (!cancel && cached) setFeed((current) => current ?? cached);
+    });
+    void resolveStorefront(load)
       .then((next) => {
-        if (!cancel) setFeed(next);
+        if (cancel) return;
+        if (next) setFeed(next);
       })
       .finally(() => {
         if (!cancel) {
@@ -68,6 +78,13 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
       cancel = true;
     };
   }, [attempt]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (storefrontRefreshOnState(state)) reload();
+    });
+    return () => subscription.remove();
+  }, [reload]);
 
   const productsByCode = useMemo(() => indexProducts(feed), [feed]);
   const linesByCode = useMemo(() => lineByCode(feed), [feed]);
@@ -94,24 +111,33 @@ export function useCategoryTitle(slug: string | null | undefined): string {
   return t('tabs.shop');
 }
 
-export function usePresentedProduct(product: Product | undefined): {
-  name: string;
-  imageUrl: string | undefined;
+export function usePresentedProduct(product: Product | undefined): PresentedProduct & {
+  /** Gallery from the feed. Null when the card should use the catalog gallery. */
   feedImages: string[] | null;
-  /** Feed pack badge. Null when this code is not in the feed or the feed has no pack label. */
-  packLabel: string | null;
 } {
   const { market } = useLocale();
   const { productsByCode } = useStorefront();
   const language = market === 'eu' ? 'fr' : 'en';
-  if (!product) return { name: '', imageUrl: undefined, feedImages: null, packLabel: null };
-  const catalogName = product.displayName || product.name;
+  const rollback = !feedPathEnabled();
+  if (!product) {
+    const empty = presentProduct(language, market, null, undefined, rollback);
+    return { ...empty, feedImages: null };
+  }
   const overlay = productsByCode.get(product.code);
-  const label = overlay ? productLabel(language, overlay) : null;
+  const presented = presentProduct(
+    language,
+    market,
+    rollback ? null : overlay,
+    {
+      name: product.displayName || product.name,
+      imageUrl: product.imageUrl,
+      images: product.images,
+      price: product.price,
+    },
+    rollback,
+  );
   return {
-    name: label ?? catalogName,
-    imageUrl: overlay?.cardImage || product.imageUrl,
-    feedImages: overlay && overlay.images.length > 0 ? overlay.images : null,
-    packLabel: overlay?.packLabel ?? null,
+    ...presented,
+    feedImages: presented.fromFeedGallery ? presented.images : null,
   };
 }

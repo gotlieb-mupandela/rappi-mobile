@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 
 import { ALL_FOLDER, fetchCatalog, fetchNav, subFolderKey } from '@/src/api/catalog';
 import { openCatalogFolder } from '@/src/components/FolderBrowser';
@@ -10,6 +10,7 @@ import { Chip, ErrorState, Screen, SecondaryButton, SkeletonBlock } from '@/src/
 import { useLocale } from '@/src/i18n/LocaleProvider';
 import { pressHaptic } from '@/src/lib/haptics';
 import { categoryAudiences, categoryHubImage, categoryNode, foldersForCategory, localized } from '@/src/lib/storefront/adapt';
+import { athleteTileImage, audienceSlugFromId } from '@/src/lib/storefront/present';
 import { resolveTarget } from '@/src/lib/storefront/contract';
 import { AthleteCards, HubCover, HubTypeGrid, StorefrontUnavailable } from '@/src/lib/storefront/feedSections';
 import { openStorefrontRoute } from '@/src/lib/storefront/open';
@@ -34,6 +35,23 @@ export function CategoryHub({ slug }: { slug: string }) {
   const feedDescription = category ? localized(category.description, language).trim() : '';
   const feedImage = feed ? categoryHubImage(feed, slug) : null;
   const athletesFromFeed = feed ? categoryAudiences(feed, slug) : [];
+  const athleteTiles = athletesFromFeed.map((row) => {
+    const slugName = audienceSlugFromId(row.id);
+    const audienceNode = feed?.nodes.find(
+      (node) => node.kind === 'audience' && (node.slug === slugName || node.key === slugName || node.key === row.id),
+    );
+    return {
+      key: row.id,
+      label: localized(row.label, language),
+      image: athleteTileImage({
+        audienceImage: row.image,
+        nodeImage: audienceNode?.image ?? null,
+        hubCover: feedImage,
+      }),
+      objectPosition: row.objectPosition ?? audienceNode?.objectPosition ?? null,
+      imageFit: row.imageFit ?? audienceNode?.imageFit ?? null,
+    };
+  });
 
   const nav = useQuery({ queryKey: ['catalog-nav'], queryFn: fetchNav, staleTime: 60_000 });
   const overview = useQuery({
@@ -69,9 +87,20 @@ export function CategoryHub({ slug }: { slug: string }) {
 
   return (
     <Screen title={name} back>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={storefront.loading || overview.isRefetching}
+            onRefresh={() => {
+              storefront.reload();
+              void overview.refetch();
+              void nav.refetch();
+            }}
+          />
+        }>
         <View style={styles.hero}>
-          <HubCover image={feedImage} />
+          <HubCover image={feedImage} objectPosition={category?.objectPosition} imageFit={category?.imageFit} />
           <Image source={SHADE} style={styles.heroShade} contentFit="fill" pointerEvents="none" />
           <View style={styles.heroText}>
             <Text style={styles.eyebrow}>Rappi Sports Hub</Text>
@@ -121,6 +150,8 @@ export function CategoryHub({ slug }: { slug: string }) {
                   key: node.key,
                   label: localized(node.title, language),
                   image: node.image,
+                  objectPosition: node.objectPosition,
+                  imageFit: node.imageFit,
                 }))}
                 onOpen={(key, label) => {
                   const node = feedFolders.find((item) => item.key === key);
@@ -152,11 +183,7 @@ export function CategoryHub({ slug }: { slug: string }) {
           <View style={styles.section}>
             <SectionHeader title="Shop by athlete" />
             <AthleteCards
-              tiles={athletesFromFeed.map((row) => ({
-                key: row.id,
-                label: localized(row.label, language),
-                image: null,
-              }))}
+              tiles={athleteTiles}
               onOpen={(key, label) => {
                 const row = athletesFromFeed.find((item) => item.id === key);
                 const route = row ? resolveTarget(row.target) : null;

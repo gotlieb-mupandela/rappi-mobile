@@ -17,6 +17,12 @@ export type StorefrontAudienceRef = {
   label: LocalizedText;
   count: number;
   target: string;
+  /** Athlete tile photo. Null when the feed omits it. */
+  image: string | null;
+  /** CSS object-position for this athlete tile. Null when the feed omits it. */
+  objectPosition: string | null;
+  /** cover or contain. Null when the feed omits it. */
+  imageFit: 'cover' | 'contain' | null;
 };
 
 export type StorefrontNode = {
@@ -40,6 +46,10 @@ export type StorefrontNode = {
   slug: string | null;
   /** Per-hub audiences from the feed. Empty when the category has one or none. */
   audiences: StorefrontAudienceRef[];
+  /** CSS object-position for this tile. Null when the feed omits it. */
+  objectPosition: string | null;
+  /** cover or contain. Null when the feed omits it. */
+  imageFit: 'cover' | 'contain' | null;
 };
 
 export type StorefrontShipping = {
@@ -64,6 +74,8 @@ export type StorefrontCheckout = {
 
 export type StorefrontProduct = {
   code: string;
+  /** Card title from the feed. Null when the feed omits it. */
+  name: string | null;
   label: string | null;
   /** French card badge. Null when `label` is null. Omitted feeds fall back to `label`. */
   labelFr?: string | null;
@@ -71,7 +83,15 @@ export type StorefrontProduct = {
   pairCount: number | null;
   /** Plain pack badge from the feed. Null when the feed omits it. */
   packLabel: string | null;
+  /** Namibian dollar amount. Null when the feed omits it. */
+  price: number | null;
+  /** Exact price text from the feed, such as N$2,219. Null when the feed omits it. */
+  priceLabel: string | null;
   cardImage: string | null;
+  /** CSS object-position for the card photo. Null when the feed omits it. */
+  objectPosition: string | null;
+  /** cover or contain. Null when the feed omits it. */
+  imageFit: 'cover' | 'contain' | null;
   images: string[];
   /** Supplier line. The feed field `item` is never read. */
   line: string | null;

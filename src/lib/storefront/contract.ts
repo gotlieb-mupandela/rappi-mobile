@@ -5,6 +5,7 @@
  * One later web push may adjust how `line` is chosen. This app reads `line` only and never `item`.
  * The released image-map route is GET /api/mobile/storefront.
  */
+import { readImageFit, readObjectPosition } from './crop.ts';
 import { feedImageUrl } from './images.ts';
 import type {
   LocalizedText,
@@ -32,7 +33,8 @@ export type StorefrontValidation =
   | { ok: false; reason: string };
 
 const KEY = /^[A-Za-z0-9][A-Za-z0-9._-]{0,80}$/;
-const CODE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,64}$/;
+/** Live codes include a slash (TEAM/14) or a comma (946,001). */
+const CODE = /^[A-Za-z0-9][A-Za-z0-9._,/-]{0,64}$/;
 const COUNTRY = /^[A-Z]{2}$/;
 const KINDS = new Set<StorefrontNodeKind>(['menu', 'folder', 'category', 'audience', 'tile']);
 const AUDIENCE_SLUGS = new Set(['men', 'women', 'kids']);
@@ -128,6 +130,8 @@ function readNode(value: unknown): StorefrontNode | null {
     tone,
     slug,
     audiences,
+    objectPosition: readObjectPosition(value.objectPosition),
+    imageFit: readImageFit(value.imageFit),
   };
 }
 
@@ -171,7 +175,15 @@ function readAudience(value: unknown): StorefrontAudienceRef | null {
   if (typeof value.count !== 'number' || !Number.isInteger(value.count) || value.count <= 0 || value.count > 1_000_000) return null;
   const label = readCopy(value.label, LIMITS.title, true);
   if (!label || label.fr.trim() === '') return null;
-  return { id: value.id, label, count: value.count, target: value.target };
+  return {
+    id: value.id,
+    label,
+    count: value.count,
+    target: value.target,
+    image: feedImageUrl(value.image),
+    objectPosition: readObjectPosition(value.objectPosition),
+    imageFit: readImageFit(value.imageFit),
+  };
 }
 
 function readNodes(value: unknown, limit: number): StorefrontNode[] | null {
@@ -249,6 +261,12 @@ function readProduct(value: unknown): StorefrontProduct | null {
   }
   const label = value.label === null ? null : value.label;
   if (label === null) labelFr = null;
+  let name: string | null = null;
+  if ('name' in value && value.name != null) {
+    if (typeof value.name !== 'string' || !isPlainText(value.name, LIMITS.label)) return null;
+    const trimmed = value.name.trim();
+    name = trimmed === '' ? null : trimmed;
+  }
   if (typeof value.isPack !== 'boolean') return null;
   if (value.pairCount !== null && (typeof value.pairCount !== 'number' || !Number.isInteger(value.pairCount) || value.pairCount < 0 || value.pairCount > 10000)) {
     return null;
@@ -258,6 +276,18 @@ function readProduct(value: unknown): StorefrontProduct | null {
     if (typeof value.packLabel !== 'string' || !isPlainText(value.packLabel, LIMITS.label)) return null;
     const trimmed = value.packLabel.trim();
     packLabel = trimmed === '' ? null : trimmed;
+  }
+  let price: number | null = null;
+  if ('price' in value && value.price != null) {
+    const amount = saneMoney(value.price, 0, 10_000_000);
+    if (amount === null) return null;
+    price = amount;
+  }
+  let priceLabel: string | null = null;
+  if ('priceLabel' in value && value.priceLabel != null) {
+    if (typeof value.priceLabel !== 'string' || !isPlainText(value.priceLabel, LIMITS.label)) return null;
+    const trimmed = value.priceLabel.trim();
+    priceLabel = trimmed === '' ? null : trimmed;
   }
   if (!Array.isArray(value.images)) return null;
   const line = value.line === undefined ? null : value.line;
@@ -274,12 +304,17 @@ function readProduct(value: unknown): StorefrontProduct | null {
   }
   return {
     code: value.code,
+    name,
     label,
     labelFr,
     isPack: value.isPack,
     pairCount: value.pairCount,
     packLabel,
+    price,
+    priceLabel,
     cardImage: feedImageUrl(value.cardImage),
+    objectPosition: readObjectPosition(value.objectPosition),
+    imageFit: readImageFit(value.imageFit),
     images,
     line,
     category: category.value,

@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 
 import { fetchFolderCatalog } from '@/src/api/catalog';
 import type { CatalogPage, CatalogQuery, Product } from '@/src/api/types';
@@ -104,7 +104,18 @@ export function FolderProducts({ query, byLine, emptyAction }: Props) {
   };
 
   return (
-    <ScrollView ref={scroll} contentContainerStyle={styles.content}>
+    <ScrollView
+      ref={scroll}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={catalog.isRefetching || storefront.loading}
+          onRefresh={() => {
+            storefront.reload();
+            void catalog.refetch();
+          }}
+        />
+      }>
       {sections.length > 1 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anchors}>
           {sections.map((section) => (

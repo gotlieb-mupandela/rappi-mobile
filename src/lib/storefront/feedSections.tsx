@@ -1,7 +1,8 @@
 import { Image } from 'expo-image';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { fonts, radius, space, theme } from '../../theme.ts';
+import { contentPositionFor, HOME_CROP_WHEN_FEED_OMITS, TILE_CROP_WHEN_FEED_OMITS, type FeedImageFit } from './crop.ts';
 
 const { colors } = theme;
 
@@ -11,6 +12,8 @@ export type FeedTileModel = {
   image: string | null;
   span?: 1 | 2 | null;
   tone?: 'dark' | 'light' | null;
+  objectPosition?: string | null;
+  imageFit?: FeedImageFit | null;
 };
 
 type Status = 'loading' | 'unavailable' | 'ready';
@@ -58,17 +61,24 @@ export function HomeFeed({
   tiles,
   onRetry,
   onOpen,
+  refreshing,
+  onRefresh,
 }: {
   status: Status;
   tiles: FeedTileModel[];
   onRetry: () => void;
   onOpen: (key: string, label: string) => void;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }) {
   if (status !== 'ready') {
     return <StorefrontUnavailable loading={status === 'loading'} onRetry={onRetry} testID="home-unavailable" />;
   }
   return (
-    <ScrollView testID="home-feed" contentContainerStyle={styles.homeContent}>
+    <ScrollView
+      testID="home-feed"
+      contentContainerStyle={styles.homeContent}
+      refreshControl={onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} /> : undefined}>
       <View style={styles.homeGrid}>
         {tiles.map((tile) => (
           <Pressable
@@ -83,7 +93,15 @@ export function HomeFeed({
               pressed && styles.pressed,
             ]}>
             {tile.image ? (
-              <Image source={{ uri: tile.image }} style={styles.fill} contentFit="cover" contentPosition="top" cachePolicy="memory-disk" transition={250} />
+              <Image
+                source={{ uri: tile.image }}
+                style={styles.fill}
+                contentFit={tile.imageFit ?? 'cover'}
+                contentPosition={contentPositionFor(tile.objectPosition, HOME_CROP_WHEN_FEED_OMITS)}
+                cachePolicy="memory-disk"
+                recyclingKey={tile.image}
+                transition={250}
+              />
             ) : null}
             {tile.image
               ? SCRIM_STEPS.map((height) => <View key={height} pointerEvents="none" style={[styles.scrim, { height: `${height}%` }]} />)
@@ -105,11 +123,15 @@ export function ShopFeed({
   menus,
   onRetry,
   onOpen,
+  refreshing,
+  onRefresh,
 }: {
   status: Status;
   menus: FeedTileModel[];
   onRetry: () => void;
   onOpen: (key: string, label: string) => void;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }) {
   if (status !== 'ready') {
     return <StorefrontUnavailable loading={status === 'loading'} onRetry={onRetry} testID="shop-unavailable" />;
@@ -118,7 +140,10 @@ export function ShopFeed({
   const rows: (FeedTileModel | null)[][] = [];
   for (let index = 0; index < cells.length; index += 2) rows.push(cells.slice(index, index + 2));
   return (
-    <ScrollView testID="shop-feed" contentContainerStyle={styles.shopContent}>
+    <ScrollView
+      testID="shop-feed"
+      contentContainerStyle={styles.shopContent}
+      refreshControl={onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} /> : undefined}>
       <View style={styles.shopMenus}>
         {rows.map((row, rowIndex) => (
           <View key={rowIndex} style={styles.shopRow}>
@@ -132,7 +157,15 @@ export function ShopFeed({
                     style={({ pressed }) => [pressed && styles.pressed]}>
                     <View style={styles.shopImage}>
                       {menu.image ? (
-                        <Image source={{ uri: menu.image }} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={180} />
+                        <Image
+                          source={{ uri: menu.image }}
+                          style={styles.fill}
+                          contentFit={menu.imageFit ?? 'cover'}
+                          contentPosition={contentPositionFor(menu.objectPosition, TILE_CROP_WHEN_FEED_OMITS)}
+                          cachePolicy="memory-disk"
+                          recyclingKey={menu.image}
+                          transition={180}
+                        />
                       ) : null}
                     </View>
                     <Text style={styles.shopName} numberOfLines={2}>
@@ -151,9 +184,20 @@ export function ShopFeed({
   );
 }
 
-export function HubCover({ image }: { image: string | null }) {
+export function HubCover({ image, objectPosition, imageFit }: { image: string | null; objectPosition?: string | null; imageFit?: FeedImageFit | null }) {
   if (!image) return <View testID="hub-cover-empty" style={styles.hubCover} />;
-  return <Image testID="hub-cover" source={{ uri: image }} style={styles.hubCover} contentFit="cover" contentPosition="top" cachePolicy="memory-disk" transition={250} />;
+  return (
+    <Image
+      testID="hub-cover"
+      source={{ uri: image }}
+      style={styles.hubCover}
+      contentFit={imageFit ?? 'cover'}
+      contentPosition={contentPositionFor(objectPosition, HOME_CROP_WHEN_FEED_OMITS)}
+      cachePolicy="memory-disk"
+      recyclingKey={image}
+      transition={250}
+    />
+  );
 }
 
 export function HubTypeGrid({
@@ -175,7 +219,15 @@ export function HubTypeGrid({
           style={styles.typeCell}>
           <View style={styles.typeImage}>
             {tile.image ? (
-              <Image source={{ uri: tile.image }} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={180} />
+              <Image
+                source={{ uri: tile.image }}
+                style={styles.fill}
+                contentFit={tile.imageFit ?? 'cover'}
+                contentPosition={contentPositionFor(tile.objectPosition, TILE_CROP_WHEN_FEED_OMITS)}
+                cachePolicy="memory-disk"
+                recyclingKey={tile.image}
+                transition={180}
+              />
             ) : null}
           </View>
           <Text style={styles.typeName} numberOfLines={1}>
@@ -206,7 +258,16 @@ export function AthleteCards({
           style={styles.athlete}>
           <View style={styles.athleteCard}>
             {tile.image ? (
-              <Image testID={`athlete-image-${tile.key}`} source={{ uri: tile.image }} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={200} />
+              <Image
+                testID={`athlete-image-${tile.key}`}
+                source={{ uri: tile.image }}
+                style={styles.fill}
+                contentFit={tile.imageFit ?? 'cover'}
+                contentPosition={contentPositionFor(tile.objectPosition, TILE_CROP_WHEN_FEED_OMITS)}
+                cachePolicy="memory-disk"
+                recyclingKey={tile.image}
+                transition={200}
+              />
             ) : (
               <View testID={`athlete-no-image-${tile.key}`} style={styles.fill} />
             )}

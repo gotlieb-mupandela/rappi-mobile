@@ -56,7 +56,18 @@ test('category order skips hidden categories and nests children', () => {
   const dropped = structuredClone(value);
   const sport = dropped.nodes.find((node) => node.key === 'sportswear');
   assert.ok(sport);
-  sport.audiences = [...sport.audiences, { id: 'sportswear--nope', label: { en: 'Nope', fr: 'Nope' }, count: 1, target: '/shop/sportswear?audience=Men' }];
+  sport.audiences = [
+    ...sport.audiences,
+    {
+      id: 'sportswear--nope',
+      label: { en: 'Nope', fr: 'Nope' },
+      count: 1,
+      target: '/shop/sportswear?audience=Men',
+      image: null,
+      objectPosition: null,
+      imageFit: null,
+    },
+  ];
   assert.equal(categoryAudiences(dropped, 'sportswear').some((row) => row.id === 'sportswear--nope'), false);
 });
 

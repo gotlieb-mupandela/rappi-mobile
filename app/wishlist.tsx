@@ -12,15 +12,14 @@ import { fetchStock } from '@/src/api/stock';
 import type { Product, StockResponse } from '@/src/api/types';
 import { SizePicker } from '@/src/components/SizePicker';
 import { EmptyState, ErrorState, PressableScale, Screen, SecondaryButton, SkeletonBlock, TextButton } from '@/src/components/ui';
-import { useLocale } from '@/src/i18n/LocaleProvider';
 import { useAuth } from '@/src/lib/auth';
 import { useBag } from '@/src/lib/bag';
 import { tapHaptic } from '@/src/lib/haptics';
-import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
+import { IMAGE_WIDTH } from '@/src/lib/images';
+import { displayUri } from '@/src/lib/storefront/present';
 import { useReducedMotion } from '@/src/lib/motion';
 import { openLogin } from '@/src/lib/navigation';
 import { defaultSize, isAvailable, isOneSize, isSoldOut, productSizes, stockLine } from '@/src/lib/sizes';
-import { productLabel } from '@/src/lib/storefront/contract';
 import { usePresentedProduct, useStorefront } from '@/src/lib/storefront/provider';
 import { useToast } from '@/src/lib/toast';
 import { makeStyles, useTheme } from '@/src/lib/theme';
@@ -221,7 +220,6 @@ function WishlistItem({
   stock?: StockResponse;
   onRemove: () => void;
 }) {
-  const { formatMoney } = useLocale();
   const { colors } = useTheme();
   const styles = useStyles();
   const bag = useBag();
@@ -251,7 +249,7 @@ function WishlistItem({
 
   const add = () => {
     if (!selected || selected.stock <= 0) return;
-    bag.add({ id: product.id, code: product.code, size: selected.size, name, imageUrl: presented.imageUrl ?? product.imageUrl, price: product.price, qty: 1 });
+    bag.add({ id: product.id, code: product.code, size: selected.size, name, imageUrl: presented.imageUrl ?? product.imageUrl, price: presented.price, qty: 1 });
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     toast.show(oneSize ? 'Added to bag' : `Added to bag · Size ${selected.size}`, {
       icon: 'bag-check-outline',
@@ -268,10 +266,12 @@ function WishlistItem({
           style={({ pressed }) => [styles.photo, pressed && styles.pressed]}>
           {presented.imageUrl ? (
             <Image
-              source={{ uri: sizedImage(presented.imageUrl, IMAGE_WIDTH.card) }}
+              source={{ uri: displayUri(presented.imageUrl, presented.fromFeedImage, IMAGE_WIDTH.card) }}
               style={[styles.fill, soldOut && styles.dim]}
-              contentFit="contain"
+              contentFit={presented.imageFit}
+              contentPosition={presented.contentPosition}
               cachePolicy="memory-disk"
+              recyclingKey={presented.imageUrl}
               transition={200}
             />
           ) : null}
@@ -280,7 +280,7 @@ function WishlistItem({
           <Text style={styles.name} numberOfLines={2}>
             {name}
           </Text>
-          <Text style={styles.price}>{formatMoney(product.price)}</Text>
+          <Text style={styles.price}>{presented.priceLabel}</Text>
           {soldOut || lowStock ? <Text style={[styles.stock, { color: colors[line.tone] }]}>{line.text}</Text> : null}
         </Pressable>
         <Pressable
@@ -311,9 +311,7 @@ function WishlistItem({
 function GoneSection({ items, onRemove, onClear }: { items: GoneItem[]; onRemove: (code: string) => void; onClear: () => void }) {
   const { colors, sectionLabel } = useTheme();
   const styles = useStyles();
-  const { market } = useLocale();
   const storefront = useStorefront();
-  const language = market === 'eu' ? 'fr' : 'en';
   return (
     <View style={styles.gone}>
       <View style={styles.headerRow}>
@@ -322,15 +320,19 @@ function GoneSection({ items, onRemove, onClear }: { items: GoneItem[]; onRemove
       </View>
       {items.map(({ entry, product }) => {
         const overlay = product ? storefront.productsByCode.get(product.code) : undefined;
-        const named = product
-          ? ((overlay ? productLabel(language, overlay) : null) ?? (product.displayName || product.name))
-          : 'Discontinued item';
+        const named = product ? (overlay?.name?.trim() || product.displayName || product.name) : 'Discontinued item';
         const photo = overlay?.cardImage || product?.imageUrl;
         return (
           <View key={entry.code} style={styles.goneRow}>
             <View style={styles.gonePhoto}>
               {photo ? (
-                <Image source={{ uri: sizedImage(photo, IMAGE_WIDTH.thumb) }} style={[styles.fill, styles.dim]} contentFit="contain" cachePolicy="memory-disk" />
+                <Image
+                  source={{ uri: displayUri(photo, Boolean(overlay?.cardImage), IMAGE_WIDTH.thumb) }}
+                  style={[styles.fill, styles.dim]}
+                  contentFit="contain"
+                  cachePolicy="memory-disk"
+                  recyclingKey={photo}
+                />
               ) : (
                 <Ionicons name="image-outline" size={20} color={colors.muted} />
               )}
