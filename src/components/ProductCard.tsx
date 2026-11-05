@@ -6,7 +6,8 @@ import type { Product } from '@/src/api/types';
 import { HeartButton } from '@/src/components/HeartButton';
 import { PressableScale } from '@/src/components/ui';
 import { useLocale } from '@/src/i18n/LocaleProvider';
-import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
+import { IMAGE_WIDTH } from '@/src/lib/images';
+import { displayUri } from '@/src/lib/storefront/present';
 import { usePresentedProduct } from '@/src/lib/storefront/provider';
 import { makeStyles } from '@/src/lib/theme';
 import { fonts, radius } from '@/src/theme';
@@ -28,9 +29,10 @@ function badgeFor(product: Product, labels: Record<Badge['tone'], string>): Badg
 
 export function ProductCard({ product }: Props) {
   const styles = useStyles();
-  const { formatMoney, t } = useLocale();
+  const { t } = useLocale();
   const presented = usePresentedProduct(product);
   const name = presented.name;
+  const photo = displayUri(presented.imageUrl, presented.fromFeedImage, IMAGE_WIDTH.card);
   const badge = badgeFor(product, {
     sold: t('product.soldOut'),
     new: t('product.new'),
@@ -43,17 +45,18 @@ export function ProductCard({ product }: Props) {
     <Link href={href} asChild>
       <PressableScale
         accessibilityRole="button"
-        accessibilityLabel={`${name}, ${formatMoney(product.price)}${badge ? `, ${badge.label.toLowerCase()}` : ''}`}
+        accessibilityLabel={`${name}, ${presented.priceLabel}${badge ? `, ${badge.label.toLowerCase()}` : ''}`}
         scaleTo={0.97}
         style={styles.card}>
-        <View style={styles.well}>
-          {presented.imageUrl ? (
+        <View style={[styles.well, presented.imageFit === 'cover' && styles.wellCover]}>
+          {photo ? (
             <Image
-              source={{ uri: sizedImage(presented.imageUrl, IMAGE_WIDTH.card) }}
+              source={{ uri: photo }}
               style={[styles.image, badge?.tone === 'sold' && styles.soldImage]}
-              contentFit="contain"
+              contentFit={presented.imageFit}
+              contentPosition={presented.contentPosition}
               cachePolicy="memory-disk"
-              recyclingKey={product.code}
+              recyclingKey={photo}
               transition={200}
             />
           ) : null}
@@ -68,7 +71,12 @@ export function ProductCard({ product }: Props) {
           <Text style={styles.name} numberOfLines={2} ellipsizeMode="tail">
             {name}
           </Text>
-          <Text style={styles.price}>{formatMoney(product.price)}</Text>
+          {presented.badgeLabel ? (
+            <Text style={styles.badgeLine} numberOfLines={1}>
+              {presented.badgeLabel}
+            </Text>
+          ) : null}
+          <Text style={styles.price}>{presented.priceLabel}</Text>
         </View>
       </PressableScale>
     </Link>
@@ -91,6 +99,7 @@ const useStyles = makeStyles(({ colors }) => ({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
+  wellCover: { padding: 0 },
   image: {
     width: '100%',
     height: '100%',
@@ -124,6 +133,7 @@ const useStyles = makeStyles(({ colors }) => ({
     minHeight: 36,
     color: colors.text,
   },
+  badgeLine: { fontFamily: fonts.body, fontSize: 11, color: colors.muted },
   price: {
     fontFamily: fonts.bodyBold,
     fontSize: 15,

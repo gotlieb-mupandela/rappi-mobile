@@ -19,6 +19,7 @@ export const View = host('View');
 export const Text = host('Text');
 export const Pressable = host('Pressable');
 export const ActivityIndicator = host('ActivityIndicator');
+export const RefreshControl = host('RefreshControl');
 export const StyleSheet = {
   create<T>(styles: T): T {
     return styles;

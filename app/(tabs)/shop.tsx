@@ -16,6 +16,8 @@ export default function ShopScreen() {
         key: menu.key,
         label: localized(menu.title, language),
         image: menu.image,
+        objectPosition: menu.objectPosition,
+        imageFit: menu.imageFit,
       }))
     : [];
   const status = storefront.feed ? 'ready' : storefront.loading || !storefront.ready ? 'loading' : 'unavailable';
@@ -25,6 +27,8 @@ export default function ShopScreen() {
         status={status}
         menus={menus}
         onRetry={() => storefront.reload()}
+        refreshing={storefront.loading && !!storefront.feed}
+        onRefresh={() => storefront.reload()}
         onOpen={(key, label) => {
           if (!storefront.feed) return;
           const destination = shopTileDestination(storefront.feed, key);

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import { memoryStore, resolveStorefront, storeHostAllowed } from './cache.ts';
+import { memoryStore, resolveStorefront, STOREFRONT_CACHE_MAX_AGE_MS, storeHostAllowed } from './cache.ts';
 
 function fixture(): unknown {
   return JSON.parse(readFileSync(new URL('./fixture.json', import.meta.url), 'utf8'));
@@ -100,4 +100,36 @@ test('production builds refuse a store host other than www.rappisportshub.com', 
   assert.equal(storeHostAllowed('https://www.rappisportshub.com', true), true);
   assert.equal(storeHostAllowed('http://www.rappisportshub.com', false), false);
   assert.equal(storeHostAllowed('https://preview.example', false), true);
+});
+
+test('a saved feed older than one minute is not used when the refresh fails', async () => {
+  const store = memoryStore();
+  const good = fixture();
+  await resolveStorefront({
+    production: false,
+    apiUrl: host,
+    store,
+    now: 5_000,
+    fetchFeed: async () => good,
+  });
+  const expired = await resolveStorefront({
+    production: false,
+    apiUrl: host,
+    store,
+    now: 5_000 + STOREFRONT_CACHE_MAX_AGE_MS + 1,
+    fetchFeed: async () => {
+      throw new Error('offline');
+    },
+  });
+  assert.equal(expired, null);
+  const fresh = await resolveStorefront({
+    production: false,
+    apiUrl: host,
+    store: memoryStore(JSON.stringify({ savedAt: 9_000, feed: good })),
+    now: 9_000 + 1_000,
+    fetchFeed: async () => {
+      throw new Error('offline');
+    },
+  });
+  assert.equal(fresh?.version, '2026-10-25.1.7');
 });

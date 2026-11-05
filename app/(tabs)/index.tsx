@@ -19,6 +19,8 @@ export default function HomeScreen() {
         image: tile.image,
         span: tile.span,
         tone: tile.tone,
+        objectPosition: tile.objectPosition,
+        imageFit: tile.imageFit,
       }))
     : [];
   const status = storefront.feed ? 'ready' : storefront.loading || !storefront.ready ? 'loading' : 'unavailable';
@@ -28,6 +30,8 @@ export default function HomeScreen() {
         status={status}
         tiles={tiles}
         onRetry={() => storefront.reload()}
+        refreshing={storefront.loading && !!storefront.feed}
+        onRefresh={() => storefront.reload()}
         onOpen={(key, label) => {
           const tile = storefront.feed ? homeTiles(storefront.feed).find((item) => item.key === key) : undefined;
           const route = tile ? resolveTarget(tile.target) : null;

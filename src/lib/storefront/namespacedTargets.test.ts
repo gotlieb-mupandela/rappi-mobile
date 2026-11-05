@@ -47,6 +47,8 @@ test('every namespaced feed href resolves from a real feed shape', () => {
     tone: null,
     slug: null,
     audiences: [],
+    objectPosition: null,
+    imageFit: null,
     extraField: base ? true : false,
   }));
   const parsed = validateMobileStorefront(feed);

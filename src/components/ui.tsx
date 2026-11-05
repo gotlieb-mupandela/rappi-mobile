@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { pressHaptic, tapHaptic } from '@/src/lib/haptics';
 import { IMAGE_WIDTH, sizedImage } from '@/src/lib/images';
+import type { FeedContentPosition, FeedImageFit } from '@/src/lib/storefront/crop';
 import { OfflineBanner } from '@/src/lib/offline';
 import { useReducedMotion } from '@/src/lib/motion';
 import { makeStyles, useTheme } from '@/src/lib/theme';
@@ -279,12 +280,20 @@ export function FolderCard({
   name,
   imageUrl,
   onPress,
+  fromFeed = false,
+  contentFit = 'cover',
+  contentPosition,
 }: {
   name: string;
   imageUrl?: string;
   onPress: () => void;
+  /** Feed URLs are shown unchanged, including ?v=. Catalog covers are still resized. */
+  fromFeed?: boolean;
+  contentFit?: FeedImageFit;
+  contentPosition?: FeedContentPosition;
 }) {
   const styles = useStyles();
+  const uri = fromFeed ? imageUrl : sizedImage(imageUrl, IMAGE_WIDTH.card);
   return (
     <PressableScale
       accessibilityRole="button"
@@ -295,8 +304,16 @@ export function FolderCard({
       }}
       style={styles.folder}>
       <View style={styles.folderImage}>
-        {imageUrl ? (
-          <Image source={{ uri: sizedImage(imageUrl, IMAGE_WIDTH.card) }} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={180} />
+        {uri ? (
+          <Image
+            source={{ uri }}
+            style={styles.fill}
+            contentFit={contentFit}
+            contentPosition={contentPosition}
+            cachePolicy="memory-disk"
+            recyclingKey={uri}
+            transition={180}
+          />
         ) : null}
       </View>
       <Text style={styles.folderName} numberOfLines={2}>

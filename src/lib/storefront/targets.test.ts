@@ -104,6 +104,8 @@ test('a feed built from every fixed id resolves that id target', () => {
     tone: null,
     slug: null,
     audiences: [],
+    objectPosition: null,
+    imageFit: null,
     extraField: base ? true : false,
   }));
   const parsed = validateMobileStorefront(feed);

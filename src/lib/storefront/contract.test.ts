@@ -36,6 +36,11 @@ test('accepts the fixture feed', () => {
   assert.equal(pack.images[0], pack.cardImage);
   assert.equal(pack.line, 'Training cones');
   assert.equal(pack.packLabel, 'Training cones, Pack of 25');
+  assert.equal(pack.name, 'Training cones');
+  assert.equal(pack.price, 199);
+  assert.equal(pack.priceLabel, 'N$199');
+  assert.equal(pack.imageFit, null);
+  assert.equal(pack.objectPosition, null);
   assert.equal('item' in pack, false);
   const plain = parsed.value.products.find((product) => product.code === 'PLAIN-1');
   assert.ok(plain);
@@ -230,6 +235,68 @@ test('the fixture omits Flow and records TEAM/14 under balls-bags', () => {
   assert.equal(team.category, 'balls-bags');
   assert.equal(team.subcategory, 'bags');
   assert.equal(resolveTarget('/shop/shoes?group=flow'), null);
+});
+
+test('objectPosition, imageFit, and an audience image are kept, and a bad crop is dropped', () => {
+  const body = clone();
+  const nodes = body.nodes as Array<Record<string, unknown>>;
+  const sportswear = nodes.find((node) => node.key === 'sportswear');
+  assert.ok(sportswear);
+  sportswear.objectPosition = '50% 0%';
+  sportswear.imageFit = 'cover';
+  sportswear.audiences = [
+    {
+      id: 'sportswear--men',
+      label: { en: 'Men', fr: 'Hommes' },
+      count: 10,
+      target: '/shop/sportswear?audience=men',
+      image: 'https://www.rappisportshub.com/brand/audience-men.png?v=3',
+      objectPosition: 'center',
+      imageFit: 'contain',
+    },
+    {
+      id: 'sportswear--kids',
+      label: { en: 'Kids', fr: 'Enfants' },
+      count: 2,
+      target: '/shop/sportswear?audience=kids',
+      image: 'not a url',
+      objectPosition: 'nope',
+    },
+  ];
+  const products = body.products as Array<Record<string, unknown>>;
+  products.push({
+    code: 'TEAM/14B',
+    name: 'Slash code',
+    label: null,
+    isPack: false,
+    pairCount: null,
+    line: null,
+    category: null,
+    subcategory: null,
+    audience: null,
+    cardImage: 'https://www.rappisportshub.com/catalog-photos/plain-ok.jpg?v=keep',
+    images: ['https://www.rappisportshub.com/catalog-photos/plain-ok.jpg?v=keep'],
+    price: 12,
+    priceLabel: 'N$12',
+    imageFit: 'cover',
+    objectPosition: 'center 20%',
+  });
+  const parsed = validateMobileStorefront(body);
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+  const hub = parsed.value.nodes.find((node) => node.key === 'sportswear');
+  assert.ok(hub);
+  assert.equal(hub.objectPosition, '50% 0%');
+  assert.equal(hub.imageFit, 'cover');
+  assert.equal(hub.audiences[0].image, 'https://www.rappisportshub.com/brand/audience-men.png?v=3');
+  assert.equal(hub.audiences[0].imageFit, 'contain');
+  assert.equal(hub.audiences[1].image, null);
+  assert.equal(hub.audiences[1].objectPosition, null);
+  const slash = parsed.value.products.find((item) => item.code === 'TEAM/14B');
+  assert.ok(slash);
+  assert.equal(slash.cardImage, 'https://www.rappisportshub.com/catalog-photos/plain-ok.jpg?v=keep');
+  assert.equal(slash.objectPosition, 'center 20%');
+  assert.equal(slash.priceLabel, 'N$12');
 });
 
 test('a feed that is not an object is rejected', () => {
